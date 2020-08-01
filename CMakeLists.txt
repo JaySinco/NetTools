@@ -57,8 +57,8 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
-add_library(common_lib STATIC ${CMAKE_SOURCE_DIR}/.trash.c)
-target_link_libraries(common_lib
+add_library(net STATIC ${CMAKE_SOURCE_DIR}/src/net.cpp)
+target_link_libraries(net
     wpcap.lib
     ws2_32.lib
     glog.lib
@@ -66,7 +66,7 @@ target_link_libraries(common_lib
     )
 
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/lsdev.cpp)
-target_link_libraries(lsdev common_lib)
+target_link_libraries(lsdev net)
 
 add_executable(sniff ${CMAKE_SOURCE_DIR}/src/sniff.cpp)
-target_link_libraries(sniff common_lib)
+target_link_libraries(sniff net)
