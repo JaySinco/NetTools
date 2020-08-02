@@ -1,113 +1,85 @@
-#include <pcap.h>
-#include <ctime>
-#include <stdio.h>
-#include <iostream>
+#include "net.h"
 
-/* prototype of the packet handler */
-void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
+DEFINE_int32(i, -1, "adapter index to capture");
+DEFINE_string(f, "", "capture filter applied to adapter");
 
-int main()
+int main(int argc, char* argv[])
 {
-	pcap_if_t *alldevs;
-	pcap_if_t *d;
-	int inum;
-	int i=0;
-	pcap_t *adhandle;
-	char errbuf[PCAP_ERRBUF_SIZE];
+    google::InitGoogleLogging(argv[0]);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    FLAGS_logtostderr = 1;
+    FLAGS_minloglevel = 0;
 
-// #ifdef WIN32
-// 	/* Load Npcap and its functions. */
-// 	if (!LoadNpcapDlls())
-// 	{
-// 		fprintf(stderr, "Couldn't load Npcap\n");
-// 		exit(1);
-// 	}
-// #endif
-	/* Retrieve the device list */
-	if(pcap_findalldevs(&alldevs, errbuf) == -1)
-	{
-		fprintf(stderr,"Error in pcap_findalldevs: %s\n", errbuf);
-		exit(1);
-	}
-	
-	/* Print the list */
-	for(d=alldevs; d; d=d->next)
-	{
-		printf("%d. %s", ++i, d->name);
-		if (d->description)
-			printf(" (%s)\n", d->description);
-		else
-			printf(" (No description available)\n");
-	}
-	
-	if(i==0)
-	{
-		printf("\nNo interfaces found! Make sure Npcap is installed.\n");
-		return -1;
-	}
-	
-	printf("Enter the interface number (1-%d):",i);
-	std::cout << std::flush;
-	scanf("%d", &inum);
-	
-	if(inum < 1 || inum > i)
-	{
-		printf("\nInterface number out of range.\n");
-		/* Free the device list */
-		pcap_freealldevs(alldevs);
-		return -1;
-	}
-	
-	/* Jump to the selected adapter */
-	for(d=alldevs, i=0; i< inum-1 ;d=d->next, i++);
-	
-	/* Open the device */
-	/* Open the adapter */
-	if ((adhandle= pcap_open_live(d->name,	// name of the device
-							 65536,			// portion of the packet to capture. 
-											// 65536 grants that the whole packet will be captured on all the MACs.
-							 1,				// promiscuous mode (nonzero means promiscuous)
-							 1000,			// read timeout
-							 errbuf			// error buffer
-							 )) == NULL)
-	{
-		fprintf(stderr,"\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
-		/* Free the device list */
-		pcap_freealldevs(alldevs);
-		return -1;
-	}
-	
-	printf("\nlistening on %s...\n", d->description);
-	
-	/* At this point, we don't need any more the device list. Free it */
-	pcap_freealldevs(alldevs);
-	
-	/* start the capture */
-	pcap_loop(adhandle, 0, packet_handler, NULL);
-	
-	pcap_close(adhandle);
-	return 0;
-}
+    if (FLAGS_i < 0) {
+        LOG(ERROR) << "invalid adapter index " << FLAGS_i;
+        return -1;
+    }
+    std::string devname;
+    u_int devmask = 0xffffff;
+    pcap_if_t *alldevs;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    {
+        LOG(ERROR) << "failed to find all device: " << errbuf;
+        return -1;
+    }
+    int i = 0;
+    for (pcap_if_t *d = alldevs; d; d = d->next, ++i)
+    {
+        if (i == FLAGS_i) {
+            std::cout << i << ": " << d << std::endl;
+            devname = d->name;
+            for (const pcap_addr_t *a = d->addresses; a; a = a->next) {
+                if (a->netmask && a->netmask->sa_family == AF_INET) {
+                    devmask = reinterpret_cast<const sockaddr_in*>(a->netmask)->sin_addr.s_addr;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    pcap_freealldevs(alldevs);
+    if (devname.size() == 0) {
+        LOG(ERROR) << "invalid adapter index " << FLAGS_i << ", max=" << i-1;
+        return -1;
+    }
 
+    pcap_t *adhandle;
+    if (!(adhandle= pcap_open(devname.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
+    {
+        LOG(ERROR) << "failed to open the adapter";
+        return -1;
+    }
 
-/* Callback function invoked by libpcap for every incoming packet */
-void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data)
-{
-	struct tm *ltime;
-	char timestr[16];
-	time_t local_tv_sec;
+    if (FLAGS_f.size() > 0) {
+        LOG(INFO) << "set filter \"" << FLAGS_f << "\", netmask=0x" << std::hex 
+            << std::setw(8) << std::setfill('0') << ntohl(devmask) << std::dec;
+        bpf_program fcode;
+        if (pcap_compile(adhandle, &fcode, FLAGS_f.c_str(), 1, devmask) < 0) {
+            LOG(ERROR) << "failed to compile the packet filter"; 
+            return -1;
+        }
+        if (pcap_setfilter(adhandle, &fcode) < 0) {
+            LOG(ERROR) << "failed to set filter"; 
+            return -1;
+        }   
+    }
 
-	/*
-	 * unused parameters
-	 */
-	(VOID)(param);
-	(VOID)(pkt_data);
+    LOG(INFO) << "listening on adapter...";
+    int res;
+    pcap_pkthdr *header;
+    const u_char *pkt_data;
+    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
+    {
+        if (res == 0) {
+            VLOG(3) << "timeout elapsed";
+            continue;
+        }
+        print_packet(std::cout, header, pkt_data) << std::endl;
+    }
 
-	/* convert the timestamp to readable format */
-	local_tv_sec = header->ts.tv_sec;
-	ltime=localtime(&local_tv_sec);
-	strftime( timestr, sizeof timestr, "%H:%M:%S", ltime);
-	
-	printf("%s,%.6d len:%d\n", timestr, header->ts.tv_usec, header->len);
-	
+    if (res == -1) {
+        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
+        return -1;
+    }
 }

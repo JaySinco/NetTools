@@ -9,6 +9,7 @@
     },
     "C_Cpp.default.includePath": [
         "${workspaceFolder}",
+        "${workspaceFolder}/src/",
         "${workspaceFolder}/NetTools/3rdparty/gflags/include/",
         "${workspaceFolder}/NetTools/3rdparty/glog/include/",
         "${workspaceFolder}/NetTools/3rdparty/npcap/include/"

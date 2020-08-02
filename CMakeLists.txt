@@ -41,6 +41,9 @@ project(NetTools)
 
 configure_msvc_runtime()
 
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+
 set(INCLUDE_DIR
     ${CMAKE_SOURCE_DIR}/3rdparty/gflags/include/
     ${CMAKE_SOURCE_DIR}/3rdparty/glog/include/
