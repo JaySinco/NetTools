@@ -83,18 +83,28 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
     }
     switch (ntohs(arp_data->op)) {
     case ARP_REQUEST_OP:
-        out << "[ARP] " << arp_data->sia << ": who is " << arp_data->dia << "?";
+        out << "\tEthernet type: ARP\n";
+        out << "\tDescription: " << arp_data->sia << " asks: who has " <<  arp_data->dia << "?\n";
+        out << "\tOperation: Requset\n";
         break;
     case ARP_REPLY_OP:
-        out << "[ARP] " << arp_data->sia << ": i am at " << arp_data->sea << ".";
+        out << "\tEthernet type: ARP\n";
+        out << "\tDescription: " <<  arp_data->sia << " replies to " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
+        out << "\tOperation: Reply\n";
         break;
     case RARP_REQUEST_OP:
-        out << "[RARP]";
+        out << "\tEthernet type: RARP\n";
+        out << "\tOperation: Requset\n";
         break;
     case RARP_REPLY_op:
-        out << "[RARP]";
+        out << "\tEthernet type: RARP\n";
+        out << "\tOperation: Reply\n";
         break;
     }
+    out << "\tSource Mac: " << arp_data->sea << "\n";
+    out << "\tSource Ip: " << arp_data->sia << "\n";
+    out << "\tDestination Mac: " << arp_data->dea << "\n";
+    out << "\tDestination Ip: " << arp_data->dia << "\n";
     return out;
 }
 
@@ -107,14 +117,15 @@ std::ostream &print_packet(std::ostream &out, const pcap_pkthdr *header, const u
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
     out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
     auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+    out << eh->sea << " > " << eh->dea << std::endl;
     u_short ethtyp = ntohs(eh->eth_type);
     switch (ethtyp)
     {
     case ETHERNET_TYPE_IPv4:
-        out << "[IPv4]";
+        out << "\tEthernet type: IPv4\n";
         break;
     case ETHERNET_TYPE_IPv6:
-        out << "[IPv6]";
+        out << "\tEthernet type: IPv6\n";
         break;
     case ETHERNET_TYPE_ARP:
     case ETHERNET_TYPE_RARP:
