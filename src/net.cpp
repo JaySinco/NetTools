@@ -78,20 +78,20 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
     if (ntohs(arp_data->hw_type) != 1 || ntohs(arp_data->proto) != 0x0800 ||
         arp_data->hw_len != 6 || arp_data->proto_len != 4)
     {
-        out << "(not typical ethernet ipv4 arp)";
+        LOG(ERROR) << "not typical ethernet-ipv4 arp/rarp";
         return out;
     }
     switch (ntohs(arp_data->op)) {
-    case 1: // arp request
+    case ARP_REQUEST_OP:
         out << "[ARP] " << arp_data->sia << ": who is " << arp_data->dia << "?";
         break;
-    case 2: // arp reply
+    case ARP_REPLY_OP:
         out << "[ARP] " << arp_data->sia << ": i am at " << arp_data->sea << ".";
         break;
-    case 3: // rarp request
+    case RARP_REQUEST_OP:
         out << "[RARP]";
         break;
-    case 4: // rarp reply
+    case RARP_REPLY_op:
         out << "[RARP]";
         break;
     }
@@ -107,20 +107,24 @@ std::ostream &print_packet(std::ostream &out, const pcap_pkthdr *header, const u
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
     out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
     auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-    switch (ntohs(eh->eth_type))
+    u_short ethtyp = ntohs(eh->eth_type);
+    switch (ethtyp)
     {
-    case 0x0800: // ip
-        out << "[IP]";
+    case ETHERNET_TYPE_IPv4:
+        out << "[IPv4]";
         break;
-    case 0x0806: // arp
-    case 0x8035: // rarp
+    case ETHERNET_TYPE_IPv6:
+        out << "[IPv6]";
+        break;
+    case ETHERNET_TYPE_ARP:
+    case ETHERNET_TYPE_RARP:
     {
         auto ah = reinterpret_cast<const eth_ip4_arp*>(pkt_data + sizeof(ethernet_header));
         out << ah;
         break;
     }
     default:
-        LOG(ERROR) << "unknow ethernet type: " << eh->eth_type;
+        LOG(ERROR) << "unknow ethernet type: 0x" << std::hex << ethtyp << std::dec;
     }
     return out;
 }

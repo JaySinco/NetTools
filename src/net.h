@@ -5,6 +5,15 @@
 #include <glog/logging.h>
 #include "pcap.h"
 
+#define ETHERNET_TYPE_IPv4 0x0800
+#define ETHERNET_TYPE_IPv6 0x86DD
+#define ETHERNET_TYPE_ARP  0x0806
+#define ETHERNET_TYPE_RARP 0x8035
+#define ARP_REQUEST_OP  1
+#define ARP_REPLY_OP    2
+#define RARP_REQUEST_OP 3
+#define RARP_REPLY_op   4
+
 struct eth_addr {
     u_char b1, b2, b3, b4, b5, b6;
 };
