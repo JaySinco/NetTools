@@ -1,18 +1,25 @@
 #pragma once
 #include <iostream>
 #include <iomanip>
+#include <sstream>
+#define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include "pcap.h"
 
+#define ETHERNET_ADDRESS_LEN 6
+#define IPV4_ADDRESS_LEN 4
 #define ETHERNET_TYPE_IPv4 0x0800
 #define ETHERNET_TYPE_IPv6 0x86DD
 #define ETHERNET_TYPE_ARP  0x0806
 #define ETHERNET_TYPE_RARP 0x8035
+#define ARP_HARDWARE_TYPE_ETHERNET 1
+#define ARP_HARDWARE_PROTO_IP 0x0800
 #define ARP_REQUEST_OP  1
 #define ARP_REPLY_OP    2
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
+#define BROADCAST_ETH_ADDR eth_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
 struct eth_addr {
     u_char b1, b2, b3, b4, b5, b6;
@@ -60,6 +67,29 @@ struct udp_header {
     u_short crc;   // Checksum
 };
 
+struct adapter_info {
+    std::string name;
+    std::string desc;
+    ip4_addr ip;
+    ip4_addr mask;
+    ip4_addr gateway;
+    eth_addr mac;
+};
+
+template <typename T>
+std::string to_string(const T& v)
+{
+    std::ostringstream ss;
+    ss << v;
+    return ss.str();
+}
+
+bool get_adapter_info_by_ip4(const ip4_addr &ip, adapter_info &info);
+in_addr ip4_to_win(const ip4_addr &addr);
+ip4_addr ip4_from_win(const in_addr &waddr);
+bool ip4_from_string(const std::string &s, ip4_addr &addr);
+bool operator==(const ip4_addr &a, const ip4_addr &b);
+u_int operator&(const ip4_addr &a, const ip4_addr &b);
 std::ostream &operator<<(std::ostream &out, const in_addr &addr);
 std::ostream &operator<<(std::ostream &out, const in6_addr &addr);
 std::ostream &operator<<(std::ostream &out, const sockaddr *addr);

@@ -66,6 +66,7 @@ target_link_libraries(net
     ws2_32.lib
     glog.lib
     gflags.lib
+    iphlpapi.lib
     )
 
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/lsdev.cpp)
@@ -73,3 +74,6 @@ target_link_libraries(lsdev net)
 
 add_executable(sniff ${CMAKE_SOURCE_DIR}/src/sniff.cpp)
 target_link_libraries(sniff net)
+
+add_executable(arp ${CMAKE_SOURCE_DIR}/src/arp.cpp)
+target_link_libraries(arp net)
