@@ -61,7 +61,7 @@ message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
 add_library(net STATIC
-  ${CMAKE_SOURCE_DIR}/src/dtype.cpp
+  ${CMAKE_SOURCE_DIR}/src/type.cpp
   ${CMAKE_SOURCE_DIR}/src/net.cpp
   )
 target_link_libraries(net

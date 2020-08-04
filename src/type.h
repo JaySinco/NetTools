@@ -41,6 +41,9 @@ struct ip4_addr {
 
 struct eth_addr {
     u_char b1, b2, b3, b4, b5, b6;
+
+    bool operator==(const eth_addr &other) const;
+    bool operator!=(const eth_addr &other) const;
 };
 
 struct ethernet_header {
@@ -59,6 +62,8 @@ struct eth_ip4_arp {
     ip4_addr sia;       // Source ip address
     eth_addr dea;       // Destination ethernet address
     ip4_addr dia;       // Destination ip address
+
+    bool fake() const;
 };
 
 struct ip4_header {

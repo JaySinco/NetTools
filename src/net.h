@@ -1,5 +1,12 @@
 #pragma once
-#include "dtype.h"
+#include "type.h"
+
+bool ip2mac(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &ip,
+    eth_addr &mac,
+    int timeout_ms);
 
 bool send_arp(
     pcap_t *adhandle,

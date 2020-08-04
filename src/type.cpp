@@ -1,6 +1,6 @@
 #include <winsock2.h>
 #include <iphlpapi.h>
-#include "dtype.h"
+#include "type.h"
 
 ip4_addr::ip4_addr(u_char c1, u_char c2, u_char c3, u_char c4)
     :b1(c1), b2(c2), b3(c3), b4(c4) {}
@@ -56,6 +56,25 @@ u_int ip4_addr::operator&(const ip4_addr &other) const
     return ntohl(*i) & ntohl(*j);
 }
 
+bool eth_addr::operator==(const eth_addr &other) const
+{
+    return b1 == other.b1 && b2 == other.b2 && b3 == other.b3 &&
+        b4 == other.b4 && b5 == other.b5 && b6 == other.b6;
+}
+
+bool eth_addr::operator!=(const eth_addr &other) const
+{
+    return !(*this == other);
+}
+
+bool eth_ip4_arp::fake() const
+{
+    if (ntohs(op) == ARP_REPLY_OP && sea == dea && sia != dia) {
+        return true;
+    }
+    return false;
+}
+
 adapter_info::adapter_info(const ip4_addr &subnet_ip, bool exact_match)
 {
     u_long buflen = sizeof(IP_ADAPTER_INFO);
@@ -74,7 +93,8 @@ adapter_info::adapter_info(const ip4_addr &subnet_ip, bool exact_match)
         ip4_addr apt_ip(pAdapter->IpAddressList.IpAddress.String);
         ip4_addr apt_mask(pAdapter->IpAddressList.IpMask.String);
         if ((exact_match && apt_ip == subnet_ip) || 
-            (!exact_match && (apt_ip & apt_mask) == (subnet_ip & apt_mask)))
+            (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && 
+                (apt_ip & apt_mask) == (subnet_ip & apt_mask)))
         {
             this->name = std::string("\\Device\\NPF_") + pAdapter->AdapterName;
             this->desc = pAdapter->Description;

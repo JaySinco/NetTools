@@ -18,8 +18,8 @@ int main(int argc, char* argv[])
     try {
         input_ip = ip4_addr(FLAGS_ip);
     }
-    catch (const std::runtime_error&) {
-        LOG(ERROR) << "invalid ipv4 address: " << FLAGS_ip;
+    catch (const std::runtime_error &e) {
+        LOG(ERROR) << e.what();
         return -1;
     }
 

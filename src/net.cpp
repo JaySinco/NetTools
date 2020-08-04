@@ -1,4 +1,61 @@
+#include <thread>
+#include <atomic>
 #include "net.h"
+
+bool ip2mac(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &ip,
+    eth_addr &mac,
+    int timeout_ms)
+{
+    auto start_tm = std::chrono::system_clock::now();
+    std::atomic<bool> over = false;
+    std::thread send_loop_t([&]{
+        while (!over) {
+            send_arp(adhandle, ARP_REQUEST_OP, apt_info.mac, apt_info.ip, PLACEHOLDER_ETH_ADDR, ip);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    });
+    
+    int res;
+    pcap_pkthdr *header;
+    const u_char *pkt_data;
+    bool succ = false;
+    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
+    {
+        if (timeout_ms > 0)
+        {
+            auto now_tm = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
+            if (duration.count() >= timeout_ms) {
+                LOG(ERROR) << "haven't got arp reply after " << duration.count() << " ms";
+                break;
+            }
+
+        }
+        if (res == 0) {
+            continue;
+        }
+        auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+        if (ntohs(eh->eth_type) == ETHERNET_TYPE_ARP) {
+            auto ah = reinterpret_cast<const eth_ip4_arp*>(pkt_data + sizeof(ethernet_header));
+            if (ntohs(ah->op) == ARP_REPLY_OP) {
+                if (!ah->fake() && ah->sia == ip) {
+                    mac = ah->sea;
+                    succ = true;
+                    break;
+                }
+            }
+        }
+    }
+    if (res == -1) {
+        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
+    }
+    over = true;
+    send_loop_t.join();
+    return succ;
+}
 
 bool send_arp(
     pcap_t *adhandle,
@@ -117,12 +174,12 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
     }
     switch (ntohs(arp_data->op)) {
     case ARP_REQUEST_OP:
-        out << "\tEthernet type: ARP\n";
+        out << "\tEthernet type: ARP" << (arp_data->fake() ? "[FAKE]" : "") << "\n";
         out << "\tDescription: " << arp_data->sia << " asks: who has " <<  arp_data->dia << "?\n";
         out << "\tOperation: Requset\n";
         break;
     case ARP_REPLY_OP:
-        out << "\tEthernet type: ARP\n";
+        out << "\tEthernet type: ARP" << (arp_data->fake() ? "[FAKE]" : "") << "\n";
         out << "\tDescription: " <<  arp_data->sia << " tells " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
         out << "\tOperation: Reply\n";
         break;
