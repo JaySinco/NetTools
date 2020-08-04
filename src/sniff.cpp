@@ -1,6 +1,6 @@
 #include "net.h"
 
-DEFINE_int32(n, -1, "adapter index to capture");
+DEFINE_string(ip, "", "ipv4 address used to choose adapter");
 DEFINE_string(filter, "", "capture filter applied to adapter");
 
 int main(int argc, char* argv[])
@@ -10,52 +10,38 @@ int main(int argc, char* argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    if (FLAGS_n < 0) {
-        LOG(ERROR) << "invalid adapter index " << FLAGS_n;
+    if (FLAGS_ip.size() <= 0) {
+        LOG(ERROR) << "empty ipv4 address";
         return -1;
     }
-    std::string devname;
-    u_int devmask = 0xffffff;
-    pcap_if_t *alldevs;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    if (pcap_findalldevs(&alldevs, errbuf) == -1)
-    {
-        LOG(ERROR) << "failed to find all device: " << errbuf;
-        return -1;
+    ip4_addr input_ip;
+    try {
+        input_ip = ip4_addr(FLAGS_ip);
     }
-    int i = 0;
-    for (pcap_if_t *d = alldevs; d; d = d->next, ++i)
-    {
-        if (i == FLAGS_n) {
-            std::cout << i << ": " << d << std::endl;
-            devname = d->name;
-            for (const pcap_addr_t *a = d->addresses; a; a = a->next) {
-                if (a->netmask && a->netmask->sa_family == AF_INET) {
-                    devmask = reinterpret_cast<const sockaddr_in*>(a->netmask)->sin_addr.s_addr;
-                    break;
-                }
-            }
-            break;
-        }
-    }
-    pcap_freealldevs(alldevs);
-    if (devname.size() == 0) {
-        LOG(ERROR) << "invalid adapter index " << FLAGS_n << ", max=" << i-1;
+    catch (const std::runtime_error&) {
+        LOG(ERROR) << "invalid ipv4 address: " << FLAGS_ip;
         return -1;
     }
 
+    adapter_info apt_info(input_ip, false);
+    if (apt_info.name.size() == 0) {
+        LOG(ERROR) << "failed to find adapter according to " << input_ip;
+        return -1;
+    }
+    std::cout << apt_info << std::endl;
+
     pcap_t *adhandle;
-    if (!(adhandle= pcap_open(devname.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
+    char errbuf[PCAP_ERRBUF_SIZE];
+    if (!(adhandle= pcap_open(apt_info.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
     {
-        LOG(ERROR) << "failed to open the adapter";
+        LOG(ERROR) << "failed to open the adapter: " << apt_info.name;
         return -1;
     }
 
     if (FLAGS_filter.size() > 0) {
-        LOG(INFO) << "set filter \"" << FLAGS_filter << "\", netmask=0x" << std::hex
-            << std::setw(8) << std::setfill('0') << ntohl(devmask) << std::dec;
+        LOG(INFO) << "set filter \"" << FLAGS_filter << "\", netmask=" << apt_info.mask;
         bpf_program fcode;
-        if (pcap_compile(adhandle, &fcode, FLAGS_filter.c_str(), 1, devmask) < 0) {
+        if (pcap_compile(adhandle, &fcode, FLAGS_filter.c_str(), 1, static_cast<u_int>(apt_info.mask)) < 0) {
             LOG(ERROR) << "failed to compile the packet filter"; 
             return -1;
         }

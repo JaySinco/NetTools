@@ -35,53 +35,22 @@ int main(int argc, char* argv[])
         return -1;
     }
     ip4_addr input_ip;
-    if (FLAGS_ip.size() > 0 && !ip4_from_string(FLAGS_ip, input_ip)) {
+    try {
+        input_ip = ip4_addr(FLAGS_ip);
+    }
+    catch (const std::runtime_error&) {
         LOG(ERROR) << "invalid ipv4 address: " << FLAGS_ip;
         return -1;
     }
 
-    std::string devname;
-    ip4_addr local_ip;
-    pcap_if_t *alldevs;
+    g_apt_info = adapter_info(input_ip, false);
+    if (g_apt_info.name.size() == 0) {
+        LOG(ERROR) << "failed to find adapter according to " << input_ip;
+        return -1;
+    }
+
     char errbuf[PCAP_ERRBUF_SIZE];
-    if (pcap_findalldevs(&alldevs, errbuf) == -1)
-    {
-        LOG(ERROR) << "failed to find all device: " << errbuf;
-        return -1;
-    }
-    bool found = false;
-    for (pcap_if_t *d = alldevs; d; d = d->next)
-    {
-        for (const pcap_addr_t *a = d->addresses; a; a = a->next) {
-            if (a->addr && a->addr->sa_family == AF_INET) {
-                auto ip = reinterpret_cast<const sockaddr_in*>(a->addr)->sin_addr;
-                auto ip_addr = ip4_from_win(ip);
-                auto mask = reinterpret_cast<const sockaddr_in*>(a->netmask)->sin_addr;
-                auto mask_addr = ip4_from_win(mask);
-                if ((ip_addr & mask_addr) == (input_ip & mask_addr)) {
-                    local_ip = ip_addr;
-                    devname = d->name;
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (found) {
-            break;
-        }
-    }
-    pcap_freealldevs(alldevs);
-    if (!found) {
-        LOG(ERROR) << "failed to match adapter accroding to netmask";
-        return -1;
-    }
-
-    if (!get_adapter_info_by_ip4(local_ip, g_apt_info)) {
-        LOG(ERROR) << "failed to get more adapter info";
-        return -1;
-    }
-
-    if (!(g_adhandle= pcap_open(devname.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
+    if (!(g_adhandle= pcap_open(g_apt_info.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
     {
         LOG(ERROR) << "failed to open the adapter";
         return -1;
