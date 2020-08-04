@@ -2,6 +2,33 @@
 #include <iphlpapi.h>
 #include "net.h"
 
+bool send_arp(
+    pcap_t *adhandle, u_short op,
+    const eth_addr &sea, const ip4_addr &sia, const eth_addr &dea, const ip4_addr &dia)
+{
+    u_char packet[sizeof(ethernet_header) + sizeof(eth_ip4_arp)] = { 0 };
+    auto eh = reinterpret_cast<ethernet_header*>(packet);
+    eh->dea = BROADCAST_ETH_ADDR;
+    eh->sea = sea;
+    eh->eth_type = htons(ETHERNET_TYPE_ARP);
+    auto ah = reinterpret_cast<eth_ip4_arp*>(packet + sizeof(ethernet_header));
+    ah->hw_type = htons(ARP_HARDWARE_TYPE_ETHERNET);
+    ah->proto = htons(ETHERNET_TYPE_IPv4);
+    ah->hw_len = ETHERNET_ADDRESS_LEN;
+    ah->proto_len = IPV4_ADDRESS_LEN;
+    ah->op = htons(op);
+    ah->sea = sea;
+    ah->sia = sia;
+    ah->dea = dea;
+    ah->dia = dia;
+    if (pcap_sendpacket(adhandle, packet, sizeof(packet)/sizeof(packet[0])) != 0)
+    {
+        LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
+        return false;
+    }
+    return true;
+}
+
 bool get_adapter_info_by_ip4(const ip4_addr &ip, adapter_info &info)
 {
     u_long buflen = sizeof(IP_ADAPTER_INFO);
@@ -89,6 +116,11 @@ bool operator==(const ip4_addr &a, const ip4_addr &b)
         a.b3 == b.b3 && a.b4 == b.b4;
 }
 
+bool operator!=(const ip4_addr &a, const ip4_addr &b)
+{
+    return !(a == b);
+}
+
 std::ostream &operator<<(std::ostream &out, const in_addr &addr)
 {
     u_long ip4 = addr.s_addr;
@@ -131,10 +163,10 @@ std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev)
 {
     out << dev->name << std::endl;
     bool get_detail = false;
+    adapter_info apt_info;
     for (pcap_addr_t *a = dev->addresses; a; a = a->next) {
         if (a->addr && a->addr->sa_family == AF_INET) {
             auto waddr = reinterpret_cast<const sockaddr_in*>(a->addr)->sin_addr;
-            adapter_info apt_info;
             if (get_adapter_info_by_ip4(ip4_from_win(waddr), apt_info)) {
                 get_detail = true;
                 out << "\tDescription: " << apt_info.desc << std::endl;
@@ -149,7 +181,15 @@ std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev)
     out << "\tLoopback: " << ((dev->flags & PCAP_IF_LOOPBACK) ? "yes" : "no") << std::endl;
     for (pcap_addr_t *a = dev->addresses; a; a = a->next) {
         out << "\t---------------------------------------" << std::endl;
-        if (a->addr) out << "\tAddress: " << a->addr << std::endl;
+        if (a->addr) {
+            out << "\tAddress: " << a->addr << std::endl;
+            auto waddr = reinterpret_cast<const sockaddr_in*>(a->addr)->sin_addr;
+            if (get_detail && ip4_from_win(waddr) == apt_info.ip &&
+                apt_info.gateway != PLACEHOLDER_IPv4_ADDR)
+            {
+                out << "\tGateway: " << apt_info.gateway << std::endl;
+            }
+        }
         if (a->netmask) out << "\tNetmask: " << a->netmask << std::endl;
         if (a->broadaddr) out << "\tBroadcast: " << a->broadaddr << std::endl;
         if (a->dstaddr) out << "\tDestination: " << a->dstaddr << std::endl;
@@ -175,7 +215,7 @@ std::ostream &operator<<(std::ostream &out, const eth_addr &addr)
 std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
 {
     if (ntohs(arp_data->hw_type) != ARP_HARDWARE_TYPE_ETHERNET ||
-        ntohs(arp_data->proto) != ARP_HARDWARE_PROTO_IP ||
+        ntohs(arp_data->proto) != ETHERNET_TYPE_IPv4 ||
         arp_data->hw_len != ETHERNET_ADDRESS_LEN ||
         arp_data->proto_len != IPV4_ADDRESS_LEN)
     {
@@ -190,7 +230,7 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
         break;
     case ARP_REPLY_OP:
         out << "\tEthernet type: ARP\n";
-        out << "\tDescription: " <<  arp_data->sia << " replies to " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
+        out << "\tDescription: " <<  arp_data->sia << " tells " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
         out << "\tOperation: Reply\n";
         break;
     case RARP_REQUEST_OP:

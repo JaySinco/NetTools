@@ -14,12 +14,14 @@
 #define ETHERNET_TYPE_ARP  0x0806
 #define ETHERNET_TYPE_RARP 0x8035
 #define ARP_HARDWARE_TYPE_ETHERNET 1
-#define ARP_HARDWARE_PROTO_IP 0x0800
 #define ARP_REQUEST_OP  1
 #define ARP_REPLY_OP    2
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
+#define BROADCAST_IPv4_ADDR ip4_addr{0xff, 0xff, 0xff, 0xff}
+#define PLACEHOLDER_IPv4_ADDR ip4_addr{0x0, 0x0, 0x0, 0x0}
 #define BROADCAST_ETH_ADDR eth_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+#define PLACEHOLDER_ETH_ADDR eth_addr{0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
 
 struct eth_addr {
     u_char b1, b2, b3, b4, b5, b6;
@@ -85,11 +87,18 @@ std::string to_string(const T& v)
 }
 
 bool get_adapter_info_by_ip4(const ip4_addr &ip, adapter_info &info);
-in_addr ip4_to_win(const ip4_addr &addr);
-ip4_addr ip4_from_win(const in_addr &waddr);
+
+bool send_arp(
+    pcap_t *adhandle, u_short op,
+    const eth_addr &sea, const ip4_addr &sia, const eth_addr &dea, const ip4_addr &dia);
+
 bool ip4_from_string(const std::string &s, ip4_addr &addr);
-bool operator==(const ip4_addr &a, const ip4_addr &b);
+ip4_addr ip4_from_win(const in_addr &waddr);
+in_addr ip4_to_win(const ip4_addr &addr);
+
 u_int operator&(const ip4_addr &a, const ip4_addr &b);
+bool operator==(const ip4_addr &a, const ip4_addr &b);
+bool operator!=(const ip4_addr &a, const ip4_addr &b);
 std::ostream &operator<<(std::ostream &out, const in_addr &addr);
 std::ostream &operator<<(std::ostream &out, const in6_addr &addr);
 std::ostream &operator<<(std::ostream &out, const sockaddr *addr);
