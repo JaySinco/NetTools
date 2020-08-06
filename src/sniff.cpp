@@ -5,38 +5,21 @@ DEFINE_string(filter, "", "capture filter applied to adapter");
 
 int main(int argc, char* argv[])
 {
+    NT_TRY
     google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
     if (FLAGS_ip.size() <= 0) {
-        LOG(ERROR) << "empty ipv4 address";
-        return -1;
-    }
-    ip4_addr input_ip;
-    try {
-        input_ip = ip4_addr(FLAGS_ip);
-    }
-    catch (const std::runtime_error &e) {
-        LOG(ERROR) << e.what();
+        LOG(ERROR) << "empty ipv4 address, please set --ip";
         return -1;
     }
 
-    adapter_info apt_info(input_ip, false);
-    if (apt_info.name.size() == 0) {
-        LOG(ERROR) << "failed to find adapter according to " << input_ip;
-        return -1;
-    }
+    ip4_addr input_ip(FLAGS_ip);
+    adapter_info apt_info;
+    pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);
     std::cout << apt_info << std::endl;
-
-    pcap_t *adhandle;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    if (!(adhandle= pcap_open(apt_info.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
-    {
-        LOG(ERROR) << "failed to open the adapter: " << apt_info.name;
-        return -1;
-    }
 
     if (FLAGS_filter.size() > 0) {
         LOG(INFO) << "set filter \"" << FLAGS_filter << "\", netmask=" << apt_info.mask;
@@ -51,7 +34,7 @@ int main(int argc, char* argv[])
         }   
     }
 
-    LOG(INFO) << "listening on adapter...";
+    LOG(INFO) << "begin to sniff...";
     int res;
     pcap_pkthdr *header;
     const u_char *pkt_data;
@@ -68,4 +51,5 @@ int main(int argc, char* argv[])
         LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
         return -1;
     }
+    NT_CATCH
 }

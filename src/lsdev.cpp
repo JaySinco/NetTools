@@ -2,6 +2,7 @@
 
 int main(int argc, char* argv[])
 {
+    NT_TRY
     google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     FLAGS_logtostderr = 1;
@@ -20,4 +21,5 @@ int main(int argc, char* argv[])
         std::cout << i << ": " << d << std::endl;
     }
     pcap_freealldevs(alldevs);
+    NT_CATCH
 }

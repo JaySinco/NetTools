@@ -162,6 +162,21 @@ std::ostream &print_packet(
     return out;
 }
 
+pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info)
+{
+    apt_info = adapter_info(ip, exact_match);
+    if (apt_info.name.size() == 0) {
+        throw std::runtime_error(nt::sout << "no adapter found in same local network with " << ip);
+    }
+    pcap_t *adhandle;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    if (!(adhandle= pcap_open(apt_info.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
+    {
+        throw std::runtime_error(nt::sout << "failed to open the adapter: " << apt_info.name);
+    }
+    return adhandle;
+}
+
 std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
 {
     if (ntohs(arp_data->hw_type) != ARP_HARDWARE_TYPE_ETHERNET ||
