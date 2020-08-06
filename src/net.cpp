@@ -127,41 +127,6 @@ std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev)
     return out;
 }
 
-std::ostream &print_packet(
-    std::ostream &out,
-    const pcap_pkthdr *header,
-    const u_char *pkt_data)
-{
-    time_t local_tv_sec = header->ts.tv_sec;
-    tm ltime;
-    localtime_s(&ltime, &local_tv_sec);
-    char timestr[16];
-    strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
-    out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
-    auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-    out << eh->sea << " > " << eh->dea << std::endl;
-    u_short ethtyp = ntohs(eh->eth_type);
-    switch (ethtyp)
-    {
-    case ETHERNET_TYPE_IPv4:
-        out << "\tEthernet type: IPv4\n";
-        break;
-    case ETHERNET_TYPE_IPv6:
-        out << "\tEthernet type: IPv6\n";
-        break;
-    case ETHERNET_TYPE_ARP:
-    case ETHERNET_TYPE_RARP:
-    {
-        auto ah = reinterpret_cast<const eth_ip4_arp*>(pkt_data + sizeof(ethernet_header));
-        out << ah;
-        break;
-    }
-    default:
-        LOG(ERROR) << "unknow ethernet type: 0x" << std::hex << ethtyp << std::dec;
-    }
-    return out;
-}
-
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info)
 {
     apt_info = adapter_info(ip, exact_match);
@@ -177,6 +142,59 @@ pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &
     return adhandle;
 }
 
+u_short calc_checksum(const void *data, size_t len_in_byte)
+{
+    if (len_in_byte % 2 != 0) {
+        throw std::runtime_error("calculate checksum: data length is not an integer of 2");
+    }
+    u_long checksum = 0;
+    auto check_ptr = reinterpret_cast<const u_short *>(data);
+    for (int i = 0; i < len_in_byte / 2; ++i) {
+        checksum += check_ptr[i];
+        checksum = (checksum >> 16) + (checksum & 0xffff);
+    }
+    return static_cast<u_short>(~checksum);
+}
+
+std::ostream &print_packet(
+    std::ostream &out,
+    const pcap_pkthdr *header,
+    const u_char *pkt_data)
+{
+    time_t local_tv_sec = header->ts.tv_sec;
+    tm ltime;
+    localtime_s(&ltime, &local_tv_sec);
+    char timestr[16];
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
+    out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
+    auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+    out << eh->sea << " > " << eh->dea << std::endl;
+    u_short ethtyp = ntohs(eh->eth_type);
+    const u_char *ptr = pkt_data + sizeof(ethernet_header);
+    switch (ethtyp)
+    {
+    case ETHERNET_TYPE_IPv4:
+    {
+        auto ih = reinterpret_cast<const ip4_header*>(ptr);
+        out << ih;
+        break;
+    }
+    case ETHERNET_TYPE_IPv6:
+        out << "\tEthernet type: IPv6\n";
+        break;
+    case ETHERNET_TYPE_ARP:
+    case ETHERNET_TYPE_RARP:
+    {
+        auto ah = reinterpret_cast<const eth_ip4_arp*>(ptr);
+        out << ah;
+        break;
+    }
+    default:
+        LOG(ERROR) << "unknow ethernet type: 0x" << std::hex << ethtyp << std::dec;
+    }
+    return out;
+}
+
 std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
 {
     if (ntohs(arp_data->hw_type) != ARP_HARDWARE_TYPE_ETHERNET ||
@@ -189,27 +207,55 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
     }
     switch (ntohs(arp_data->op)) {
     case ARP_REQUEST_OP:
-        out << "\tEthernet type: ARP" << (arp_data->fake() ? "[FAKE]" : "") << "\n";
+        out << "\tEthernet type: ARP Requset" << (arp_data->fake() ? "*" : "") << "\n";
         out << "\tDescription: " << arp_data->sia << " asks: who has " <<  arp_data->dia << "?\n";
-        out << "\tOperation: Requset\n";
         break;
     case ARP_REPLY_OP:
-        out << "\tEthernet type: ARP" << (arp_data->fake() ? "[FAKE]" : "") << "\n";
+        out << "\tEthernet type: ARP Reply" << (arp_data->fake() ? "*" : "") << "\n";
         out << "\tDescription: " <<  arp_data->sia << " tells " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
-        out << "\tOperation: Reply\n";
         break;
     case RARP_REQUEST_OP:
-        out << "\tEthernet type: RARP\n";
-        out << "\tOperation: Requset\n";
+        out << "\tEthernet type: RARP Requset\n";
         break;
     case RARP_REPLY_op:
-        out << "\tEthernet type: RARP\n";
-        out << "\tOperation: Reply\n";
+        out << "\tEthernet type: RARP Reply\n";
         break;
     }
     out << "\tSource Mac: " << arp_data->sea << "\n";
     out << "\tSource Ip: " << arp_data->sia << "\n";
     out << "\tDestination Mac: " << arp_data->dea << "\n";
     out << "\tDestination Ip: " << arp_data->dia << "\n";
+    return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data)
+{
+    if ((ip4_data->ver_ihl >> 4) != 4) {
+        LOG(ERROR) << "ip protocol version is not 4";
+        return out;
+    }
+    size_t header_size = 4 * (ip4_data->ver_ihl & 0xf);
+    size_t total_size = ntohs(ip4_data->tlen);
+    out << "\tEthernet type: IPv4\n";
+    out << "\tIPv4 Header Size: " << header_size << " bytes\n";
+    out << "\tIPv4 Total Size: " << total_size << " bytes\n";
+    out << "\tIPv4 Header Checksum: " << calc_checksum(ip4_data, header_size) << "\n";
+    out << "\tTTL: " << static_cast<int>(ip4_data->ttl) << "\n";
+    out << "\tSource Ip: " << ip4_data->sia << "\n";
+    out << "\tDestination Ip: " << ip4_data->dia << "\n";
+    switch (ip4_data->proto) {
+    case IPv4_TYPE_ICMP:
+        out << "\tIPv4 type: ICMP\n";
+        break;
+    case IPv4_TYPE_TCP:
+        out << "\tIPv4 type: TCP\n";
+        break;
+    case IPv4_TYPE_UDP:
+        out << "\tIPv4 type: UDP\n";
+        break;
+    default:
+        out << "\tIPv4 type: " << ip4_data->proto << "\n";
+        break;
+    }
     return out;
 }

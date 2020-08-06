@@ -23,6 +23,8 @@ std::ostream &print_packet(
     const pcap_pkthdr *header,
     const u_char *pkt_data);
 
+u_short calc_checksum(const void *data, size_t len_in_byte);
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info);
+std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data);
 std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data);
 std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev);
