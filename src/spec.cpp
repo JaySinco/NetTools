@@ -1,6 +1,5 @@
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include "type.h"
+#include <ws2tcpip.h>
+#include "spec.h"
 
 ip4_addr::ip4_addr(u_char c1, u_char c2, u_char c3, u_char c4)
     :b1(c1), b2(c2), b3(c3), b4(c4) {}
@@ -75,48 +74,6 @@ bool eth_ip4_arp::fake() const
     return false;
 }
 
-adapter_info::adapter_info(const ip4_addr &subnet_ip, bool exact_match)
-{
-    u_long buflen = sizeof(IP_ADAPTER_INFO);
-    auto pAdapterInfo = reinterpret_cast<IP_ADAPTER_INFO*>(malloc(sizeof(IP_ADAPTER_INFO)));
-    if (GetAdaptersInfo(pAdapterInfo, &buflen) == ERROR_BUFFER_OVERFLOW) {
-        free(pAdapterInfo);
-        pAdapterInfo = reinterpret_cast<IP_ADAPTER_INFO*>(malloc(buflen));
-        if (GetAdaptersInfo(pAdapterInfo, &buflen) != NO_ERROR) {
-            free(pAdapterInfo);
-            throw std::runtime_error(nt::sout << "failed to call GetAdaptersInfo");
-        }
-    }
-    PIP_ADAPTER_INFO pAdapter = NULL;
-    pAdapter = pAdapterInfo;
-    while (pAdapter) {
-        ip4_addr apt_ip(pAdapter->IpAddressList.IpAddress.String);
-        ip4_addr apt_mask(pAdapter->IpAddressList.IpMask.String);
-        if ((exact_match && apt_ip == subnet_ip) || 
-            (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && 
-                (apt_ip & apt_mask) == (subnet_ip & apt_mask)))
-        {
-            this->name = std::string("\\Device\\NPF_") + pAdapter->AdapterName;
-            this->desc = pAdapter->Description;
-            this->ip = apt_ip;
-            this->mask = apt_mask;
-            this->gateway = ip4_addr(pAdapter->GatewayList.IpAddress.String);
-            if (pAdapter->AddressLength != sizeof(eth_addr)) {
-                LOG(WARNING) << "wrong address length: " << pAdapter->AddressLength;
-            }
-            else {
-                auto c = reinterpret_cast<u_char*>(&this->mac);
-                for (unsigned i = 0; i < pAdapter->AddressLength; ++i) {
-                    c[i] = pAdapter->Address[i];
-                }
-            }
-            break;
-        }
-        pAdapter = pAdapter->Next;
-    }
-    free(pAdapterInfo);
-}
-
 std::ostream &operator<<(std::ostream &out, const in_addr &addr)
 {
     u_long ip4 = addr.s_addr;
@@ -170,13 +127,81 @@ std::ostream &operator<<(std::ostream &out, const eth_addr &addr)
     return out << std::dec;
 }
 
-std::ostream &operator<<(std::ostream &out, const adapter_info &apt)
+u_short calc_checksum(const void *data, size_t len_in_byte)
 {
-    out << apt.name << std::endl;
-    out << "\tDescription: " << apt.desc << std::endl;
-    out << "\tMac: " << apt.mac << std::endl;
-    out << "\tAddress: " << apt.ip << std::endl;
-    out << "\tNetmask: " << apt.mask << std::endl;
-    out << "\tGateway: " << apt.gateway << std::endl;
+    if (len_in_byte % 2 != 0) {
+        throw std::runtime_error("calculate checksum: data length is not an integer of 2");
+    }
+    u_long checksum = 0;
+    auto check_ptr = reinterpret_cast<const u_short *>(data);
+    for (int i = 0; i < len_in_byte / 2; ++i) {
+        checksum += check_ptr[i];
+        checksum = (checksum >> 16) + (checksum & 0xffff);
+    }
+    return static_cast<u_short>(~checksum);
+}
+
+std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
+{
+    if (ntohs(arp_data->hw_type) != ARP_HARDWARE_TYPE_ETHERNET ||
+        ntohs(arp_data->proto) != ETHERNET_TYPE_IPv4 ||
+        arp_data->hw_len != ETHERNET_ADDRESS_LEN ||
+        arp_data->proto_len != IPV4_ADDRESS_LEN)
+    {
+        LOG(ERROR) << "not typical ethernet-ipv4 arp/rarp";
+        return out;
+    }
+    switch (ntohs(arp_data->op)) {
+    case ARP_REQUEST_OP:
+        out << "\tEthernet type: ARP Requset" << (arp_data->fake() ? "*" : "") << "\n";
+        out << "\tDescription: " << arp_data->sia << " asks: who has " <<  arp_data->dia << "?\n";
+        break;
+    case ARP_REPLY_OP:
+        out << "\tEthernet type: ARP Reply" << (arp_data->fake() ? "*" : "") << "\n";
+        out << "\tDescription: " <<  arp_data->sia << " tells " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
+        break;
+    case RARP_REQUEST_OP:
+        out << "\tEthernet type: RARP Requset\n";
+        break;
+    case RARP_REPLY_op:
+        out << "\tEthernet type: RARP Reply\n";
+        break;
+    }
+    out << "\tSource Mac: " << arp_data->sea << "\n";
+    out << "\tSource Ip: " << arp_data->sia << "\n";
+    out << "\tDestination Mac: " << arp_data->dea << "\n";
+    out << "\tDestination Ip: " << arp_data->dia << "\n";
+    return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data)
+{
+    if ((ip4_data->ver_ihl >> 4) != 4) {
+        LOG(ERROR) << "ip protocol version is not 4";
+        return out;
+    }
+    size_t header_size = 4 * (ip4_data->ver_ihl & 0xf);
+    size_t total_size = ntohs(ip4_data->tlen);
+    out << "\tEthernet type: IPv4\n";
+    out << "\tIP Header Size: " << header_size << " bytes\n";
+    out << "\tIP Total Size: " << total_size << " bytes\n";
+    out << "\tIP Header Checksum: " << calc_checksum(ip4_data, header_size) << "\n";
+    out << "\tTTL: " << static_cast<int>(ip4_data->ttl) << "\n";
+    out << "\tSource Ip: " << ip4_data->sia << "\n";
+    out << "\tDestination Ip: " << ip4_data->dia << "\n";
+    switch (ip4_data->proto) {
+    case IPv4_TYPE_ICMP:
+        out << "\tIP type: ICMP\n";
+        break;
+    case IPv4_TYPE_TCP:
+        out << "\tIP type: TCP\n";
+        break;
+    case IPv4_TYPE_UDP:
+        out << "\tIP type: UDP\n";
+        break;
+    default:
+        out << "\tIP type: " << ip4_data->proto << "\n";
+        break;
+    }
     return out;
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -5,26 +6,50 @@
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include "pcap.h"
 
 #define ETHERNET_ADDRESS_LEN 6
 #define IPV4_ADDRESS_LEN 4
+
 #define ETHERNET_TYPE_IPv4 0x0800
 #define ETHERNET_TYPE_IPv6 0x86DD
 #define ETHERNET_TYPE_ARP  0x0806
 #define ETHERNET_TYPE_RARP 0x8035
+
 #define IPv4_TYPE_ICMP 1
 #define IPv4_TYPE_TCP  6
 #define IPv4_TYPE_UDP  17
+
 #define ARP_HARDWARE_TYPE_ETHERNET 1
 #define ARP_REQUEST_OP  1
 #define ARP_REPLY_OP    2
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
+
 #define BROADCAST_IPv4_ADDR ip4_addr{0xff, 0xff, 0xff, 0xff}
 #define PLACEHOLDER_IPv4_ADDR ip4_addr{0x0, 0x0, 0x0, 0x0}
 #define BROADCAST_ETH_ADDR eth_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 #define PLACEHOLDER_ETH_ADDR eth_addr{0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+
+template <typename T>
+std::string to_string(const T& v)
+{
+    std::ostringstream ss;
+    ss << v;
+    return ss.str();
+}
+
+namespace nt {
+    class StreamToCharImpl {
+    public:
+        template <typename T>
+        StreamToCharImpl &operator<<(const T&v) { ss << v; return *this; }
+
+        operator std::string() { return ss.str(); }
+    private:
+        std::ostringstream ss;
+    };
+    #define sout StreamToCharImpl{}
+}
 
 struct ip4_addr {
     u_char b1, b2, b3, b4;
@@ -89,43 +114,12 @@ struct udp_header {
     u_short crc;   // Checksum
 };
 
-struct adapter_info {
-    std::string name;
-    std::string desc;
-    ip4_addr ip;
-    ip4_addr mask;
-    ip4_addr gateway;
-    eth_addr mac;
-
-    adapter_info() = default;
-    adapter_info(const ip4_addr &subnet_ip, bool exact_match);
-};
+u_short calc_checksum(const void *data, size_t len_in_byte);
 
 std::ostream &operator<<(std::ostream &out, const eth_addr &addr);
 std::ostream &operator<<(std::ostream &out, const ip4_addr &addr);
 std::ostream &operator<<(std::ostream &out, const in_addr &addr);
 std::ostream &operator<<(std::ostream &out, const in6_addr &addr);
 std::ostream &operator<<(std::ostream &out, const sockaddr *addr);
-std::ostream &operator<<(std::ostream &out, const adapter_info &apt);
-
-template <typename T>
-std::string to_string(const T& v)
-{
-    std::ostringstream ss;
-    ss << v;
-    return ss.str();
-}
-
-namespace nt {
-    class StreamToCharImpl {
-    public:
-        template <typename T>
-        StreamToCharImpl &operator<<(const T&v) { ss << v; return *this; }
-
-        operator std::string() { return ss.str(); }
-    private:
-        std::ostringstream ss;
-    };
-    #define sout StreamToCharImpl{}
-}
-
+std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data);
+std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data);
