@@ -107,6 +107,12 @@ struct ip4_header {
     ip4_addr dia;            // Destination address
 };
 
+struct icmp_header {
+    u_char type;
+    u_char code;
+    u_short crc; // whole checksum
+};
+
 struct udp_header {
     u_short sport; // Source port
     u_short dport; // Destination port
@@ -123,3 +129,4 @@ std::ostream &operator<<(std::ostream &out, const in6_addr &addr);
 std::ostream &operator<<(std::ostream &out, const sockaddr *addr);
 std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data);
 std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data);
+std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t length);
