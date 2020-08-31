@@ -25,6 +25,9 @@
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
 
+#define ICMP_TYPE_NETMASK_ASK   17
+#define ICMP_TYPE_NETMASK_REPLY 18
+
 #define BROADCAST_IPv4_ADDR ip4_addr{0xff, 0xff, 0xff, 0xff}
 #define PLACEHOLDER_IPv4_ADDR ip4_addr{0x0, 0x0, 0x0, 0x0}
 #define BROADCAST_ETH_ADDR eth_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
@@ -95,22 +98,31 @@ struct eth_ip4_arp {
 };
 
 struct ip4_header {
-    u_char   ver_ihl;        // Version (4 bits) + Internet header length (4 bits)
-    u_char   tos;            // Type of service
-    u_short  tlen;           // Total length
-    u_short  identification; // Identification
-    u_short  flags_fo;       // Flags (3 bits) + Fragment offset (13 bits)
-    u_char   ttl;            // Time to live
-    u_char   proto;          // Protocol
-    u_short  crc;            // Header checksum
-    ip4_addr sia;            // Source address
-    ip4_addr dia;            // Destination address
+    u_char   ver_ihl;   // Version (4 bits) + Internet header length (4 bits)
+    u_char   tos;       // Type of service
+    u_short  tlen;      // Total length
+    u_short  id;        // Identification
+    u_short  flags_fo;  // Flags (3 bits) + Fragment offset (13 bits)
+    u_char   ttl;       // Time to live
+    u_char   proto;     // Protocol
+    u_short  crc;       // Header checksum
+    ip4_addr sia;       // Source address
+    ip4_addr dia;       // Destination address
 };
 
 struct icmp_header {
     u_char type;
     u_char code;
-    u_short crc; // whole checksum
+    u_short crc; // Checksum as a whole
+};
+
+struct icmp_addr_mask {
+    u_char type;   // ICMP Header
+    u_char code;
+    u_short crc;
+    u_short id;    // Identification
+    u_short sn;    // serial number
+    ip4_addr mask; // subnet address mask
 };
 
 struct udp_header {

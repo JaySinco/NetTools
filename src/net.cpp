@@ -1,7 +1,16 @@
 #include "net.h"
 #include <thread>
 #include <atomic>
+#include <random>
 #include <iphlpapi.h>
+
+u_short rand_u_short()
+{
+    static std::random_device rd;
+    static std::default_random_engine engine(rd());
+    static std::uniform_int_distribution<u_short> dist;
+    return dist(engine);
+}
 
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info)
 {
@@ -115,6 +124,58 @@ bool ip2mac(
     return succ;
 }
 
+bool query_mask(pcap_t *adhandle, const adapter_info &apt_info, ip4_addr &netmask, int timeout_ms)
+{
+    auto start_tm = std::chrono::system_clock::now();
+    icmp_addr_mask icmp_data { 0 };
+    icmp_data.type = ICMP_TYPE_NETMASK_ASK;
+    icmp_data.code = 0;
+    icmp_data.id = rand_u_short();
+    icmp_data.sn = rand_u_short();
+    icmp_data.crc = calc_checksum(&icmp_data, sizeof(icmp_addr_mask));
+    bool ok = send_ip4(adhandle, BROADCAST_ETH_ADDR, apt_info.mac, IPv4_TYPE_ICMP,
+        apt_info.ip, BROADCAST_IPv4_ADDR, &icmp_data, sizeof(icmp_addr_mask));
+    if (!ok) {
+        return false;
+    }
+    
+    int res;
+    pcap_pkthdr *header;
+    const u_char *pkt_data;
+    bool succ = false;
+    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
+    {
+        if (timeout_ms > 0)
+        {
+            auto now_tm = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
+            if (duration.count() >= timeout_ms) {
+                LOG(ERROR) << "haven't got icmp reply after " << duration.count() << " ms";
+                return false;
+            }
+
+        }
+        if (res == 0) {
+            continue;
+        }
+        auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+        if (eh->dea == apt_info.mac && ntohs(eh->eth_type) == ETHERNET_TYPE_IPv4) {
+            auto ih = reinterpret_cast<const ip4_header*>(pkt_data + sizeof(ethernet_header));
+            if (ih->dia == apt_info.ip && ih->proto == IPv4_TYPE_ICMP) {
+                auto mh = reinterpret_cast<const icmp_addr_mask*>(pkt_data + sizeof(ethernet_header) + sizeof(ip4_header));
+                if (mh->type == ICMP_TYPE_NETMASK_REPLY && mh->id == icmp_data.id && mh->sn == icmp_data.sn) {
+                    netmask = mh->mask;
+                    return true;
+                }
+            }
+        }
+    }
+    if (res == -1) {
+        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
+    }
+    return false;
+}
+
 bool send_arp(
     pcap_t *adhandle,
     u_short op,
@@ -139,6 +200,42 @@ bool send_arp(
     ah->dea = dea;
     ah->dia = dia;
     if (pcap_sendpacket(adhandle, packet, sizeof(packet)/sizeof(packet[0])) != 0)
+    {
+        LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
+        return false;
+    }
+    return true;
+}
+
+bool send_ip4(
+    pcap_t *adhandle,
+    const eth_addr &dea,
+    const eth_addr &sea,
+    u_char proto,
+    const ip4_addr &sia,
+    const ip4_addr &dia,
+    void *ip_data,
+    size_t len_in_byte)
+{
+    size_t total_len = sizeof(ethernet_header) + sizeof(ip4_header) + len_in_byte;
+    u_char *packet = new u_char[total_len]{ 0 };
+    std::shared_ptr<void*> packet_guard(nullptr, [=](void *){ delete[] packet; });
+    auto eh = reinterpret_cast<ethernet_header*>(packet);
+    eh->dea = dea;
+    eh->sea = sea;
+    eh->eth_type = htons(ETHERNET_TYPE_IPv4);
+    auto ih = reinterpret_cast<ip4_header*>(packet + sizeof(ethernet_header));
+    ih->ver_ihl = (4 << 4) | 5;
+    ih->tlen = htons(static_cast<u_short>(20 + len_in_byte));
+    std::uniform_int_distribution<u_short> us_dist;
+    ih->id = rand_u_short();
+    ih->ttl = 128;
+    ih->proto = proto;
+    ih->sia = sia;
+    ih->dia = dia;
+    ih->crc = calc_checksum(ih, sizeof(ip4_header));
+    memcpy(packet + sizeof(ethernet_header) + sizeof(ip4_header), ip_data, len_in_byte);
+    if (pcap_sendpacket(adhandle, packet, static_cast<int>(total_len)) != 0)
     {
         LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
         return false;

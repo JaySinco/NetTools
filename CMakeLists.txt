@@ -80,3 +80,6 @@ target_link_libraries(sniff net)
 
 add_executable(arp ${CMAKE_SOURCE_DIR}/src/arp.cpp)
 target_link_libraries(arp net)
+
+add_executable(qmask ${CMAKE_SOURCE_DIR}/src/qmask.cpp)
+target_link_libraries(qmask net)

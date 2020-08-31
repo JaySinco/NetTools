@@ -187,6 +187,9 @@ std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data)
     out << "\tIP Header Size: " << header_size << " bytes\n";
     out << "\tIP Total Size: " << total_size << " bytes\n";
     out << "\tIP Header Checksum: " << calc_checksum(ip4_data, header_size) << "\n";
+    out << "\tIP Identification: " << ntohs(ip4_data->id) << "\n";
+    out << "\tIP Flags: " << (ntohs(ip4_data->flags_fo) >> 13) << "\n";
+    out << "\tIP Fragment Offset: " << (ntohs(ip4_data->flags_fo) & (~0>>3)) << "\n";
     out << "\tTTL: " << static_cast<int>(ip4_data->ttl) << "\n";
     out << "\tSource Ip: " << ip4_data->sia << "\n";
     out << "\tDestination Ip: " << ip4_data->dia << "\n";
@@ -214,27 +217,35 @@ std::ostream &operator<<(std::ostream &out, const ip4_header *ip4_data)
 
 std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t length)
 {
-    std::ostringstream ss;
+    std::ostringstream desc, body;
     switch (icmp_data->type) {
     case 3: case 4: case 5: case 11: case 12:
-        ss << "error";
+        desc << "error";
         break;
     case 0: case 8:
-        ss << "ping";
+        desc << "ping";
         break;
     case 9: case 10:
-        ss << "router";
+        desc << "router";
         break;
     case 13: case 14:
-        ss << "timestamp";
+        desc << "timestamp";
         break;
-    case 17: case 18:
-        ss << "netmask";
+    case ICMP_TYPE_NETMASK_ASK:
+    case ICMP_TYPE_NETMASK_REPLY:
+        if (icmp_data->type == ICMP_TYPE_NETMASK_ASK) desc << "netmask-ask";
+        if (icmp_data->type == ICMP_TYPE_NETMASK_REPLY) desc << "netmask-reply";
+        auto mh = reinterpret_cast<const icmp_addr_mask*>(icmp_data);
+        body << "\tICMP Checksum: " << calc_checksum(mh, sizeof(icmp_addr_mask)) << "\n";
+        body << "\tICMP Identification: " << ntohs(mh->id) << "\n";
+        body << "\tICMP Serial No.: " << ntohs(mh->sn) << "\n";
+        body << "\tICMP Netmask: " << mh->mask << "\n";
         break;
     }
     out << "\t------------------------\n";
-    out << "\tICMP Type: " << ss.str() << "(" << int(icmp_data->type) << ")" << "\n";
+    out << "\tICMP Type: " << desc.str() << "(" << int(icmp_data->type) << ")" << "\n";
     out << "\tICMP Size: " << length << " bytes\n";
     out << "\tICMP Code: " << int(icmp_data->code) << "\n";
+    out << body.str();
     return out;
 }
