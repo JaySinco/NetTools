@@ -134,10 +134,18 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
     icmp_data.id = rand_ushort();
     icmp_data.sn = rand_ushort();
     icmp_data.crc = calc_checksum(&icmp_data, sizeof(icmp_ping));
-    bool ok = send_ip4(adhandle, BROADCAST_ETH_ADDR, apt_info.mac, IPv4_TYPE_ICMP,
-        apt_info.ip, target_ip, &icmp_data, sizeof(icmp_ping));
-    if (!ok) {
-        return false;
+    eth_addr dest_mac = BROADCAST_ETH_ADDR;
+    bool is_local = (target_ip & apt_info.mask) == (apt_info.ip & apt_info.mask);
+    if (!is_local) {
+        VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
+        if (!ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000)) {
+            throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
+        }
+    }
+    if (!send_ip4(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip,
+        &icmp_data, sizeof(icmp_ping)))
+    {
+        throw std::runtime_error("failed to send ipv4 packet");
     }
     
     int res;
@@ -165,14 +173,14 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
             if (ih->dia == apt_info.ip && ih->proto == IPv4_TYPE_ICMP) {
                 auto mh = reinterpret_cast<const icmp_ping*>(pkt_data + sizeof(ethernet_header) + sizeof(ip4_header));
                 if (mh->type == ICMP_TYPE_PING_REPLY && mh->id == icmp_data.id && mh->sn == icmp_data.sn) {
-                    VLOG(1) << target_ip << " is at " << eh->sea;
+                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->sea;        
                     return true;
                 }
             }
         }
     }
     if (res == -1) {
-        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
+        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
     }
     return false;
 }
@@ -220,7 +228,10 @@ bool send_ip4(
 {
     size_t total_len = sizeof(ethernet_header) + sizeof(ip4_header) + len_in_byte;
     u_char *packet = new u_char[total_len]{ 0 };
-    std::shared_ptr<void*> packet_guard(nullptr, [=](void *){ delete[] packet; });
+    std::shared_ptr<void*> packet_guard(nullptr, [=](void *){
+        delete[] packet;
+        VLOG(3) << "ipv4 packet deleted";
+    });
     auto eh = reinterpret_cast<ethernet_header*>(packet);
     eh->dea = dea;
     eh->sea = sea;

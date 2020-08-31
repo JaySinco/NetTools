@@ -227,9 +227,13 @@ std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t
         if (icmp_data->type == ICMP_TYPE_PING_ASK) desc << "ping-ask";
         if (icmp_data->type == ICMP_TYPE_PING_REPLY) desc << "ping-reply";
         auto mh = reinterpret_cast<const icmp_ping*>(icmp_data);
-        body << "\tICMP Checksum: " << calc_checksum(mh, sizeof(icmp_ping)) << "\n";
+        body << "\tICMP Checksum: " << calc_checksum(mh, length) << "\n";
         body << "\tICMP Identification: " << ntohs(mh->id) << "\n";
         body << "\tICMP Serial No.: " << ntohs(mh->sn) << "\n";
+        if (length > sizeof(icmp_ping)) {
+            const char *c = reinterpret_cast<const char*>(icmp_data) + sizeof(icmp_ping);
+            body << "\tPing Echo: " << std::string(c, length - sizeof(icmp_ping)) << "\n";
+        }
         break;
     }
     case 9: case 10:
