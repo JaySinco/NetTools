@@ -16,13 +16,13 @@ struct adapter_info {
     adapter_info(const ip4_addr &subnet_ip, bool exact_match);
 };
 
-u_short rand_u_short();
+u_short rand_ushort();
 
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info);
 
 bool ip2mac(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &ip, eth_addr &mac, int timeout_ms);
 
-bool query_mask(pcap_t *adhandle, const adapter_info &apt_info, ip4_addr &netmask, int timeout_ms);
+bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, int timeout_ms);
 
 bool send_arp(pcap_t *adhandle, u_short op, const eth_addr &sea, const ip4_addr &sia,
     const eth_addr &dea, const ip4_addr &dia);

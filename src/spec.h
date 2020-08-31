@@ -25,6 +25,8 @@
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
 
+#define ICMP_TYPE_PING_REPLY    0
+#define ICMP_TYPE_PING_ASK      8
 #define ICMP_TYPE_NETMASK_ASK   17
 #define ICMP_TYPE_NETMASK_REPLY 18
 
@@ -114,6 +116,14 @@ struct icmp_header {
     u_char type;
     u_char code;
     u_short crc; // Checksum as a whole
+};
+
+struct icmp_ping {
+    u_char type;   // ICMP Header
+    u_char code;
+    u_short crc;
+    u_short id;    // Identification
+    u_short sn;    // serial number
 };
 
 struct icmp_addr_mask {

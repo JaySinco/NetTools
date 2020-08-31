@@ -4,7 +4,7 @@
 #include <random>
 #include <iphlpapi.h>
 
-u_short rand_u_short()
+u_short rand_ushort()
 {
     static std::random_device rd;
     static std::default_random_engine engine(rd());
@@ -102,6 +102,7 @@ bool ip2mac(
 
         }
         if (res == 0) {
+            VLOG(3) << "timeout elapsed";
             continue;
         }
         auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
@@ -124,17 +125,17 @@ bool ip2mac(
     return succ;
 }
 
-bool query_mask(pcap_t *adhandle, const adapter_info &apt_info, ip4_addr &netmask, int timeout_ms)
+bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, int timeout_ms)
 {
     auto start_tm = std::chrono::system_clock::now();
-    icmp_addr_mask icmp_data { 0 };
-    icmp_data.type = ICMP_TYPE_NETMASK_ASK;
+    icmp_ping icmp_data { 0 };
+    icmp_data.type = ICMP_TYPE_PING_ASK;
     icmp_data.code = 0;
-    icmp_data.id = rand_u_short();
-    icmp_data.sn = rand_u_short();
-    icmp_data.crc = calc_checksum(&icmp_data, sizeof(icmp_addr_mask));
+    icmp_data.id = rand_ushort();
+    icmp_data.sn = rand_ushort();
+    icmp_data.crc = calc_checksum(&icmp_data, sizeof(icmp_ping));
     bool ok = send_ip4(adhandle, BROADCAST_ETH_ADDR, apt_info.mac, IPv4_TYPE_ICMP,
-        apt_info.ip, BROADCAST_IPv4_ADDR, &icmp_data, sizeof(icmp_addr_mask));
+        apt_info.ip, target_ip, &icmp_data, sizeof(icmp_ping));
     if (!ok) {
         return false;
     }
@@ -150,21 +151,21 @@ bool query_mask(pcap_t *adhandle, const adapter_info &apt_info, ip4_addr &netmas
             auto now_tm = std::chrono::system_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
             if (duration.count() >= timeout_ms) {
-                LOG(ERROR) << "haven't got icmp reply after " << duration.count() << " ms";
                 return false;
             }
 
         }
         if (res == 0) {
+            VLOG(3) << "timeout elapsed";
             continue;
         }
         auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
         if (eh->dea == apt_info.mac && ntohs(eh->eth_type) == ETHERNET_TYPE_IPv4) {
             auto ih = reinterpret_cast<const ip4_header*>(pkt_data + sizeof(ethernet_header));
             if (ih->dia == apt_info.ip && ih->proto == IPv4_TYPE_ICMP) {
-                auto mh = reinterpret_cast<const icmp_addr_mask*>(pkt_data + sizeof(ethernet_header) + sizeof(ip4_header));
-                if (mh->type == ICMP_TYPE_NETMASK_REPLY && mh->id == icmp_data.id && mh->sn == icmp_data.sn) {
-                    netmask = mh->mask;
+                auto mh = reinterpret_cast<const icmp_ping*>(pkt_data + sizeof(ethernet_header) + sizeof(ip4_header));
+                if (mh->type == ICMP_TYPE_PING_REPLY && mh->id == icmp_data.id && mh->sn == icmp_data.sn) {
+                    VLOG(1) << target_ip << " is at " << eh->sea;
                     return true;
                 }
             }
@@ -228,7 +229,7 @@ bool send_ip4(
     ih->ver_ihl = (4 << 4) | 5;
     ih->tlen = htons(static_cast<u_short>(20 + len_in_byte));
     std::uniform_int_distribution<u_short> us_dist;
-    ih->id = rand_u_short();
+    ih->id = rand_ushort();
     ih->ttl = 128;
     ih->proto = proto;
     ih->sia = sia;

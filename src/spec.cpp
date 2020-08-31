@@ -222,9 +222,16 @@ std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t
     case 3: case 4: case 5: case 11: case 12:
         desc << "error";
         break;
-    case 0: case 8:
-        desc << "ping";
+    case ICMP_TYPE_PING_ASK:
+    case ICMP_TYPE_PING_REPLY: {
+        if (icmp_data->type == ICMP_TYPE_PING_ASK) desc << "ping-ask";
+        if (icmp_data->type == ICMP_TYPE_PING_REPLY) desc << "ping-reply";
+        auto mh = reinterpret_cast<const icmp_ping*>(icmp_data);
+        body << "\tICMP Checksum: " << calc_checksum(mh, sizeof(icmp_ping)) << "\n";
+        body << "\tICMP Identification: " << ntohs(mh->id) << "\n";
+        body << "\tICMP Serial No.: " << ntohs(mh->sn) << "\n";
         break;
+    }
     case 9: case 10:
         desc << "router";
         break;
@@ -232,7 +239,7 @@ std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t
         desc << "timestamp";
         break;
     case ICMP_TYPE_NETMASK_ASK:
-    case ICMP_TYPE_NETMASK_REPLY:
+    case ICMP_TYPE_NETMASK_REPLY: {
         if (icmp_data->type == ICMP_TYPE_NETMASK_ASK) desc << "netmask-ask";
         if (icmp_data->type == ICMP_TYPE_NETMASK_REPLY) desc << "netmask-reply";
         auto mh = reinterpret_cast<const icmp_addr_mask*>(icmp_data);
@@ -241,6 +248,7 @@ std::ostream &print_icmp(std::ostream &out, const icmp_header *icmp_data, size_t
         body << "\tICMP Serial No.: " << ntohs(mh->sn) << "\n";
         body << "\tICMP Netmask: " << mh->mask << "\n";
         break;
+    }
     }
     out << "\t------------------------\n";
     out << "\tICMP Type: " << desc.str() << "(" << int(icmp_data->type) << ")" << "\n";

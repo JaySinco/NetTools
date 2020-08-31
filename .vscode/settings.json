@@ -10,9 +10,9 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}",
         "${workspaceFolder}/src/",
-        "${workspaceFolder}/NetTools/3rdparty/gflags/include/",
-        "${workspaceFolder}/NetTools/3rdparty/glog/include/",
-        "${workspaceFolder}/NetTools/3rdparty/npcap/include/"
+        "${workspaceFolder}/NetTools/external/gflags/include/",
+        "${workspaceFolder}/NetTools/external/glog/include/",
+        "${workspaceFolder}/NetTools/external/npcap/include/"
     ],
     "C_Cpp.autoAddFileAssociations": false,
     "explorer.autoReveal": false
