@@ -1,4 +1,3 @@
-#include <winsock2.h> 
 #include "net.h"
 
 int main(int argc, char* argv[])
@@ -21,19 +20,9 @@ int main(int argc, char* argv[])
     }
     else {
         VLOG(1) << "invalid ip address, try interpret as host name";
-        WSADATA ws;
-	    WSAStartup(MAKEWORD(2, 2), &ws);
-        addrinfo *first_addr;
-        addrinfo hints = {0};
-        hints.ai_family = AF_INET;
-        hints.ai_flags = AI_PASSIVE;
-        hints.ai_protocol = 0;
-        hints.ai_socktype = SOCK_STREAM;
-        auto ret = GetAddrInfoA(target_name.c_str(), nullptr, &hints, &first_addr);
-        if (ret == 0 && first_addr != nullptr) {
-            target_ip = reinterpret_cast<sockaddr_in *>(first_addr->ai_addr)->sin_addr;
-        }
-        else {
+        bool succ = false;
+        target_ip = ip4_addr::from_hostname(target_name, succ);
+        if (!succ) {
             LOG(ERROR) << "invalid ip or host name: " << target_name;
             return -1;
         }

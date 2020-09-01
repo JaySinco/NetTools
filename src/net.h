@@ -18,6 +18,11 @@ struct adapter_info {
     static adapter_info select_auto();
 };
 
+struct wsa_guard {
+    wsa_guard();
+    ~wsa_guard();
+};
+
 u_short rand_ushort();
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info);
 

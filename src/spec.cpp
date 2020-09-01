@@ -66,6 +66,27 @@ bool ip4_addr::is_valid(const std::string &s)
     return (inet_pton(AF_INET, s.c_str(), &waddr) == 1);
 }
 
+ip4_addr ip4_addr::from_hostname(const std::string &name, bool &succ)
+{
+    ip4_addr output_ip = PLACEHOLDER_IPv4_ADDR;
+    addrinfo hints = {0};
+    hints.ai_family = AF_INET;
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_protocol = 0;
+    hints.ai_socktype = SOCK_STREAM;
+    addrinfo *first_addr;
+    auto ret = GetAddrInfoA(name.c_str(), nullptr, &hints, &first_addr);
+    if (ret == 0 && first_addr != nullptr) {
+        succ = true;
+        output_ip = reinterpret_cast<sockaddr_in *>(first_addr->ai_addr)->sin_addr;
+    }
+    else {
+        succ = false;
+        VLOG(1) << "failed to get ipv4 from host name " << name << ": " << ret;
+    }
+    return output_ip;
+}
+
 bool eth_addr::operator==(const eth_addr &other) const
 {
     return b1 == other.b1 && b2 == other.b2 && b3 == other.b3 &&

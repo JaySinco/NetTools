@@ -1,8 +1,11 @@
+#include <winsock2.h>
 #include "net.h"
 #include <thread>
 #include <atomic>
 #include <random>
 #include <iphlpapi.h>
+
+static wsa_guard g_wsa_guarder;
 
 u_short rand_ushort()
 {
@@ -10,6 +13,15 @@ u_short rand_ushort()
     static std::default_random_engine engine(rd());
     static std::uniform_int_distribution<u_short> dist;
     return dist(engine);
+}
+
+wsa_guard::wsa_guard() {
+    WSADATA ws;
+    WSAStartup(MAKEWORD(2, 2), &ws);
+}
+
+wsa_guard::~wsa_guard() {
+    WSACleanup();
 }
 
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info)

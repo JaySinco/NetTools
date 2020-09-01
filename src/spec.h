@@ -75,6 +75,7 @@ struct ip4_addr {
 
     bool same_subnet(const ip4_addr &other, const ip4_addr &netmask) const;
     static bool is_valid(const std::string &s);
+    static ip4_addr from_hostname(const std::string &name, bool &succ);
 };
 
 struct eth_addr {
