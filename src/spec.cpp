@@ -55,6 +55,17 @@ u_int ip4_addr::operator&(const ip4_addr &other) const
     return ntohl(*i) & ntohl(*j);
 }
 
+bool ip4_addr::same_subnet(const ip4_addr &other, const ip4_addr &netmask) const
+{
+    return (*this & netmask) == (other & netmask);
+}
+
+bool ip4_addr::is_valid(const std::string &s)
+{
+    in_addr waddr;
+    return (inet_pton(AF_INET, s.c_str(), &waddr) == 1);
+}
+
 bool eth_addr::operator==(const eth_addr &other) const
 {
     return b1 == other.b1 && b2 == other.b2 && b3 == other.b3 &&

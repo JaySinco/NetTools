@@ -49,7 +49,7 @@ adapter_info adapter_info::select_ip(const ip4_addr &subnet_ip, bool exact_match
         ip4_addr apt_gateway(pAdapter->GatewayList.IpAddress.String);
         bool auto_cond = (apt_gateway != PLACEHOLDER_IPv4_ADDR);
         bool exact_match_cond = (exact_match && apt_ip == subnet_ip);
-        bool subnet_cond = (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && (apt_ip & apt_mask) == (subnet_ip & apt_mask));
+        bool subnet_cond = (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && (apt_ip.same_subnet(subnet_ip, apt_mask)));
         if ((select_auto && auto_cond) || (!select_auto && (exact_match_cond || subnet_cond)))
         {
             found = true;
@@ -109,7 +109,7 @@ bool ip2mac(
             auto now_tm = std::chrono::system_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
             if (duration.count() >= timeout_ms) {
-                LOG(ERROR) << "haven't got arp reply after " << duration.count() << " ms";
+                VLOG(1) << "haven't got arp-reply after " << duration.count() << " ms";
                 break;
             }
 
@@ -131,7 +131,7 @@ bool ip2mac(
         }
     }
     if (res == -1) {
-        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
+        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
     }
     over = true;
     send_loop_t.join();
@@ -148,7 +148,7 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
     ping_data.sn = rand_ushort();
     ping_data.crc = calc_checksum(ICMP_HEADER_START(&ping_data), ICMP_HEADER_SIZE);
     eth_addr dest_mac = BROADCAST_ETH_ADDR;
-    bool is_local = (target_ip & apt_info.mask) == (apt_info.ip & apt_info.mask);
+    bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
     if (!is_local) {
         VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
         if (!ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000)) {
@@ -172,6 +172,7 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
             auto now_tm = std::chrono::system_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
             if (duration.count() >= timeout_ms) {
+                VLOG(1) << "haven't got ping-reply after " << duration.count() << " ms";
                 return false;
             }
 

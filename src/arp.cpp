@@ -61,6 +61,9 @@ int main(int argc, char* argv[])
         if (ip2mac(adhandle, apt_info, input_ip, target_mac, 5000)) {
             std::cout << input_ip << " is at " << target_mac << "." << std::endl;
         }
+        else {
+            std::cout << input_ip << " is offline." << std::endl;
+        }
     }
     NT_CATCH
 }

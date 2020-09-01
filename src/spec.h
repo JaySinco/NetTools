@@ -72,6 +72,9 @@ struct ip4_addr {
     bool  operator==(const ip4_addr &other) const;
     bool  operator!=(const ip4_addr &other) const;
     u_int operator&(const ip4_addr &other) const;
+
+    bool same_subnet(const ip4_addr &other, const ip4_addr &netmask) const;
+    static bool is_valid(const std::string &s);
 };
 
 struct eth_addr {
