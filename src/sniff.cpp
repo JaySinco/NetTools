@@ -1,6 +1,6 @@
 #include "net.h"
 
-DEFINE_string(ip, "", "ipv4 address used to choose adapter");
+DEFINE_string(ip, "", "ipv4 address used to choose adapter, select-auto if empty");
 DEFINE_string(filter, "", "capture filter applied to adapter");
 
 int main(int argc, char* argv[])
@@ -11,12 +11,10 @@ int main(int argc, char* argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    if (FLAGS_ip.size() <= 0) {
-        LOG(ERROR) << "empty ipv4 address, please set --ip";
-        return -1;
+    ip4_addr input_ip = PLACEHOLDER_IPv4_ADDR;
+    if (FLAGS_ip.size() > 0) {
+        input_ip = ip4_addr(FLAGS_ip);
     }
-
-    ip4_addr input_ip(FLAGS_ip);
     adapter_info apt_info;
     pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);
     std::cout << apt_info << std::endl;

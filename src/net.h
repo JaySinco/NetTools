@@ -13,7 +13,9 @@ struct adapter_info {
     eth_addr mac;
 
     adapter_info() = default;
-    adapter_info(const ip4_addr &subnet_ip, bool exact_match);
+
+    static adapter_info select_ip(const ip4_addr &subnet_ip, bool exact_match);
+    static adapter_info select_auto();
 };
 
 u_short rand_ushort();

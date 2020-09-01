@@ -153,18 +153,26 @@ std::ostream &operator<<(std::ostream &out, const eth_ip4_arp *arp_data)
     }
     switch (ntohs(arp_data->op)) {
     case ARP_REQUEST_OP:
-        out << "\tEthernet type: ARP Requset" << (arp_data->fake() ? "*" : "") << "\n";
+        out << "\tEthernet type: ARP\n";
+        out << "\t------------------------\n";
+        out << "\tARP Type: Requset" << (arp_data->fake() ? "*" : "") << "\n";
         out << "\tDescription: " << arp_data->sia << " asks: who has " <<  arp_data->dia << "?\n";
         break;
     case ARP_REPLY_OP:
-        out << "\tEthernet type: ARP Reply" << (arp_data->fake() ? "*" : "") << "\n";
+        out << "\tEthernet type: ARP\n";
+        out << "\t------------------------\n";
+        out << "\tARP Type: Reply" << (arp_data->fake() ? "*" : "") << "\n";
         out << "\tDescription: " <<  arp_data->sia << " tells " << arp_data->dia << ": i am at " << arp_data->sea << ".\n";
         break;
     case RARP_REQUEST_OP:
-        out << "\tEthernet type: RARP Requset\n";
+        out << "\tEthernet type: RARP\n";
+        out << "\t------------------------\n";
+        out << "\tRARP Type: Requset\n";
         break;
     case RARP_REPLY_op:
-        out << "\tEthernet type: RARP Reply\n";
+        out << "\tEthernet type: RARP\n";
+        out << "\t------------------------\n";
+        out << "\tRARP Type: Reply\n";
         break;
     }
     out << "\tSource Mac: " << arp_data->sea << "\n";

@@ -1,7 +1,6 @@
 #include "net.h"
 
-DEFINE_string(ip, "", "target ipv4 address, also used to choose adapter if --self not set");
-DEFINE_string(self, "", "self ipv4 address, used to choose adapter");
+DEFINE_string(ip, "", "target ipv4 address");
 
 int main(int argc, char* argv[])
 {
@@ -16,13 +15,9 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    ip4_addr target_ip(FLAGS_ip);
-    ip4_addr self_ip = target_ip;
-    if (FLAGS_self.size() > 0) {
-        self_ip = ip4_addr(FLAGS_self);
-    }
     adapter_info apt_info;
-    pcap_t *adhandle = open_target_adaptor(self_ip, false, apt_info);
+    pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
+    ip4_addr target_ip(FLAGS_ip);
     if (!is_reachable(adhandle, apt_info, target_ip, 5000)) {
         std::cout << target_ip << " is not online!" << std::endl;
         return -1;

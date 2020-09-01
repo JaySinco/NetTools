@@ -14,7 +14,7 @@ u_short rand_ushort()
 
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info)
 {
-    apt_info = adapter_info(ip, exact_match);
+    apt_info = adapter_info::select_ip(ip, exact_match);
     if (apt_info.name.size() == 0) {
         throw std::runtime_error(nt::sout << "no adapter found in same local network with " << ip);
     }
@@ -27,37 +27,42 @@ pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &
     return adhandle;
 }
 
-adapter_info::adapter_info(const ip4_addr &subnet_ip, bool exact_match)
+adapter_info adapter_info::select_ip(const ip4_addr &subnet_ip, bool exact_match)
 {
+    adapter_info apt_info;
     u_long buflen = sizeof(IP_ADAPTER_INFO);
     auto pAdapterInfo = reinterpret_cast<IP_ADAPTER_INFO*>(malloc(sizeof(IP_ADAPTER_INFO)));
+    std::shared_ptr<void> pAdapterInfo_guard(nullptr, [=](void *){ free(pAdapterInfo); });
     if (GetAdaptersInfo(pAdapterInfo, &buflen) == ERROR_BUFFER_OVERFLOW) {
-        free(pAdapterInfo);
         pAdapterInfo = reinterpret_cast<IP_ADAPTER_INFO*>(malloc(buflen));
         if (GetAdaptersInfo(pAdapterInfo, &buflen) != NO_ERROR) {
-            free(pAdapterInfo);
             throw std::runtime_error(nt::sout << "failed to call GetAdaptersInfo");
         }
     }
+    bool select_auto = (subnet_ip == PLACEHOLDER_IPv4_ADDR);
     PIP_ADAPTER_INFO pAdapter = NULL;
     pAdapter = pAdapterInfo;
+    bool found = false;
     while (pAdapter) {
         ip4_addr apt_ip(pAdapter->IpAddressList.IpAddress.String);
         ip4_addr apt_mask(pAdapter->IpAddressList.IpMask.String);
-        if ((exact_match && apt_ip == subnet_ip) || 
-            (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && 
-                (apt_ip & apt_mask) == (subnet_ip & apt_mask)))
+        ip4_addr apt_gateway(pAdapter->GatewayList.IpAddress.String);
+        bool auto_cond = (apt_gateway != PLACEHOLDER_IPv4_ADDR);
+        bool exact_match_cond = (exact_match && apt_ip == subnet_ip);
+        bool subnet_cond = (!exact_match && apt_mask != PLACEHOLDER_IPv4_ADDR && (apt_ip & apt_mask) == (subnet_ip & apt_mask));
+        if ((select_auto && auto_cond) || (!select_auto && (exact_match_cond || subnet_cond)))
         {
-            this->name = std::string("\\Device\\NPF_") + pAdapter->AdapterName;
-            this->desc = pAdapter->Description;
-            this->ip = apt_ip;
-            this->mask = apt_mask;
-            this->gateway = ip4_addr(pAdapter->GatewayList.IpAddress.String);
+            found = true;
+            apt_info.name = std::string("\\Device\\NPF_") + pAdapter->AdapterName;
+            apt_info.desc = pAdapter->Description;
+            apt_info.ip = apt_ip;
+            apt_info.mask = apt_mask;
+            apt_info.gateway = apt_gateway;
             if (pAdapter->AddressLength != sizeof(eth_addr)) {
                 LOG(WARNING) << "wrong address length: " << pAdapter->AddressLength;
             }
             else {
-                auto c = reinterpret_cast<u_char*>(&this->mac);
+                auto c = reinterpret_cast<u_char*>(&apt_info.mac);
                 for (unsigned i = 0; i < pAdapter->AddressLength; ++i) {
                     c[i] = pAdapter->Address[i];
                 }
@@ -66,7 +71,15 @@ adapter_info::adapter_info(const ip4_addr &subnet_ip, bool exact_match)
         }
         pAdapter = pAdapter->Next;
     }
-    free(pAdapterInfo);
+    if (select_auto && found) {
+        VLOG(1) << "adapter selected automatically:\n" << apt_info << std::endl;
+    }
+    return apt_info;
+}
+
+adapter_info adapter_info::select_auto()
+{
+    return select_ip(PLACEHOLDER_IPv4_ADDR, false);
 }
 
 bool ip2mac(
@@ -228,10 +241,7 @@ bool send_ip4(
 {
     size_t total_len = sizeof(ethernet_header) + sizeof(ip4_header) + len_in_byte;
     u_char *packet = new u_char[total_len]{ 0 };
-    std::shared_ptr<void*> packet_guard(nullptr, [=](void *){
-        delete[] packet;
-        VLOG(3) << "ipv4 packet deleted";
-    });
+    std::shared_ptr<void*> packet_guard(nullptr, [=](void *){ delete[] packet; });
     auto eh = reinterpret_cast<ethernet_header*>(packet);
     eh->dea = dea;
     eh->sea = sea;
@@ -274,7 +284,7 @@ std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev)
     for (pcap_addr_t *a = dev->addresses; a; a = a->next) {
         if (a->addr && a->addr->sa_family == AF_INET) {
             auto waddr = reinterpret_cast<const sockaddr_in*>(a->addr)->sin_addr;
-            apt_info = adapter_info(waddr, true);
+            apt_info = adapter_info::select_ip(waddr, true);
             if (apt_info.ip == waddr) {
                 get_detail = true;
                 out << "\tDescription: " << apt_info.desc << std::endl;
