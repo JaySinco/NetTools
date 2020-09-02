@@ -96,71 +96,89 @@ std::ostream &operator<<(std::ostream &out, const sockaddr *addr);
  * Protocol data structure details below as follows
  */
 
-struct ethernet_header {
+struct _ethernet_header_detail {
     eth_addr dea;      // Destination address
     eth_addr sea;      // Source address
     u_short  eth_type; // Ethernet type
 };
 
+struct ethernet_header {
+    _ethernet_header_detail d; // Ethernet detail
+};
+
+struct _arp_header_detail {
+    u_short  hw_type;   // Hardware type
+    u_short  proto;     // Protocol
+    u_char   hw_len;    // Hardware address length
+    u_char   proto_len; // Protocol address length
+    u_short  op;        // Operation code
+    eth_addr sea;       // Source ethernet address
+    ip4_addr sia;       // Source ip address
+    eth_addr dea;       // Destination ethernet address
+    ip4_addr dia;       // Destination ip address
+};
+
 struct arp_header {
-    ethernet_header h_eth;     // Ethernet header
-    u_short         hw_type;   // Hardware type
-    u_short         proto;     // Protocol
-    u_char          hw_len;    // Hardware address length
-    u_char          proto_len; // Protocol address length
-    u_short         op;        // Operation code
-    eth_addr        sea;       // Source ethernet address
-    ip4_addr        sia;       // Source ip address
-    eth_addr        dea;       // Destination ethernet address
-    ip4_addr        dia;       // Destination ip address
+    ethernet_header    h; // Ethernet header
+    _arp_header_detail d; // ARP detail
 
     bool is_fake() const;
     bool is_typical() const;
 };
-#define ARP_HEADER_START(h) ((void*)&(h)->hw_type)
-#define ARP_HEADER_SIZE (sizeof(arp_header) - sizeof(ethernet_header))
+
+struct _ip_header_detail {
+    u_char   ver_ihl;   // Version (4 bits) + Internet header length (4 bits)
+    u_char   tos;       // Type of service
+    u_short  tlen;      // Total length
+    u_short  id;        // Identification
+    u_short  flags_fo;  // Flags (3 bits) + Fragment offset (13 bits)
+    u_char   ttl;       // Time to live
+    u_char   proto;     // Protocol
+    u_short  crc;       // Header checksum
+    ip4_addr sia;       // Source address
+    ip4_addr dia;       // Destination address
+};
 
 struct ip_header {
-    ethernet_header h_eth;     // Ethernet header
-    u_char          ver_ihl;   // Version (4 bits) + Internet header length (4 bits)
-    u_char          tos;       // Type of service
-    u_short         tlen;      // Total length
-    u_short         id;        // Identification
-    u_short         flags_fo;  // Flags (3 bits) + Fragment offset (13 bits)
-    u_char          ttl;       // Time to live
-    u_char          proto;     // Protocol
-    u_short         crc;       // Header checksum
-    ip4_addr        sia;       // Source address
-    ip4_addr        dia;       // Destination address
+    ethernet_header   h; // Ethernet header
+    _ip_header_detail d; // IP detail
 };
-#define IP_HEADER_START(h) ((void*)&(h)->ver_ihl)
-#define IP_HEADER_SIZE (sizeof(ip_header) - sizeof(ethernet_header))
+
+struct _icmp_header_detail {
+    u_char  type; // Type
+    u_char  code; // Code
+    u_short crc;  // Checksum as a whole
+    u_short id;   // Identification
+    u_short sn;   // Serial number
+};
 
 struct icmp_header {
-    ip_header h_ip; // IPv4 header
-    u_char    type; // Type
-    u_char    code; // Code
-    u_short   crc;  // Checksum as a whole
-    u_short   id;   // Identification
-    u_short   sn;   // Serial number
+    ip_header           h; // IPv4 header
+    _icmp_header_detail d; // ICMP detail
 };
-#define ICMP_HEADER_START(h) ((void*)&(h)->type)
-#define ICMP_HEADER_SIZE (sizeof(icmp_header) - sizeof(ip_header))
 
 struct icmp_netmask_header {
-    icmp_header h_icmp; // ICMP header
-    ip4_addr    mask;   // Subnet address mask
+    icmp_header h;    // ICMP header
+    ip4_addr    mask; // Subnet address mask
+};
+
+struct icmp_error_header {
+    icmp_header       h;      // ICMP header
+    _ip_header_detail e_ip;   // Error ip header
+    char              buf[8]; // At least 8-bit behind ip header
+};
+
+struct _udp_header_detail {
+    u_short sport; // Source port
+    u_short dport; // Destination port
+    u_short len;   // Datagram length
+    u_short crc;   // Checksum 
 };
 
 struct udp_header {
-    ip_header h_ip;  // IPv4 header
-    u_short   sport; // Source port
-    u_short   dport; // Destination port
-    u_short   len;   // Datagram length
-    u_short   crc;   // Checksum
+    ip_header          h; // IPv4 header
+    _udp_header_detail d; // UDP detail
 };
-#define UDP_HEADER_START(h) ((void*)&(h)->sport)
-#define UDP_HEADER_SIZE (sizeof(udp_header) - sizeof(ip_header))
 
 u_short calc_checksum(const void *data, size_t len_in_byte);
 

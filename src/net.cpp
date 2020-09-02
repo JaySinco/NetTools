@@ -131,11 +131,11 @@ bool ip2mac(
             continue;
         }
         auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-        if (ntohs(eh->eth_type) == ETHERNET_TYPE_ARP) {
+        if (ntohs(eh->d.eth_type) == ETHERNET_TYPE_ARP) {
             auto ah = reinterpret_cast<const arp_header*>(pkt_data);
-            if (ntohs(ah->op) == ARP_REPLY_OP) {
-                if (!ah->is_fake() && ah->sia == ip) {
-                    mac = ah->sea;
+            if (ntohs(ah->d.op) == ARP_REPLY_OP) {
+                if (!ah->is_fake() && ah->d.sia == ip) {
+                    mac = ah->d.sea;
                     succ = true;
                     break;
                 }
@@ -153,12 +153,12 @@ bool ip2mac(
 bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, int timeout_ms)
 {
     auto start_tm = std::chrono::system_clock::now();
-    icmp_header ping_data { 0 };
+    _icmp_header_detail ping_data { 0 };
     ping_data.type = ICMP_TYPE_PING_ASK;
     ping_data.code = 0;
     ping_data.id = rand_ushort();
     ping_data.sn = rand_ushort();
-    ping_data.crc = calc_checksum(ICMP_HEADER_START(&ping_data), ICMP_HEADER_SIZE);
+    ping_data.crc = calc_checksum(&ping_data, sizeof(_icmp_header_detail));
     eth_addr dest_mac = BROADCAST_ETH_ADDR;
     bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
     if (!is_local) {
@@ -168,7 +168,7 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
         }
     }
     if (!send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip,
-        &ping_data.type, ICMP_HEADER_SIZE))
+        &ping_data, sizeof(_icmp_header_detail)))
     {
         throw std::runtime_error("failed to send ipv4 packet");
     }
@@ -194,12 +194,12 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
             continue;
         }
         auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-        if (eh->dea == apt_info.mac && ntohs(eh->eth_type) == ETHERNET_TYPE_IPv4) {
+        if (eh->d.dea == apt_info.mac && ntohs(eh->d.eth_type) == ETHERNET_TYPE_IPv4) {
             auto ih = reinterpret_cast<const ip_header*>(pkt_data);
-            if (ih->dia == apt_info.ip && ih->proto == IPv4_TYPE_ICMP) {
+            if (ih->d.dia == apt_info.ip && ih->d.proto == IPv4_TYPE_ICMP) {
                 auto mh = reinterpret_cast<const icmp_header*>(pkt_data);
-                if (mh->type == ICMP_TYPE_PING_REPLY && mh->id == ping_data.id && mh->sn == ping_data.sn) {
-                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->sea;        
+                if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
+                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;        
                     return true;
                 }
             }
@@ -220,18 +220,18 @@ bool send_arp(
     const ip4_addr &dia)
 {
     arp_header ah;
-    ah.h_eth.dea = BROADCAST_ETH_ADDR;
-    ah.h_eth.sea = sea;
-    ah.h_eth.eth_type = htons(ETHERNET_TYPE_ARP);
-    ah.hw_type = htons(ARP_HARDWARE_TYPE_ETHERNET);
-    ah.proto = htons(ETHERNET_TYPE_IPv4);
-    ah.hw_len = ETHERNET_ADDRESS_LEN;
-    ah.proto_len = IPV4_ADDRESS_LEN;
-    ah.op = htons(op);
-    ah.sea = sea;
-    ah.sia = sia;
-    ah.dea = dea;
-    ah.dia = dia;
+    ah.h.d.dea = BROADCAST_ETH_ADDR;
+    ah.h.d.sea = sea;
+    ah.h.d.eth_type = htons(ETHERNET_TYPE_ARP);
+    ah.d.hw_type = htons(ARP_HARDWARE_TYPE_ETHERNET);
+    ah.d.proto = htons(ETHERNET_TYPE_IPv4);
+    ah.d.hw_len = ETHERNET_ADDRESS_LEN;
+    ah.d.proto_len = IPV4_ADDRESS_LEN;
+    ah.d.op = htons(op);
+    ah.d.sea = sea;
+    ah.d.sia = sia;
+    ah.d.dea = dea;
+    ah.d.dia = dia;
     if (pcap_sendpacket(adhandle, reinterpret_cast<u_char*>(&ah), sizeof(arp_header)) != 0)
     {
         LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
@@ -254,18 +254,18 @@ bool send_ip(
     u_char *packet = new u_char[total_len]{ 0 };
     std::shared_ptr<void*> packet_guard(nullptr, [=](void *){ delete[] packet; });
     auto ih = reinterpret_cast<ip_header*>(packet);
-    ih->h_eth.dea = dea;
-    ih->h_eth.sea = sea;
-    ih->h_eth.eth_type = htons(ETHERNET_TYPE_IPv4);
-    ih->ver_ihl = (4 << 4) | 5;
-    ih->tlen = htons(static_cast<u_short>(20 + len_in_byte));
+    ih->h.d.dea = dea;
+    ih->h.d.sea = sea;
+    ih->h.d.eth_type = htons(ETHERNET_TYPE_IPv4);
+    ih->d.ver_ihl = (4 << 4) | 5;
+    ih->d.tlen = htons(static_cast<u_short>(20 + len_in_byte));
     std::uniform_int_distribution<u_short> us_dist;
-    ih->id = rand_ushort();
-    ih->ttl = 128;
-    ih->proto = proto;
-    ih->sia = sia;
-    ih->dia = dia;
-    ih->crc = calc_checksum(IP_HEADER_START(ih), IP_HEADER_SIZE);
+    ih->d.id = rand_ushort();
+    ih->d.ttl = 128;
+    ih->d.proto = proto;
+    ih->d.sia = sia;
+    ih->d.dia = dia;
+    ih->d.crc = calc_checksum(&ih->d, sizeof(_ip_header_detail));
     memcpy(packet + sizeof(ip_header), ip_data, len_in_byte);
     if (pcap_sendpacket(adhandle, packet, static_cast<int>(total_len)) != 0)
     {
@@ -327,7 +327,7 @@ std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev)
 
 std::ostream &print_ip_packet(std::ostream &out, const ip_header *ih)
 {
-    switch (ih->proto)
+    switch (ih->d.proto)
     {
     case IPv4_TYPE_ICMP:
         out << *reinterpret_cast<const icmp_header*>(ih);
@@ -351,8 +351,8 @@ std::ostream &print_packet(
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
     out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
     auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-    out << eh->sea << " > " << eh->dea << std::endl;
-    switch (ntohs(eh->eth_type))
+    out << eh->d.sea << " > " << eh->d.dea << std::endl;
+    switch (ntohs(eh->d.eth_type))
     {
     case ETHERNET_TYPE_IPv4:
         print_ip_packet(out, reinterpret_cast<const ip_header*>(eh));

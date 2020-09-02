@@ -167,7 +167,7 @@ u_short calc_checksum(const void *data, size_t len_in_byte)
 
 bool arp_header::is_fake() const
 {
-    if (ntohs(op) == ARP_REPLY_OP && sea == dea && sia != dia) {
+    if (ntohs(d.op) == ARP_REPLY_OP && d.sea == d.dea && d.sia != d.dia) {
         return true;
     }
     return false;
@@ -175,46 +175,46 @@ bool arp_header::is_fake() const
 
 bool arp_header::is_typical() const
 {
-    return ntohs(hw_type) == ARP_HARDWARE_TYPE_ETHERNET && ntohs(proto) == ETHERNET_TYPE_IPv4 &&
-        hw_len == ETHERNET_ADDRESS_LEN && proto_len == IPV4_ADDRESS_LEN;
+    return ntohs(d.hw_type) == ARP_HARDWARE_TYPE_ETHERNET && ntohs(d.proto) == ETHERNET_TYPE_IPv4 &&
+        d.hw_len == ETHERNET_ADDRESS_LEN && d.proto_len == IPV4_ADDRESS_LEN;
 }
 
 std::ostream &operator<<(std::ostream &out, const ethernet_header &data)
 {
     std::ostringstream ss;
-    switch (ntohs(data.eth_type))
+    switch (ntohs(data.d.eth_type))
     {
     case ETHERNET_TYPE_IPv4: ss << "IPv4"; break;
     case ETHERNET_TYPE_IPv6: ss << "IPv6"; break;
     case ETHERNET_TYPE_ARP : ss << "ARP" ; break;
     case ETHERNET_TYPE_RARP: ss << "RARP"; break;
     default:
-        ss << "Unknow(" << ntohs(data.eth_type) << ")";
+        ss << "Unknow(" << ntohs(data.d.eth_type) << ")";
         break;
     }
     out << "\tEthernet Type: " << ss.str() << std::endl;
-    out << "\tSource Mac: " << data.sea << std::endl;
-    out << "\tDestination Mac: " << data.dea << std::endl;
+    out << "\tSource Mac: " << data.d.sea << std::endl;
+    out << "\tDestination Mac: " << data.d.dea << std::endl;
     return out;
 }
 
 std::ostream &operator<<(std::ostream &out, const arp_header &data)
 {
-    out << data.h_eth << DELIMITER_LINE;
+    out << data.h << DELIMITER_LINE;
 
     if (!data.is_typical()) {
         out << "\tDescription: Not typical ethernet-ipv4 arp/rarp" << std::endl;
         return out;
     }
-    switch (ntohs(data.op))
+    switch (ntohs(data.d.op))
     {
     case ARP_REQUEST_OP:
         out << "\tARP Type: Requset" << (data.is_fake() ? "*" : "") << "\n";
-        out << "\tDescription: " << data.sia << " asks: who has " <<  data.dia << "?\n";
+        out << "\tDescription: " << data.d.sia << " asks: who has " <<  data.d.dia << "?\n";
         break;
     case ARP_REPLY_OP:
         out << "\tARP Type: Reply" << (data.is_fake() ? "*" : "") << "\n";
-        out << "\tDescription: " <<  data.sia << " tells " << data.dia << ": i am at " << data.sea << ".\n";
+        out << "\tDescription: " <<  data.d.sia << " tells " << data.d.dia << ": i am at " << data.d.sea << ".\n";
         break;
     case RARP_REQUEST_OP:
         out << "\tRARP Type: Requset\n";
@@ -223,40 +223,40 @@ std::ostream &operator<<(std::ostream &out, const arp_header &data)
         out << "\tRARP Type: Reply\n";
         break;
     }
-    out << "\tSource Mac: " << data.sea << "\n";
-    out << "\tSource Ip: " << data.sia << "\n";
-    out << "\tDestination Mac: " << data.dea << "\n";
-    out << "\tDestination Ip: " << data.dia << "\n";
+    out << "\tSource Mac: " << data.d.sea << "\n";
+    out << "\tSource Ip: " << data.d.sia << "\n";
+    out << "\tDestination Mac: " << data.d.dea << "\n";
+    out << "\tDestination Ip: " << data.d.dia << "\n";
     return out;
 }
 
 std::ostream &operator<<(std::ostream &out, const ip_header &data)
 {
-    out << data.h_eth << DELIMITER_LINE;
+    out << data.h << DELIMITER_LINE;
 
-    if ((data.ver_ihl >> 4) != 4) {
+    if ((data.d.ver_ihl >> 4) != 4) {
         out << "\tDescription: IP protocol version is not 4" << std::endl;
         return out;
     }
-    size_t header_size = 4 * (data.ver_ihl & 0xf);
-    size_t total_size = ntohs(data.tlen);
+    size_t header_size = 4 * (data.d.ver_ihl & 0xf);
+    size_t total_size = ntohs(data.d.tlen);
     out << "\tIP Header Size: " << header_size << " bytes\n";
     out << "\tIP Total Size: " << total_size << " bytes\n";
-    out << "\tIP Header Checksum: " << calc_checksum(IP_HEADER_START(&data), header_size) << "\n";
-    out << "\tIP Identification: " << ntohs(data.id) << "\n";
-    out << "\tIP Flags: " << (ntohs(data.flags_fo) >> 13) << "\n";
-    out << "\tIP Fragment Offset: " << (ntohs(data.flags_fo) & (~0>>3)) << "\n";
-    out << "\tTTL: " << static_cast<int>(data.ttl) << "\n";
-    out << "\tSource Ip: " << data.sia << "\n";
-    out << "\tDestination Ip: " << data.dia << "\n";
+    out << "\tIP Header Checksum: " << calc_checksum(&data.d, header_size) << "\n";
+    out << "\tIP Identification: " << ntohs(data.d.id) << "\n";
+    out << "\tIP Flags: " << (ntohs(data.d.flags_fo) >> 13) << "\n";
+    out << "\tIP Fragment Offset: " << (ntohs(data.d.flags_fo) & (~0>>3)) << "\n";
+    out << "\tTTL: " << static_cast<int>(data.d.ttl) << "\n";
+    out << "\tSource Ip: " << data.d.sia << "\n";
+    out << "\tDestination Ip: " << data.d.dia << "\n";
     std::ostringstream ss;
-    switch (data.proto)
+    switch (data.d.proto)
     {
     case IPv4_TYPE_ICMP: ss << "ICMP"; break;
     case IPv4_TYPE_TCP : ss << "TCP" ; break;
     case IPv4_TYPE_UDP : ss << "UDP" ; break;
     default:
-        ss << "Unknow(" << data.proto << ")";
+        ss << "Unknow(" << data.d.proto << ")";
         break;
     }
     out << "\tIP Type: " << ss.str() << std::endl;
@@ -265,50 +265,49 @@ std::ostream &operator<<(std::ostream &out, const ip_header &data)
 
 std::ostream &operator<<(std::ostream &out, const icmp_header &data)
 {
-    out << data.h_ip << DELIMITER_LINE;
+    out << data.h << DELIMITER_LINE;
 
-    size_t icmp_len = ntohs(data.h_ip.tlen) - IP_HEADER_SIZE;
-    std::ostringstream desc, body;
-    switch (data.type)
+    size_t icmp_len = ntohs(data.h.d.tlen) - sizeof(_ip_header_detail);
+    std::string desc;
+    std::ostringstream body;
+    switch (data.d.type)
     {
     case 3:
     case 4:
     case 5:
     case 11:
-    case 12: desc << "Error"; break;
+    case 12:
+        desc = "error";
+        break;
     case 9:
-    case 10: desc << "Router"; break;
+    case 10:
+        desc = "router";
+        break;
     case 13:
-    case 14: desc << "Timestamp"; break;
+    case 14: desc = "timestamp"; break;
     case ICMP_TYPE_PING_ASK:
-    case ICMP_TYPE_PING_REPLY: {
-        if (data.type == ICMP_TYPE_PING_ASK)
-            desc << "Ping-ask";
-        if (data.type == ICMP_TYPE_PING_REPLY)
-            desc << "Ping-reply";
-        if (icmp_len > ICMP_HEADER_SIZE) {
+        desc = "ping-ask";
+    case ICMP_TYPE_PING_REPLY:
+        desc = "ping-reply";
+        if (icmp_len > sizeof(_icmp_header_detail)) {
             const char *c = reinterpret_cast<const char*>(&data) + sizeof(icmp_header);
-            body << "\tPing Echo: " << std::string(c, icmp_len - ICMP_HEADER_SIZE) << "\n";
+            body << "\tPing Echo: " << std::string(c, icmp_len - sizeof(_icmp_header_detail)) << "\n";
         }
         break;
-    }
     case ICMP_TYPE_NETMASK_ASK:
-    case ICMP_TYPE_NETMASK_REPLY: {
-        if (data.type == ICMP_TYPE_NETMASK_ASK)
-            desc << "Netmask-ask";
-        if (data.type == ICMP_TYPE_NETMASK_REPLY)
-            desc << "Netmask-reply";
+        desc = "netmask-ask";
+    case ICMP_TYPE_NETMASK_REPLY:
+        desc = "netmask-reply";
         auto mh = reinterpret_cast<const icmp_netmask_header*>(&data);
         body << "\tICMP Netmask: " << mh->mask << "\n";
         break;
     }
-    }
-    out << "\tICMP Type: " << desc.str() << "(" << int(data.type) << ")" << "\n";
+    out << "\tICMP Type: " << desc << "(" << int(data.d.type) << ")" << "\n";
     out << "\tICMP Size: " << icmp_len << " bytes\n";
-    out << "\tICMP Code: " << int(data.code) << "\n";
-    body << "\tICMP Checksum: " << calc_checksum(ICMP_HEADER_START(&data), icmp_len) << "\n";
-    body << "\tICMP Identification: " << ntohs(data.id) << "\n";
-    body << "\tICMP Serial No.: " << ntohs(data.sn) << "\n";
+    out << "\tICMP Code: " << int(data.d.code) << "\n";
+    body << "\tICMP Checksum: " << calc_checksum(&data.d, icmp_len) << "\n";
+    body << "\tICMP Identification: " << ntohs(data.d.id) << "\n";
+    body << "\tICMP Serial No.: " << ntohs(data.d.sn) << "\n";
     out << body.str();
     return out;
 }
