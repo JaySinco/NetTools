@@ -259,7 +259,6 @@ bool send_ip(
     ih->h.d.eth_type = htons(ETHERNET_TYPE_IPv4);
     ih->d.ver_ihl = (4 << 4) | 5;
     ih->d.tlen = htons(static_cast<u_short>(20 + len_in_byte));
-    std::uniform_int_distribution<u_short> us_dist;
     ih->d.id = rand_ushort();
     ih->d.ttl = 128;
     ih->d.proto = proto;

@@ -4,7 +4,6 @@
 #include <signal.h>
 #include "net.h"
 
-DEFINE_string(ip, "", "ipv4 address, only used to choose adapter when in attack mode");
 DEFINE_bool(attack, false, "attack whole network by pretending myself to be gateway");
 
 std::atomic<bool> end_attack = false;
@@ -22,14 +21,14 @@ int main(int argc, char* argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    if (FLAGS_ip.size() <= 0 && !FLAGS_attack) {
+    if (argc < 2 && !FLAGS_attack) {
         LOG(ERROR) << "empty ipv4 address, please set --ip";
         return -1;
     }
 
     ip4_addr input_ip = PLACEHOLDER_IPv4_ADDR;
-    if (FLAGS_ip.size() > 0) {
-        input_ip = ip4_addr(FLAGS_ip);
+    if (argc >= 2) {
+        input_ip = ip4_addr(argv[1]);
     }
     adapter_info apt_info;
     pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);

@@ -189,7 +189,7 @@ std::ostream &operator<<(std::ostream &out, const ethernet_header &data)
     case ETHERNET_TYPE_ARP : ss << "ARP" ; break;
     case ETHERNET_TYPE_RARP: ss << "RARP"; break;
     default:
-        ss << "Unknow(" << ntohs(data.d.eth_type) << ")";
+        ss << "Unknow(0x" << std::hex << ntohs(data.d.eth_type) << std::dec << ")";
         break;
     }
     out << "\tEthernet Type: " << ss.str() << std::endl;
@@ -242,7 +242,8 @@ std::ostream &operator<<(std::ostream &out, const ip_header &data)
     size_t total_size = ntohs(data.d.tlen);
     out << "\tIP Header Size: " << header_size << " bytes\n";
     out << "\tIP Total Size: " << total_size << " bytes\n";
-    out << "\tIP Header Checksum: " << calc_checksum(&data.d, header_size) << "\n";
+    u_short checksum = calc_checksum(&data.d, header_size);
+    out << "\tIP Header Checksum: " << checksum << (checksum == 0 ? "" : "*") << "\n";
     out << "\tIP Identification: " << ntohs(data.d.id) << "\n";
     out << "\tIP Flags: " << (ntohs(data.d.flags_fo) >> 13) << "\n";
     out << "\tIP Fragment Offset: " << (ntohs(data.d.flags_fo) & (~0>>3)) << "\n";
@@ -287,27 +288,29 @@ std::ostream &operator<<(std::ostream &out, const icmp_header &data)
     case 14: desc = "timestamp"; break;
     case ICMP_TYPE_PING_ASK:
         desc = "ping-ask";
+        goto A;
     case ICMP_TYPE_PING_REPLY:
         desc = "ping-reply";
-        if (icmp_len > sizeof(_icmp_header_detail)) {
+A:      if (icmp_len > sizeof(_icmp_header_detail)) {
             const char *c = reinterpret_cast<const char*>(&data) + sizeof(icmp_header);
             body << "\tPing Echo: " << std::string(c, icmp_len - sizeof(_icmp_header_detail)) << "\n";
         }
         break;
     case ICMP_TYPE_NETMASK_ASK:
         desc = "netmask-ask";
+        goto B;
     case ICMP_TYPE_NETMASK_REPLY:
         desc = "netmask-reply";
-        auto mh = reinterpret_cast<const icmp_netmask_header*>(&data);
+B:      auto mh = reinterpret_cast<const icmp_netmask_header*>(&data);
         body << "\tICMP Netmask: " << mh->mask << "\n";
         break;
     }
     out << "\tICMP Type: " << desc << "(" << int(data.d.type) << ")" << "\n";
     out << "\tICMP Size: " << icmp_len << " bytes\n";
     out << "\tICMP Code: " << int(data.d.code) << "\n";
-    body << "\tICMP Checksum: " << calc_checksum(&data.d, icmp_len) << "\n";
-    body << "\tICMP Identification: " << ntohs(data.d.id) << "\n";
-    body << "\tICMP Serial No.: " << ntohs(data.d.sn) << "\n";
+    out << "\tICMP Checksum: " << calc_checksum(&data.d, icmp_len) << "\n";
+    out << "\tICMP Identification: " << ntohs(data.d.id) << "\n";
+    out << "\tICMP Serial No.: " << ntohs(data.d.sn) << "\n";
     out << body.str();
     return out;
 }
