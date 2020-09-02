@@ -134,7 +134,7 @@ bool ip2mac(
         if (ntohs(eh->d.eth_type) == ETHERNET_TYPE_ARP) {
             auto ah = reinterpret_cast<const arp_header*>(pkt_data);
             if (ntohs(ah->d.op) == ARP_REPLY_OP) {
-                if (!ah->is_fake() && ah->d.sia == ip) {
+                if (!ah->d.is_fake() && ah->d.sia == ip) {
                     mac = ah->d.sea;
                     succ = true;
                     break;

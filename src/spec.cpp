@@ -165,56 +165,59 @@ u_short calc_checksum(const void *data, size_t len_in_byte)
     return static_cast<u_short>(~checksum);
 }
 
-bool arp_header::is_fake() const
+bool _arp_header_detail::is_fake() const
 {
-    if (ntohs(d.op) == ARP_REPLY_OP && d.sea == d.dea && d.sia != d.dia) {
+    if (ntohs(op) == ARP_REPLY_OP && sea == dea && sia != dia) {
         return true;
     }
     return false;
 }
 
-bool arp_header::is_typical() const
+bool _arp_header_detail::is_typical() const
 {
-    return ntohs(d.hw_type) == ARP_HARDWARE_TYPE_ETHERNET && ntohs(d.proto) == ETHERNET_TYPE_IPv4 &&
-        d.hw_len == ETHERNET_ADDRESS_LEN && d.proto_len == IPV4_ADDRESS_LEN;
+    return ntohs(hw_type) == ARP_HARDWARE_TYPE_ETHERNET && ntohs(proto) == ETHERNET_TYPE_IPv4 &&
+        hw_len == ETHERNET_ADDRESS_LEN && proto_len == IPV4_ADDRESS_LEN;
 }
 
-std::ostream &operator<<(std::ostream &out, const ethernet_header &data)
+std::ostream &operator<<(std::ostream &out, const _ethernet_header_detail &detail)
 {
     std::ostringstream ss;
-    switch (ntohs(data.d.eth_type))
+    switch (ntohs(detail.eth_type))
     {
     case ETHERNET_TYPE_IPv4: ss << "IPv4"; break;
     case ETHERNET_TYPE_IPv6: ss << "IPv6"; break;
     case ETHERNET_TYPE_ARP : ss << "ARP" ; break;
     case ETHERNET_TYPE_RARP: ss << "RARP"; break;
     default:
-        ss << "Unknow(0x" << std::hex << ntohs(data.d.eth_type) << std::dec << ")";
+        ss << "Unknow(0x" << std::hex << ntohs(detail.eth_type) << std::dec << ")";
         break;
     }
     out << "\tEthernet Type: " << ss.str() << std::endl;
-    out << "\tSource Mac: " << data.d.sea << std::endl;
-    out << "\tDestination Mac: " << data.d.dea << std::endl;
+    out << "\tSource Mac: " << detail.sea << std::endl;
+    out << "\tDestination Mac: " << detail.dea << std::endl;
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const arp_header &data)
+std::ostream &operator<<(std::ostream &out, const ethernet_header &header)
 {
-    out << data.h << DELIMITER_LINE;
+    return out << header.d;
+}
 
-    if (!data.is_typical()) {
+std::ostream &operator<<(std::ostream &out, const _arp_header_detail &detail)
+{
+    if (!detail.is_typical()) {
         out << "\tDescription: Not typical ethernet-ipv4 arp/rarp" << std::endl;
         return out;
     }
-    switch (ntohs(data.d.op))
+    switch (ntohs(detail.op))
     {
     case ARP_REQUEST_OP:
-        out << "\tARP Type: Requset" << (data.is_fake() ? "*" : "") << "\n";
-        out << "\tDescription: " << data.d.sia << " asks: who has " <<  data.d.dia << "?\n";
+        out << "\tARP Type: Requset" << (detail.is_fake() ? "*" : "") << "\n";
+        out << "\tDescription: " << detail.sia << " asks: who has " <<  detail.dia << "?\n";
         break;
     case ARP_REPLY_OP:
-        out << "\tARP Type: Reply" << (data.is_fake() ? "*" : "") << "\n";
-        out << "\tDescription: " <<  data.d.sia << " tells " << data.d.dia << ": i am at " << data.d.sea << ".\n";
+        out << "\tARP Type: Reply" << (detail.is_fake() ? "*" : "") << "\n";
+        out << "\tDescription: " <<  detail.sia << " tells " << detail.dia << ": i am at " << detail.sea << ".\n";
         break;
     case RARP_REQUEST_OP:
         out << "\tRARP Type: Requset\n";
@@ -223,94 +226,171 @@ std::ostream &operator<<(std::ostream &out, const arp_header &data)
         out << "\tRARP Type: Reply\n";
         break;
     }
-    out << "\tSource Mac: " << data.d.sea << "\n";
-    out << "\tSource Ip: " << data.d.sia << "\n";
-    out << "\tDestination Mac: " << data.d.dea << "\n";
-    out << "\tDestination Ip: " << data.d.dia << "\n";
+    out << "\tSource Mac: " << detail.sea << "\n";
+    out << "\tSource Ip: " << detail.sia << "\n";
+    out << "\tDestination Mac: " << detail.dea << "\n";
+    out << "\tDestination Ip: " << detail.dia << "\n";
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const ip_header &data)
+std::ostream &operator<<(std::ostream &out, const arp_header &header)
 {
-    out << data.h << DELIMITER_LINE;
+    return out << header.h << DELIMITER_LINE << header.d;
+}
 
-    if ((data.d.ver_ihl >> 4) != 4) {
+std::ostream &operator<<(std::ostream &out, const _ip_header_detail &detail)
+{
+    if ((detail.ver_ihl >> 4) != 4) {
         out << "\tDescription: IP protocol version is not 4" << std::endl;
         return out;
     }
-    size_t header_size = 4 * (data.d.ver_ihl & 0xf);
-    size_t total_size = ntohs(data.d.tlen);
+    size_t header_size = 4 * (detail.ver_ihl & 0xf);
+    size_t total_size = ntohs(detail.tlen);
     out << "\tIP Header Size: " << header_size << " bytes\n";
     out << "\tIP Total Size: " << total_size << " bytes\n";
-    u_short checksum = calc_checksum(&data.d, header_size);
+    u_short checksum = calc_checksum(&detail, header_size);
     out << "\tIP Header Checksum: " << checksum << (checksum == 0 ? "" : "*") << "\n";
-    out << "\tIP Identification: " << ntohs(data.d.id) << "\n";
-    out << "\tIP Flags: " << (ntohs(data.d.flags_fo) >> 13) << "\n";
-    out << "\tIP Fragment Offset: " << (ntohs(data.d.flags_fo) & (~0>>3)) << "\n";
-    out << "\tTTL: " << static_cast<int>(data.d.ttl) << "\n";
-    out << "\tSource Ip: " << data.d.sia << "\n";
-    out << "\tDestination Ip: " << data.d.dia << "\n";
+    out << "\tIP Identification: " << ntohs(detail.id) << "\n";
+    out << "\tIP Flags: " << (ntohs(detail.flags_fo) >> 13) << "\n";
+    out << "\tIP Fragment Offset: " << (ntohs(detail.flags_fo) & (~0>>3)) << "\n";
+    out << "\tTTL: " << static_cast<int>(detail.ttl) << "\n";
+    out << "\tSource Ip: " << detail.sia << "\n";
+    out << "\tDestination Ip: " << detail.dia << "\n";
     std::ostringstream ss;
-    switch (data.d.proto)
+    switch (detail.proto)
     {
     case IPv4_TYPE_ICMP: ss << "ICMP"; break;
     case IPv4_TYPE_TCP : ss << "TCP" ; break;
     case IPv4_TYPE_UDP : ss << "UDP" ; break;
     default:
-        ss << "Unknow(" << data.d.proto << ")";
+        ss << "Unknow(" << int(detail.proto) << ")";
         break;
     }
     out << "\tIP Type: " << ss.str() << std::endl;
     return out;
 }
 
-std::ostream &operator<<(std::ostream &out, const icmp_header &data)
+std::ostream &operator<<(std::ostream &out, const ip_header &header)
 {
-    out << data.h << DELIMITER_LINE;
+    return out << header.h << DELIMITER_LINE << header.d;    
+}
 
-    size_t icmp_len = ntohs(data.h.d.tlen) - sizeof(_ip_header_detail);
+std::string get_icmp_error_desc(const icmp_header &header)
+{
+    std::string desc = "undocumented icmp error";
+    switch (header.d.type)
+    {
+    case ICMP_TYPE_ERROR_UNREACHABLE:
+        switch (header.d.code)
+        {
+        case  0: desc = "net unreachable"; break;
+        case  1: desc = "host unreachable"; break;
+        case  2: desc = "protocol unreachable"; break;
+        case  3: desc = "port unreachable"; break;
+        case  4: desc = "slice required"; break;
+        case  5: desc = "routing failure"; break;
+        case  6: desc = "unknow net"; break;
+        case  7: desc = "unknow host"; break;
+        case  8: desc = "host isolated(abandon)"; break;
+        case  9: desc = "net forbidden"; break;
+        case 10: desc = "host forbidden"; break;
+        case 11: desc = "TOS net unreachable"; break;
+        case 12: desc = "TOS host unreachable"; break;
+        case 13: desc = "force prohibit communication"; break;
+        case 14: desc = "host not authorized"; break;
+        case 15: desc = "suspend priority"; break;
+        }
+    case ICMP_TYPE_ERROR_SOURCE_CLOSED:
+        switch (header.d.code)
+        {
+        case  0: desc = "source shutdown"; break;
+        }
+    case ICMP_TYPE_ERROR_REDIRECTION:
+        switch (header.d.code)
+        {
+        case  0: desc = "net redirection"; break;
+        case  1: desc = "host redirection"; break;
+        case  2: desc = "service-type redirection"; break;
+        case  3: desc = "service-type&host redirection"; break;
+        }
+    case ICMP_TYPE_ERROR_TIMEOUT:
+        switch (header.d.code)
+        {
+        case  0: desc = "ttl=0 when transport"; break;
+        case  1: desc = "ttl=0 when assembly datagram"; break;
+        }
+    case ICMP_TYPE_ERROR_PARAMETER:
+        switch (header.d.code)
+        {
+        case  0: desc = "invalid ip header"; break;
+        case  1: desc = "missing required option"; break;
+        }
+    }
+    return desc;
+}
+
+std::ostream &operator<<(std::ostream &out, const icmp_header &header)
+{
+    out << header.h << DELIMITER_LINE;
+
+    size_t icmp_len = ntohs(header.h.d.tlen) - sizeof(_ip_header_detail);
     std::string desc;
     std::ostringstream body;
-    switch (data.d.type)
+    switch (header.d.type)
     {
-    case 3:
-    case 4:
-    case 5:
-    case 11:
-    case 12:
+    case ICMP_TYPE_ERROR_UNREACHABLE:
+    case ICMP_TYPE_ERROR_SOURCE_CLOSED:
+    case ICMP_TYPE_ERROR_REDIRECTION:
+    case ICMP_TYPE_ERROR_TIMEOUT:
+    case ICMP_TYPE_ERROR_PARAMETER:
         desc = "error";
+        body << "\tError Description: " << get_icmp_error_desc(header) << "\n";
+        body << *reinterpret_cast<const _icmp_error_detail*>(PTR_AFTER(&header));
         break;
-    case 9:
-    case 10:
+    case ICMP_TYPE_ROUTER_NOTICE:
+    case ICMP_TYPE_ROUTER_REQUEST:
         desc = "router";
         break;
-    case 13:
-    case 14: desc = "timestamp"; break;
+    case ICMP_TYPE_TIMESTAMP_ASK:
+    case ICMP_TYPE_TIMESTAMP_REPLY:
+        desc = "timestamp";
+        break;
     case ICMP_TYPE_PING_ASK:
         desc = "ping-ask";
-        goto A;
+        goto ping_common;
     case ICMP_TYPE_PING_REPLY:
         desc = "ping-reply";
-A:      if (icmp_len > sizeof(_icmp_header_detail)) {
-            const char *c = reinterpret_cast<const char*>(&data) + sizeof(icmp_header);
+ping_common:
+        if (icmp_len > sizeof(_icmp_header_detail)) {
+            const char *c = reinterpret_cast<const char*>(PTR_AFTER(&header));
             body << "\tPing Echo: " << std::string(c, icmp_len - sizeof(_icmp_header_detail)) << "\n";
         }
         break;
     case ICMP_TYPE_NETMASK_ASK:
         desc = "netmask-ask";
-        goto B;
+        goto netmask_common;
     case ICMP_TYPE_NETMASK_REPLY:
         desc = "netmask-reply";
-B:      auto mh = reinterpret_cast<const icmp_netmask_header*>(&data);
-        body << "\tICMP Netmask: " << mh->mask << "\n";
+netmask_common:
+        body << *reinterpret_cast<const _icmp_netmask_detail*>(PTR_AFTER(&header));
         break;
     }
-    out << "\tICMP Type: " << desc << "(" << int(data.d.type) << ")" << "\n";
+    out << "\tICMP Type: " << desc << "(" << int(header.d.type) << ")" << "\n";
     out << "\tICMP Size: " << icmp_len << " bytes\n";
-    out << "\tICMP Code: " << int(data.d.code) << "\n";
-    out << "\tICMP Checksum: " << calc_checksum(&data.d, icmp_len) << "\n";
-    out << "\tICMP Identification: " << ntohs(data.d.id) << "\n";
-    out << "\tICMP Serial No.: " << ntohs(data.d.sn) << "\n";
+    out << "\tICMP Code: " << int(header.d.code) << "\n";
+    out << "\tICMP Checksum: " << calc_checksum(&header.d, icmp_len) << "\n";
+    out << "\tICMP Identification: " << ntohs(header.d.id) << "\n";
+    out << "\tICMP Serial No.: " << ntohs(header.d.sn) << "\n";
     out << body.str();
     return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail)
+{
+    return out << "\tICMP Netmask: " << detail.mask << std::endl;
+}
+
+std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail)
+{
+    return out << "\tOrigin IP Header Below:\n" << detail.e_ip;
 }

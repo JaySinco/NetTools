@@ -25,16 +25,28 @@
 #define RARP_REQUEST_OP 3
 #define RARP_REPLY_op   4
 
-#define ICMP_TYPE_PING_REPLY    0
-#define ICMP_TYPE_PING_ASK      8
-#define ICMP_TYPE_NETMASK_ASK   17
-#define ICMP_TYPE_NETMASK_REPLY 18
+#define ICMP_TYPE_PING_REPLY          0
+#define ICMP_TYPE_ERROR_UNREACHABLE   3
+#define ICMP_TYPE_ERROR_SOURCE_CLOSED 4
+#define ICMP_TYPE_ERROR_REDIRECTION   5
+#define ICMP_TYPE_PING_ASK            8
+#define ICMP_TYPE_ROUTER_NOTICE       9
+#define ICMP_TYPE_ROUTER_REQUEST     10
+#define ICMP_TYPE_ERROR_TIMEOUT      11
+#define ICMP_TYPE_ERROR_PARAMETER    12
+#define ICMP_TYPE_TIMESTAMP_ASK      13
+#define ICMP_TYPE_TIMESTAMP_REPLY    14
+#define ICMP_TYPE_INFO_ASK           15
+#define ICMP_TYPE_INFO_REPLY         16
+#define ICMP_TYPE_NETMASK_ASK        17
+#define ICMP_TYPE_NETMASK_REPLY      18
 
 #define BROADCAST_IPv4_ADDR ip4_addr{0xff, 0xff, 0xff, 0xff}
 #define PLACEHOLDER_IPv4_ADDR ip4_addr{0x0, 0x0, 0x0, 0x0}
 #define BROADCAST_ETH_ADDR eth_addr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 #define PLACEHOLDER_ETH_ADDR eth_addr{0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
 
+#define PTR_AFTER(p) (((char*)(p))+sizeof(decltype(*(p))))
 #define DELIMITER_LINE "\t------------------------\n"
 
 template <typename T>
@@ -116,14 +128,14 @@ struct _arp_header_detail {
     ip4_addr sia;       // Source ip address
     eth_addr dea;       // Destination ethernet address
     ip4_addr dia;       // Destination ip address
+
+    bool is_fake() const;
+    bool is_typical() const;
 };
 
 struct arp_header {
     ethernet_header    h; // Ethernet header
     _arp_header_detail d; // ARP detail
-
-    bool is_fake() const;
-    bool is_typical() const;
 };
 
 struct _ip_header_detail {
@@ -157,15 +169,13 @@ struct icmp_header {
     _icmp_header_detail d; // ICMP detail
 };
 
-struct icmp_netmask_header {
-    icmp_header h;    // ICMP header
+struct _icmp_netmask_detail {
     ip4_addr    mask; // Subnet address mask
 };
 
-struct icmp_error_header {
-    icmp_header       h;      // ICMP header
+struct _icmp_error_detail {
     _ip_header_detail e_ip;   // Error ip header
-    char              buf[8]; // At least 8-bit behind ip header
+    u_char            buf[8]; // At least 8-bit behind ip header
 };
 
 struct _udp_header_detail {
@@ -182,8 +192,13 @@ struct udp_header {
 
 u_short calc_checksum(const void *data, size_t len_in_byte);
 
-std::ostream &operator<<(std::ostream &out, const ethernet_header &data);
-std::ostream &operator<<(std::ostream &out, const arp_header &data);
-std::ostream &operator<<(std::ostream &out, const ip_header &data);
-std::ostream &operator<<(std::ostream &out, const icmp_header &data);
-// std::ostream &operator<<(std::ostream &out, const udp_header &data);
+std::ostream &operator<<(std::ostream &out, const _ethernet_header_detail &detail);
+std::ostream &operator<<(std::ostream &out, const ethernet_header &header);
+std::ostream &operator<<(std::ostream &out, const _arp_header_detail &detail);
+std::ostream &operator<<(std::ostream &out, const arp_header &header);
+std::ostream &operator<<(std::ostream &out, const _ip_header_detail &detail);
+std::ostream &operator<<(std::ostream &out, const ip_header &header);
+std::ostream &operator<<(std::ostream &out, const icmp_header &header);
+std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail);
+std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail);
+// std::ostream &operator<<(std::ostream &out, const udp_header &header);
