@@ -48,6 +48,7 @@
 
 #define PTR_AFTER(p) (((char*)(p))+sizeof(decltype(*(p))))
 #define DELIMITER_LINE "\t------------------------\n"
+#define DELIMITER_SUBLINE "\t+-+-+-+-+-+-+-+-+-+-+-+-\n"
 
 template <typename T>
 std::string to_string(const T& v)
@@ -174,6 +175,7 @@ struct _icmp_netmask_detail {
 };
 
 struct _icmp_error_detail {
+    icmp_header       h_aux;  // Not part of detail, only used for print
     _ip_header_detail e_ip;   // Error ip header
     u_char            buf[8]; // At least 8-bit behind ip header
 };

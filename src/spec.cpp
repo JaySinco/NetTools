@@ -345,33 +345,37 @@ std::ostream &operator<<(std::ostream &out, const icmp_header &header)
     case ICMP_TYPE_ERROR_PARAMETER:
         desc = "error";
         body << "\tError Description: " << get_icmp_error_desc(header) << "\n";
-        body << *reinterpret_cast<const _icmp_error_detail*>(PTR_AFTER(&header));
+        body << *reinterpret_cast<const _icmp_error_detail*>(&header);
         break;
+
     case ICMP_TYPE_ROUTER_NOTICE:
     case ICMP_TYPE_ROUTER_REQUEST:
         desc = "router";
         break;
+
     case ICMP_TYPE_TIMESTAMP_ASK:
     case ICMP_TYPE_TIMESTAMP_REPLY:
         desc = "timestamp";
         break;
+
     case ICMP_TYPE_PING_ASK:
         desc = "ping-ask";
         goto ping_common;
     case ICMP_TYPE_PING_REPLY:
         desc = "ping-reply";
-ping_common:
+        ping_common:
         if (icmp_len > sizeof(_icmp_header_detail)) {
             const char *c = reinterpret_cast<const char*>(PTR_AFTER(&header));
             body << "\tPing Echo: " << std::string(c, icmp_len - sizeof(_icmp_header_detail)) << "\n";
         }
         break;
+
     case ICMP_TYPE_NETMASK_ASK:
         desc = "netmask-ask";
         goto netmask_common;
     case ICMP_TYPE_NETMASK_REPLY:
         desc = "netmask-reply";
-netmask_common:
+        netmask_common:
         body << *reinterpret_cast<const _icmp_netmask_detail*>(PTR_AFTER(&header));
         break;
     }
@@ -379,6 +383,10 @@ netmask_common:
     out << "\tICMP Size: " << icmp_len << " bytes\n";
     out << "\tICMP Code: " << int(header.d.code) << "\n";
     out << "\tICMP Checksum: " << calc_checksum(&header.d, icmp_len) << "\n";
+    if (icmp_len < sizeof(_icmp_header_detail)) {
+        // not all icmp have identification & serial number
+        return out;
+    }
     out << "\tICMP Identification: " << ntohs(header.d.id) << "\n";
     out << "\tICMP Serial No.: " << ntohs(header.d.sn) << "\n";
     out << body.str();
@@ -392,5 +400,7 @@ std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail)
 
 std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail)
 {
-    return out << "\tOrigin IP Header Below:\n" << detail.e_ip;
+    out << "\tOrigin IP Header Below:\n" << DELIMITER_SUBLINE << detail.e_ip;
+    // to-do: use detail.h_aux to print detail.buf
+    return out;
 }
