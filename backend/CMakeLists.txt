@@ -45,41 +45,61 @@ add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 set(INCLUDE_DIR
-    ${CMAKE_SOURCE_DIR}/external/gflags/include/
-    ${CMAKE_SOURCE_DIR}/external/glog/include/
-    ${CMAKE_SOURCE_DIR}/external/npcap/include/
-    )
+  ${CMAKE_SOURCE_DIR}/external/libcef/
+  ${CMAKE_SOURCE_DIR}/external/gflags/include/
+  ${CMAKE_SOURCE_DIR}/external/glog/include/
+  ${CMAKE_SOURCE_DIR}/external/npcap/include/
+  )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
 
 set(LINK_DIR
-    ${CMAKE_SOURCE_DIR}/external/gflags/lib/
-    ${CMAKE_SOURCE_DIR}/external/glog/lib/
-    ${CMAKE_SOURCE_DIR}/external/npcap/lib/
-    )
+  ${CMAKE_SOURCE_DIR}/external/libcef/lib/
+  ${CMAKE_SOURCE_DIR}/external/gflags/lib/
+  ${CMAKE_SOURCE_DIR}/external/glog/lib/
+  ${CMAKE_SOURCE_DIR}/external/npcap/lib/
+  )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
 add_library(net STATIC
-  ${CMAKE_SOURCE_DIR}/src/spec.cpp
-  ${CMAKE_SOURCE_DIR}/src/net.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/spec.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/net.cpp
   )
 target_link_libraries(net
-    wpcap.lib
-    ws2_32.lib
-    glog.lib
-    gflags.lib
-    iphlpapi.lib
-    )
+  wpcap.lib
+  ws2_32.lib
+  glog.lib
+  gflags.lib
+  iphlpapi.lib
+  )
 
-add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/lsdev.cpp)
+add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/net/lsdev.cpp)
 target_link_libraries(lsdev net)
 
-add_executable(sniff ${CMAKE_SOURCE_DIR}/src/sniff.cpp)
+add_executable(sniff ${CMAKE_SOURCE_DIR}/src/net/sniff.cpp)
 target_link_libraries(sniff net)
 
-add_executable(arp ${CMAKE_SOURCE_DIR}/src/arp.cpp)
+add_executable(arp ${CMAKE_SOURCE_DIR}/src/net/arp.cpp)
 target_link_libraries(arp net)
 
-add_executable(ping ${CMAKE_SOURCE_DIR}/src/ping.cpp)
+add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
 target_link_libraries(ping net)
+
+add_executable(demo WIN32
+  ${CMAKE_SOURCE_DIR}/src/core/common.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/msg_handler.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/demo.cpp
+  )
+target_link_libraries(demo
+  libcef
+  libcef_dll_wrapper
+  )
+add_custom_command(TARGET demo
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  ${CMAKE_SOURCE_DIR}/external/libcef/bin/
+  $<TARGET_FILE_DIR:demo>
+  )

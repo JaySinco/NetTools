@@ -1,2 +1,4 @@
 bin/
-dest/
+backend/dest/
+backend/external/libcef/
+render/node_modules/
