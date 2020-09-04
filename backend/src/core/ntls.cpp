@@ -14,7 +14,7 @@ int wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int
 {
     CefEnableHighDPISupport();
     CefMainArgs main_args(hInstance);
-    CefRefPtr<BasicApp> app(new BasicApp(L"demo", 800, 600, calc_app_url()));
+    CefRefPtr<BasicApp> app(new BasicApp(L"ntls", 800, 600, calc_app_url()));
     int exit_code = CefExecuteProcess(main_args, app, nullptr);
     if (exit_code >= 0) {
         return exit_code;

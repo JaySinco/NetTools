@@ -86,20 +86,20 @@ target_link_libraries(arp net)
 add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
 target_link_libraries(ping net)
 
-add_executable(demo WIN32
+add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/core/common.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp
   ${CMAKE_SOURCE_DIR}/src/core/msg_handler.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/demo.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/ntls.cpp
   )
-target_link_libraries(demo
+target_link_libraries(ntls
   libcef
   libcef_dll_wrapper
   )
-add_custom_command(TARGET demo
+add_custom_command(TARGET ntls
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory
   ${CMAKE_SOURCE_DIR}/external/libcef/bin/
-  $<TARGET_FILE_DIR:demo>
+  $<TARGET_FILE_DIR:ntls>
   )

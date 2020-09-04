@@ -1,7 +1,6 @@
 {
-    "name": "demo",
+    "name": "ntls",
     "version": "1.0.0",
-    "description": "libcef demo app",
     "main": "index.js",
     "author": "jaysinco",
     "license": "ISC",

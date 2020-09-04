@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd bin
-start ./demo.exe
+start ./ntls.exe
