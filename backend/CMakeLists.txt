@@ -45,6 +45,7 @@ add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 set(INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/src/
   ${CMAKE_SOURCE_DIR}/external/libcef/
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
   ${CMAKE_SOURCE_DIR}/external/glog/include/
@@ -63,6 +64,7 @@ message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
 add_library(net STATIC
+  ${CMAKE_SOURCE_DIR}/src/common.cpp
   ${CMAKE_SOURCE_DIR}/src/net/spec.cpp
   ${CMAKE_SOURCE_DIR}/src/net/net.cpp
   )
@@ -87,13 +89,13 @@ add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
 target_link_libraries(ping net)
 
 add_executable(ntls WIN32
-  ${CMAKE_SOURCE_DIR}/src/core/common.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp
   ${CMAKE_SOURCE_DIR}/src/core/msg_handler.cpp
   ${CMAKE_SOURCE_DIR}/src/core/ntls.cpp
   )
 target_link_libraries(ntls
+  net
   libcef
   libcef_dll_wrapper
   )

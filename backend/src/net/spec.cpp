@@ -179,6 +179,19 @@ bool _arp_header_detail::is_typical() const
         hw_len == ETHERNET_ADDRESS_LEN && proto_len == IPV4_ADDRESS_LEN;
 }
 
+bool _icmp_header_detail::is_typeof_error() const
+{
+    return type == ICMP_TYPE_ERROR_UNREACHABLE || type == ICMP_TYPE_ERROR_SOURCE_CLOSED ||
+        type == ICMP_TYPE_ERROR_REDIRECTION || type == ICMP_TYPE_ERROR_TIMEOUT ||
+        type == ICMP_TYPE_ERROR_PARAMETER;
+}
+
+bool _ip_header_detail::is_same_source(const _ip_header_detail &other) const
+{
+    return ver_ihl == other.ver_ihl && id == other.id && flags_fo == other.flags_fo &&
+        proto == other.proto && sia == other.sia && dia == other.dia;
+}
+
 std::ostream &operator<<(std::ostream &out, const _ethernet_header_detail &detail)
 {
     std::ostringstream ss;

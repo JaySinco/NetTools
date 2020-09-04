@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
         }
         signal(SIGINT, on_interrupt);
         eth_addr gateway_mac;
-        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000)) {
+        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000) == NTLS_SUCC) {
             LOG(INFO) << "gateway " << apt_info.gateway << " is at " << gateway_mac;
         }
         LOG(INFO) << "forging gateway's mac to " << apt_info.mac << "...";
@@ -49,15 +49,15 @@ int main(int argc, char* argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         LOG(INFO) << "attack stopped";
-        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000)) {
-            if (send_arp(adhandle, ARP_REPLY_OP, gateway_mac, apt_info.gateway, apt_info.mac, apt_info.ip)) {
+        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000) == NTLS_SUCC) {
+            if (send_arp(adhandle, ARP_REPLY_OP, gateway_mac, apt_info.gateway, apt_info.mac, apt_info.ip) == NTLS_SUCC) {
                 LOG(INFO) << "gateway's mac restored to " << gateway_mac;
             }
         }
     }
     else {
         eth_addr target_mac;
-        if (ip2mac(adhandle, apt_info, input_ip, target_mac, 5000)) {
+        if (ip2mac(adhandle, apt_info, input_ip, target_mac, 5000) == NTLS_SUCC) {
             std::cout << input_ip << " is at " << target_mac << "." << std::endl;
         }
         else {

@@ -94,7 +94,42 @@ adapter_info adapter_info::select_auto()
     return select_ip(PLACEHOLDER_IPv4_ADDR, false);
 }
 
-bool ip2mac(
+int packet_loop(
+    pcap_t *adhandle,
+    const loop_callback &cb,
+    const std::chrono::system_clock::time_point &start_tm,
+    int timeout_ms)
+{
+    int res;
+    pcap_pkthdr *header;
+    const u_char *pkt_data;
+    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
+    {
+        if (timeout_ms > 0)
+        {
+            auto now_tm = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
+            if (duration.count() >= timeout_ms) {
+                VLOG(1) << "haven't got arp-reply after " << duration.count() << " ms";
+                return NTLS_TIMEOUT_ERROR;
+            }
+        }
+        if (res == 0) {
+            VLOG(3) << "timeout elapsed";
+            continue;
+        }
+        auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+        int rtn = cb(header, eh);
+        if (rtn != NTLS_CONTINUE) {
+            return rtn;
+        }
+    }
+    if (res == -1) {
+        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
+    }
+}
+
+int ip2mac(
     pcap_t *adhandle,
     const adapter_info &apt_info,
     const ip4_addr &ip,
@@ -113,7 +148,7 @@ bool ip2mac(
     int res;
     pcap_pkthdr *header;
     const u_char *pkt_data;
-    bool succ = false;
+    int succ = NTLS_FAILED;
     while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
     {
         if (timeout_ms > 0)
@@ -122,6 +157,7 @@ bool ip2mac(
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
             if (duration.count() >= timeout_ms) {
                 VLOG(1) << "haven't got arp-reply after " << duration.count() << " ms";
+                succ = NTLS_TIMEOUT_ERROR;
                 break;
             }
 
@@ -136,7 +172,7 @@ bool ip2mac(
             if (ntohs(ah->d.op) == ARP_REPLY_OP) {
                 if (!ah->d.is_fake() && ah->d.sia == ip) {
                     mac = ah->d.sea;
-                    succ = true;
+                    succ = NTLS_SUCC;
                     break;
                 }
             }
@@ -150,7 +186,13 @@ bool ip2mac(
     return succ;
 }
 
-bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, int timeout_ms)
+int ping_with_ttl(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &target_ip,
+    u_char ttl,
+    int timeout_ms,
+    _icmp_error_detail &d_err)
 {
     auto start_tm = std::chrono::system_clock::now();
     _icmp_header_detail ping_data { 0 };
@@ -163,12 +205,13 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
     bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
     if (!is_local) {
         VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
-        if (!ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000)) {
+        if (ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000) != NTLS_SUCC) {
             throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
         }
     }
-    if (!send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, 128,
-        &ping_data, sizeof(_icmp_header_detail)))
+    ip_header ih_saved;
+    if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, ttl,
+        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
     {
         throw std::runtime_error("failed to send ipv4 packet");
     }
@@ -185,7 +228,7 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
             if (duration.count() >= timeout_ms) {
                 VLOG(1) << "haven't got ping-reply after " << duration.count() << " ms";
-                return false;
+                return NTLS_TIMEOUT_ERROR;
             }
 
         }
@@ -200,7 +243,14 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
                 auto mh = reinterpret_cast<const icmp_header*>(pkt_data);
                 if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
                     VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;        
-                    return true;
+                    return NTLS_SUCC;
+                }
+                if (mh->d.is_typeof_error()) {
+                    auto eh = reinterpret_cast<const _icmp_error_detail*>(pkt_data);
+                    if (eh->e_ip.is_same_source(ih_saved.d)) {
+                        d_err = *eh;
+                        return NTLS_FAILED;
+                    }
                 }
             }
         }
@@ -208,10 +258,10 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
     if (res == -1) {
         throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
     }
-    return false;
+    return NTLS_UNEXPECTED_ERROR;
 }
 
-bool send_arp(
+int send_arp(
     pcap_t *adhandle,
     u_short op,
     const eth_addr &sea,
@@ -235,12 +285,12 @@ bool send_arp(
     if (pcap_sendpacket(adhandle, reinterpret_cast<u_char*>(&ah), sizeof(arp_header)) != 0)
     {
         LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
-        return false;
+        return NTLS_FAILED;
     }
-    return true;
+    return NTLS_SUCC;
 }
 
-bool send_ip(
+int send_ip(
     pcap_t *adhandle,
     const eth_addr &dea,
     const eth_addr &sea,
@@ -249,7 +299,8 @@ bool send_ip(
     const ip4_addr &dia,
     u_char ttl,
     void *ip_data,
-    size_t len_in_byte)
+    size_t len_in_byte,
+    ip_header &ih_saved)
 {
     size_t total_len = sizeof(ip_header) + len_in_byte;
     u_char *packet = new u_char[total_len]{ 0 };
@@ -270,9 +321,10 @@ bool send_ip(
     if (pcap_sendpacket(adhandle, packet, static_cast<int>(total_len)) != 0)
     {
         LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
-        return false;
+        return NTLS_FAILED;
     }
-    return true;
+    ih_saved = *ih;
+    return NTLS_SUCC;
 }
 
 std::ostream &operator<<(std::ostream &out, const adapter_info &apt)

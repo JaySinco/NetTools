@@ -28,12 +28,29 @@ int main(int argc, char* argv[])
         }
     }
 
+    std::cout << "target=" << target_ip << std::endl;
     adapter_info apt_info;
     pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
-    if (!is_reachable(adhandle, apt_info, target_ip, 5000)) {
-        std::cout << target_ip << " is offline." << std::endl;
-        return -1;
+    int ttl = 1;
+    while (true) {
+        _icmp_error_detail d_err = {0};
+        int rtn = ping_with_ttl(adhandle, apt_info, target_ip, ttl, 10000, d_err);
+        if (rtn == NTLS_TIMEOUT_ERROR) {
+            std::cout << "timeout" << std::endl;
+            break;
+        }
+        else if (rtn == NTLS_SUCC) {
+            std::cout << "reach " << target_ip << std::endl;
+            break;
+        }
+        else if (rtn == NTLS_FAILED) {
+            std::cout << "route by " << d_err.h_aux.h.d.sia << std::endl;
+        }
+        else {
+            std::cout << "error= " << rtn << std::endl;
+            break;
+        }
+        ++ttl;
     }
-    std::cout << target_ip << " is online." << std::endl;
     NT_CATCH
 }

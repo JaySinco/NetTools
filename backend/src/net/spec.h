@@ -150,6 +150,8 @@ struct _ip_header_detail {
     u_short  crc;       // Header checksum
     ip4_addr sia;       // Source address
     ip4_addr dia;       // Destination address
+
+    bool is_same_source(const _ip_header_detail &other) const;
 };
 
 struct ip_header {
@@ -163,6 +165,8 @@ struct _icmp_header_detail {
     u_short crc;  // Checksum as a whole
     u_short id;   // Identification
     u_short sn;   // Serial number
+
+    bool is_typeof_error() const;
 };
 
 struct icmp_header {
