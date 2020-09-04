@@ -33,21 +33,10 @@ int main(int argc, char* argv[])
     }
 
     LOG(INFO) << "begin to sniff...";
-    int res;
-    pcap_pkthdr *header;
-    const u_char *pkt_data;
-    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
-    {
-        if (res == 0) {
-            VLOG(3) << "timeout elapsed";
-            continue;
-        }
-        print_packet(std::cout, header, pkt_data) << std::endl;
-    }
-
-    if (res == -1) {
-        LOG(ERROR) << "failed to read packets: " << pcap_geterr(adhandle);
-        return -1;
-    }
+    auto start_tm = std::chrono::system_clock::now();
+    packet_loop(adhandle, start_tm, -1, [&](pcap_pkthdr *pkthdr, const ethernet_header *eh){
+        print_packet(std::cout, pkthdr, eh) << std::endl;
+        return NTLS_CONTINUE;
+    });
     NT_CATCH
 }

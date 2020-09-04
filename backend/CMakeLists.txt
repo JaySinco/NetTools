@@ -88,6 +88,9 @@ target_link_libraries(arp net)
 add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
 target_link_libraries(ping net)
 
+add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/net/traceroute.cpp)
+target_link_libraries(traceroute net)
+
 add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp
@@ -96,8 +99,8 @@ add_executable(ntls WIN32
   )
 target_link_libraries(ntls
   net
-  libcef
-  libcef_dll_wrapper
+  libcef.lib
+  libcef_dll_wrapper.lib
   )
 add_custom_command(TARGET ntls
   POST_BUILD

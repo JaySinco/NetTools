@@ -151,7 +151,7 @@ struct _ip_header_detail {
     ip4_addr sia;       // Source address
     ip4_addr dia;       // Destination address
 
-    bool is_same_source(const _ip_header_detail &other) const;
+    bool almost_same(const _ip_header_detail &other) const;
 };
 
 struct ip_header {

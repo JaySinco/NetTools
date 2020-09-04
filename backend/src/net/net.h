@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <functional>
 #include "common.h"
 #include "pcap.h"
@@ -29,10 +30,11 @@ std::ostream &operator<<(std::ostream &out, const adapter_info &apt);
 std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev);
 u_short rand_ushort();
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info);
-std::ostream &print_packet(std::ostream &out, const pcap_pkthdr *header, const u_char *pkt_data);
+std::ostream &print_packet(std::ostream &out, const pcap_pkthdr *pkthdr, const ethernet_header *eh);
 using loop_callback = std::function<int(pcap_pkthdr*, const ethernet_header*)>;
-int packet_loop(pcap_t *adhandle, const loop_callback &cb, const std::chrono::system_clock::time_point &start_tm, int timeout_ms);
+int packet_loop(pcap_t *adhandle, const std::chrono::system_clock::time_point &start_tm, int timeout_ms, const loop_callback &cb);
 int ip2mac(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &ip, eth_addr &mac, int timeout_ms);
 int send_arp(pcap_t *adhandle, u_short op, const eth_addr &sea, const ip4_addr &sia, const eth_addr &dea, const ip4_addr &dia);
 int send_ip(pcap_t *adhandle, const eth_addr &dea, const eth_addr &sea, u_char proto, const ip4_addr &sia, const ip4_addr &dia, u_char ttl, void *ip_data, size_t len_in_byte, ip_header &ih_saved);
-int ping_with_ttl(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, u_char ttl, int timeout_ms, _icmp_error_detail &d_err);
+int ping(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, int timeout_ms, timeval &recv_tm);
+int trace_route(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_ip, u_char ttl, int timeout_ms, timeval &recv_tm, _icmp_error_detail &d_err);

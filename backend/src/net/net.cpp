@@ -96,9 +96,9 @@ adapter_info adapter_info::select_auto()
 
 int packet_loop(
     pcap_t *adhandle,
-    const loop_callback &cb,
     const std::chrono::system_clock::time_point &start_tm,
-    int timeout_ms)
+    int timeout_ms,
+    const loop_callback &cb)
 {
     int res;
     pcap_pkthdr *header;
@@ -122,137 +122,6 @@ int packet_loop(
         int rtn = cb(header, eh);
         if (rtn != NTLS_CONTINUE) {
             return rtn;
-        }
-    }
-    if (res == -1) {
-        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
-    }
-}
-
-int ip2mac(
-    pcap_t *adhandle,
-    const adapter_info &apt_info,
-    const ip4_addr &ip,
-    eth_addr &mac,
-    int timeout_ms)
-{
-    auto start_tm = std::chrono::system_clock::now();
-    std::atomic<bool> over = false;
-    std::thread send_loop_t([&]{
-        while (!over) {
-            send_arp(adhandle, ARP_REQUEST_OP, apt_info.mac, apt_info.ip, PLACEHOLDER_ETH_ADDR, ip);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-    });
-    
-    int res;
-    pcap_pkthdr *header;
-    const u_char *pkt_data;
-    int succ = NTLS_FAILED;
-    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
-    {
-        if (timeout_ms > 0)
-        {
-            auto now_tm = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
-            if (duration.count() >= timeout_ms) {
-                VLOG(1) << "haven't got arp-reply after " << duration.count() << " ms";
-                succ = NTLS_TIMEOUT_ERROR;
-                break;
-            }
-
-        }
-        if (res == 0) {
-            VLOG(3) << "timeout elapsed";
-            continue;
-        }
-        auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-        if (ntohs(eh->d.eth_type) == ETHERNET_TYPE_ARP) {
-            auto ah = reinterpret_cast<const arp_header*>(pkt_data);
-            if (ntohs(ah->d.op) == ARP_REPLY_OP) {
-                if (!ah->d.is_fake() && ah->d.sia == ip) {
-                    mac = ah->d.sea;
-                    succ = NTLS_SUCC;
-                    break;
-                }
-            }
-        }
-    }
-    if (res == -1) {
-        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
-    }
-    over = true;
-    send_loop_t.join();
-    return succ;
-}
-
-int ping_with_ttl(
-    pcap_t *adhandle,
-    const adapter_info &apt_info,
-    const ip4_addr &target_ip,
-    u_char ttl,
-    int timeout_ms,
-    _icmp_error_detail &d_err)
-{
-    auto start_tm = std::chrono::system_clock::now();
-    _icmp_header_detail ping_data { 0 };
-    ping_data.type = ICMP_TYPE_PING_ASK;
-    ping_data.code = 0;
-    ping_data.id = rand_ushort();
-    ping_data.sn = rand_ushort();
-    ping_data.crc = calc_checksum(&ping_data, sizeof(_icmp_header_detail));
-    eth_addr dest_mac = BROADCAST_ETH_ADDR;
-    bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
-    if (!is_local) {
-        VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
-        if (ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000) != NTLS_SUCC) {
-            throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
-        }
-    }
-    ip_header ih_saved;
-    if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, ttl,
-        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
-    {
-        throw std::runtime_error("failed to send ipv4 packet");
-    }
-    
-    int res;
-    pcap_pkthdr *header;
-    const u_char *pkt_data;
-    bool succ = false;
-    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
-    {
-        if (timeout_ms > 0)
-        {
-            auto now_tm = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now_tm - start_tm);
-            if (duration.count() >= timeout_ms) {
-                VLOG(1) << "haven't got ping-reply after " << duration.count() << " ms";
-                return NTLS_TIMEOUT_ERROR;
-            }
-
-        }
-        if (res == 0) {
-            VLOG(3) << "timeout elapsed";
-            continue;
-        }
-        auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-        if (eh->d.dea == apt_info.mac && ntohs(eh->d.eth_type) == ETHERNET_TYPE_IPv4) {
-            auto ih = reinterpret_cast<const ip_header*>(pkt_data);
-            if (ih->d.dia == apt_info.ip && ih->d.proto == IPv4_TYPE_ICMP) {
-                auto mh = reinterpret_cast<const icmp_header*>(pkt_data);
-                if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
-                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;        
-                    return NTLS_SUCC;
-                }
-                if (mh->d.is_typeof_error()) {
-                    auto eh = reinterpret_cast<const _icmp_error_detail*>(pkt_data);
-                    if (eh->e_ip.is_same_source(ih_saved.d)) {
-                        d_err = *eh;
-                        return NTLS_FAILED;
-                    }
-                }
-            }
         }
     }
     if (res == -1) {
@@ -393,16 +262,15 @@ std::ostream &print_ip_packet(std::ostream &out, const ip_header *ih)
 
 std::ostream &print_packet(
     std::ostream &out,
-    const pcap_pkthdr *header,
-    const u_char *pkt_data)
+    const pcap_pkthdr *pkthdr,
+    const ethernet_header *eh)
 {
-    time_t local_tv_sec = header->ts.tv_sec;
+    time_t local_tv_sec = pkthdr->ts.tv_sec;
     tm ltime;
     localtime_s(&ltime, &local_tv_sec);
     char timestr[16];
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &ltime);
-    out << timestr << "." << std::setw(6) << std::left << header->ts.tv_usec << " ";
-    auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
+    out << timestr << "." << std::setw(6) << std::left << pkthdr->ts.tv_usec << " ";
     out << eh->d.sea << " > " << eh->d.dea << std::endl;
     switch (ntohs(eh->d.eth_type))
     {
@@ -418,4 +286,138 @@ std::ostream &print_packet(
         break;
     }
     return out;
+}
+
+int ip2mac(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &ip,
+    eth_addr &mac,
+    int timeout_ms)
+{
+    auto start_tm = std::chrono::system_clock::now();
+    std::atomic<bool> over = false;
+    std::thread send_loop_t([&]{
+        while (!over) {
+            send_arp(adhandle, ARP_REQUEST_OP, apt_info.mac, apt_info.ip, PLACEHOLDER_ETH_ADDR, ip);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    });
+    int rtn = packet_loop(adhandle, start_tm, timeout_ms, [&](pcap_pkthdr *pkthdr, const ethernet_header *eh){
+        if (ntohs(eh->d.eth_type) == ETHERNET_TYPE_ARP) {
+            auto ah = reinterpret_cast<const arp_header*>(eh);
+            if (ntohs(ah->d.op) == ARP_REPLY_OP) {
+                if (!ah->d.is_fake() && ah->d.sia == ip) {
+                    mac = ah->d.sea;
+                    return NTLS_SUCC;
+                }
+            }
+        }
+        return NTLS_CONTINUE;
+    });
+    over = true;
+    send_loop_t.join();
+    return rtn;
+}
+
+int ping(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &target_ip,
+    int timeout_ms,
+    timeval &recv_tm)
+{
+    auto start_tm = std::chrono::system_clock::now();
+    _icmp_header_detail ping_data { 0 };
+    ping_data.type = ICMP_TYPE_PING_ASK;
+    ping_data.code = 0;
+    ping_data.id = rand_ushort();
+    ping_data.sn = rand_ushort();
+    ping_data.crc = calc_checksum(&ping_data, sizeof(_icmp_header_detail));
+    eth_addr dest_mac = BROADCAST_ETH_ADDR;
+    bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
+    if (!is_local) {
+        VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
+        if (ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000) != NTLS_SUCC) {
+            throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
+        }
+    }
+    ip_header ih_saved;
+    if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, 128,
+        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
+    {
+        throw std::runtime_error("failed to send ipv4 packet");
+    }
+
+    int rtn = packet_loop(adhandle, start_tm, timeout_ms, [&](pcap_pkthdr *pkthdr, const ethernet_header *eh){
+        if (eh->d.dea == apt_info.mac && ntohs(eh->d.eth_type) == ETHERNET_TYPE_IPv4) {
+            auto ih = reinterpret_cast<const ip_header*>(eh);
+            if (ih->d.dia == apt_info.ip && ih->d.proto == IPv4_TYPE_ICMP) {
+                auto mh = reinterpret_cast<const icmp_header*>(eh);
+                if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
+                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;
+                    recv_tm = pkthdr->ts;
+                    return NTLS_SUCC;
+                }
+            }
+        }
+        return NTLS_CONTINUE;
+    });
+    return rtn;
+}
+
+int trace_route(
+    pcap_t *adhandle,
+    const adapter_info &apt_info,
+    const ip4_addr &target_ip,
+    u_char ttl,
+    int timeout_ms,
+    timeval &recv_tm,
+    _icmp_error_detail &d_err)
+{
+    auto start_tm = std::chrono::system_clock::now();
+    _icmp_header_detail ping_data { 0 };
+    ping_data.type = ICMP_TYPE_PING_ASK;
+    ping_data.code = 0;
+    ping_data.id = rand_ushort();
+    ping_data.sn = rand_ushort();
+    ping_data.crc = calc_checksum(&ping_data, sizeof(_icmp_header_detail));
+    eth_addr dest_mac = BROADCAST_ETH_ADDR;
+    bool is_local = target_ip.same_subnet(apt_info.ip, apt_info.mask);
+    if (!is_local) {
+        VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
+        if (ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000) != NTLS_SUCC) {
+            throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
+        }
+    }
+    ip_header ih_saved;
+    if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, ttl,
+        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
+    {
+        throw std::runtime_error("failed to send ipv4 packet");
+    }
+
+    int rtn = packet_loop(adhandle, start_tm, timeout_ms, [&](pcap_pkthdr *pkthdr, const ethernet_header *eh){
+        if (eh->d.dea == apt_info.mac && ntohs(eh->d.eth_type) == ETHERNET_TYPE_IPv4) {
+            auto ih = reinterpret_cast<const ip_header*>(eh);
+            if (ih->d.dia == apt_info.ip && ih->d.proto == IPv4_TYPE_ICMP) {
+                auto mh = reinterpret_cast<const icmp_header*>(eh);
+                if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
+                    VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;
+                    recv_tm = pkthdr->ts;
+                    return NTLS_SUCC;
+                }
+                if (mh->d.is_typeof_error()) {
+                    auto mh = reinterpret_cast<const _icmp_error_detail*>(eh);
+                    if (mh->e_ip.almost_same(ih_saved.d)) {
+                        d_err = *mh;
+                        recv_tm = pkthdr->ts;
+                        return NTLS_RECV_ERROR_ICMP;
+                    }
+                }
+            }
+        }
+        return NTLS_CONTINUE;
+    });
+    return rtn;
 }
