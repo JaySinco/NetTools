@@ -283,47 +283,47 @@ std::string get_icmp_error_desc(const icmp_header &header)
     case ICMP_TYPE_ERROR_UNREACHABLE:
         switch (header.d.code)
         {
-        case  0: desc = "net unreachable"; break;
-        case  1: desc = "host unreachable"; break;
-        case  2: desc = "protocol unreachable"; break;
-        case  3: desc = "port unreachable"; break;
-        case  4: desc = "slice required"; break;
-        case  5: desc = "routing failure"; break;
-        case  6: desc = "unknow net"; break;
-        case  7: desc = "unknow host"; break;
-        case  8: desc = "host isolated(abandon)"; break;
-        case  9: desc = "net forbidden"; break;
-        case 10: desc = "host forbidden"; break;
-        case 11: desc = "TOS net unreachable"; break;
-        case 12: desc = "TOS host unreachable"; break;
-        case 13: desc = "force prohibit communication"; break;
-        case 14: desc = "host not authorized"; break;
-        case 15: desc = "suspend priority"; break;
+        case  0: desc = "Network unreachable"; break;
+        case  1: desc = "Host unreachable"; break;
+        case  2: desc = "Protocol unreachable"; break;
+        case  3: desc = "Port unreachable"; break;
+        case  4: desc = "Fragmentation needed but no frag. bit set"; break;
+        case  5: desc = "Source routing failed"; break;
+        case  6: desc = "Destination network unknown"; break;
+        case  7: desc = "Destination host unknown"; break;
+        case  8: desc = "Source host isolated (obsolete)"; break;
+        case  9: desc = "Destination network administratively prohibited"; break;
+        case 10: desc = "Destination host administratively prohibited"; break;
+        case 11: desc = "Network unreachable for TOS"; break;
+        case 12: desc = "Host unreachable for TOS"; break;
+        case 13: desc = "Communication administratively prohibited by filtering"; break;
+        case 14: desc = "Host precedence violation"; break;
+        case 15: desc = "Precedence cutoff in effect"; break;
         }
     case ICMP_TYPE_ERROR_SOURCE_CLOSED:
         switch (header.d.code)
         {
-        case  0: desc = "source shutdown"; break;
+        case  0: desc = "Source quench"; break;
         }
     case ICMP_TYPE_ERROR_REDIRECTION:
         switch (header.d.code)
         {
-        case  0: desc = "net redirection"; break;
-        case  1: desc = "host redirection"; break;
-        case  2: desc = "service-type redirection"; break;
-        case  3: desc = "service-type&host redirection"; break;
+        case  0: desc = "Redirect for network"; break;
+        case  1: desc = "Redirect for host"; break;
+        case  2: desc = "Redirect for TOS and network"; break;
+        case  3: desc = "Redirect for TOS and host"; break;
         }
     case ICMP_TYPE_ERROR_TIMEOUT:
         switch (header.d.code)
         {
-        case  0: desc = "ttl=0 when transport"; break;
-        case  1: desc = "ttl=0 when assembly datagram"; break;
+        case  0: desc = "TTL equals 0 during transit"; break;
+        case  1: desc = "TTL equals 0 during reassembly"; break;
         }
     case ICMP_TYPE_ERROR_PARAMETER:
         switch (header.d.code)
         {
-        case  0: desc = "invalid ip header"; break;
-        case  1: desc = "missing required option"; break;
+        case  0: desc = "IP header bad (catch-all error)"; break;
+        case  1: desc = "Required options missing"; break;
         }
     }
     return desc;
@@ -351,11 +351,6 @@ std::ostream &operator<<(std::ostream &out, const icmp_header &header)
     case ICMP_TYPE_ROUTER_NOTICE:
     case ICMP_TYPE_ROUTER_REQUEST:
         desc = "router";
-        break;
-
-    case ICMP_TYPE_TIMESTAMP_ASK:
-    case ICMP_TYPE_TIMESTAMP_REPLY:
-        desc = "timestamp";
         break;
 
     case ICMP_TYPE_PING_ASK:

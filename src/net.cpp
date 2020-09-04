@@ -167,7 +167,7 @@ bool is_reachable(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr
             throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
         }
     }
-    if (!send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip,
+    if (!send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, 128,
         &ping_data, sizeof(_icmp_header_detail)))
     {
         throw std::runtime_error("failed to send ipv4 packet");
@@ -247,6 +247,7 @@ bool send_ip(
     u_char proto,
     const ip4_addr &sia,
     const ip4_addr &dia,
+    u_char ttl,
     void *ip_data,
     size_t len_in_byte)
 {
@@ -260,7 +261,7 @@ bool send_ip(
     ih->d.ver_ihl = (4 << 4) | 5;
     ih->d.tlen = htons(static_cast<u_short>(20 + len_in_byte));
     ih->d.id = rand_ushort();
-    ih->d.ttl = 128;
+    ih->d.ttl = ttl;
     ih->d.proto = proto;
     ih->d.sia = sia;
     ih->d.dia = dia;
