@@ -15,8 +15,10 @@ int main(int argc, char* argv[])
 
     ip4_addr target_ip;
     std::string target_name = argv[1];
+    std::ostringstream ip_desc;
     if (ip4_addr::is_valid(target_name)) {
         target_ip = ip4_addr(target_name);
+        ip_desc << target_ip;
     }
     else {
         VLOG(1) << "invalid ip address, try interpret as host name";
@@ -26,32 +28,48 @@ int main(int argc, char* argv[])
             LOG(ERROR) << "invalid ip or host name: " << target_name;
             return -1;
         }
+        ip_desc << target_name << " [" << target_ip << "]";
     }
 
-    std::cout << "target=" << target_ip << std::endl;
+    std::cout << "\nRoute traced to " << ip_desc.str() << "\n" << std::endl;
     adapter_info apt_info;
     pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
-    int ttl = 1;
+    int ttl = 0;
+    constexpr int epoch_cnt = 3;
     while (true) {
-        _icmp_error_detail d_err = {0};
-        long cost_ms;
-        int rtn = trace_route(adhandle, apt_info, target_ip, ttl, 10000, cost_ms, d_err);
-        if (rtn == NTLS_TIMEOUT_ERROR) {
-            std::cout << "timeout" << std::endl;
-            break;
+        ++ttl;
+        ip4_addr route_ip;
+        int timeout_cnt = 0;
+        std::cout << std::setw(2) << ttl << " " << std::flush;
+        for (int i = 0; i < epoch_cnt; ++i) {
+            std::cout << std::setw(6);
+            long cost_ms;
+            ip_header ih_recv;
+            _icmp_error_detail d_err;
+            int rtn = ping(adhandle, apt_info, target_ip, ttl, 3000, cost_ms, ih_recv, d_err);
+            if (rtn == NTLS_TIMEOUT_ERROR) {
+                ++timeout_cnt;
+                std::cout << "       *" << std::flush;
+            }
+            else if (rtn == NTLS_SUCC) {
+                route_ip = target_ip;
+                std::cout << cost_ms << "ms" << std::flush;
+            }
+            else if (rtn == NTLS_RECV_ERROR_ICMP) {
+                route_ip = d_err.h_aux.h.d.sia;
+                std::cout << cost_ms << "ms" << std::flush;
+            }
         }
-        else if (rtn == NTLS_SUCC) {
-            std::cout << "reach " << target_ip << std::endl;
-            break;
-        }
-        else if (rtn == NTLS_RECV_ERROR_ICMP) {
-            std::cout << "route by " << d_err.h_aux.h.d.sia << std::endl;
+        if (timeout_cnt >= epoch_cnt) {
+            std::cout << "  -- timeout --" << std::endl;
         }
         else {
-            std::cout << "error= " << rtn << std::endl;
-            break;
+            std::cout << "  " << route_ip << std::endl;
+            if (route_ip == target_ip) {
+                std::cout << "\nTracking is complete." << std::endl;
+                break;
+            }
         }
-        ++ttl;
     }
     NT_CATCH
 }

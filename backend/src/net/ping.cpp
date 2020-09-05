@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
             LOG(ERROR) << "invalid ip or host name: " << target_name;
             return -1;
         }
-        ip_desc << target_name << "[" << target_ip << "]";
+        ip_desc << target_name << " [" << target_ip << "]";
     }
 
     std::cout << "\nPing " << ip_desc.str() << ":"<< std::endl;
@@ -36,13 +36,14 @@ int main(int argc, char* argv[])
     pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
     constexpr int total_cnt = 4;
     int recv_cnt = 0;
-    long min_cost = 9999;
+    long min_cost = 999999;
     long max_cost = -1;
     long sum_cost = 0;
     for (int i = 0; i < total_cnt; ++i) {
         long cost_ms;
         ip_header ih_recv;
-        int rtn = ping(adhandle, apt_info, target_ip, 3000, cost_ms, ih_recv);
+        _icmp_error_detail d_err;
+        int rtn = ping(adhandle, apt_info, target_ip, 128, 3000, cost_ms, ih_recv, d_err);
         std::cout << "Reply from " << target_ip << ": ";
         if (rtn == NTLS_SUCC) {
             ++recv_cnt;

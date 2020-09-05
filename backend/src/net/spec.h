@@ -184,6 +184,14 @@ struct _icmp_error_detail {
     u_char            buf[8]; // At least 8-bit behind ip header
 };
 
+struct _pseudo_udp_header_detail {
+    ip4_addr sia;      // Source address
+    ip4_addr dia;      // Destination address
+    u_char   zero_pad; // Zero
+    u_char   proto;    // Protocol
+    u_short  len;      // Datagram length
+};
+
 struct _udp_header_detail {
     u_short sport; // Source port
     u_short dport; // Destination port
@@ -197,6 +205,8 @@ struct udp_header {
 };
 
 u_short calc_checksum(const void *data, size_t len_in_byte);
+u_short calc_udp_checksum(const void *data, size_t len_in_byte, const _pseudo_udp_header_detail &dt);
+u_short calc_udp_checksum(const void *data, size_t len_in_byte, const _ip_header_detail &it);
 
 std::ostream &operator<<(std::ostream &out, const _ethernet_header_detail &detail);
 std::ostream &operator<<(std::ostream &out, const ethernet_header &header);
@@ -207,4 +217,5 @@ std::ostream &operator<<(std::ostream &out, const ip_header &header);
 std::ostream &operator<<(std::ostream &out, const icmp_header &header);
 std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail);
 std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail);
-// std::ostream &operator<<(std::ostream &out, const udp_header &header);
+std::ostream &operator<<(std::ostream &out, const _udp_header_detail &detail);
+std::ostream &operator<<(std::ostream &out, const udp_header &header);

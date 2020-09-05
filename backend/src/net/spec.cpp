@@ -165,6 +165,31 @@ u_short calc_checksum(const void *data, size_t len_in_byte)
     return static_cast<u_short>(~checksum);
 }
 
+u_short calc_udp_checksum(const void *data, size_t len_in_byte, const _pseudo_udp_header_detail &dt)
+{
+    size_t total_len = sizeof(_pseudo_udp_header_detail) + len_in_byte;
+    if (total_len % 2 != 0) {
+        total_len += 1;
+    }
+    u_char *buffer = new u_char[total_len]{ 0 };
+    std::memcpy(buffer, &dt, sizeof(_pseudo_udp_header_detail));
+    std::memcpy(buffer + sizeof(_pseudo_udp_header_detail), data, len_in_byte);
+    u_short crc = calc_checksum(buffer, total_len);
+    delete [] buffer;
+    return crc;
+}
+
+u_short calc_udp_checksum(const void *data, size_t len_in_byte, const _ip_header_detail &it)
+{
+    _pseudo_udp_header_detail dt;
+    dt.sia = it.sia;
+    dt.dia = it.dia;
+    dt.zero_pad = 0;
+    dt.proto = it.proto;
+    dt.len = htons(static_cast<u_short>(len_in_byte));
+    return calc_udp_checksum(data, len_in_byte, dt);
+}
+
 bool _arp_header_detail::is_fake() const
 {
     if (ntohs(op) == ARP_REPLY_OP && sea == dea && sia != dia) {
@@ -409,6 +434,29 @@ std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail)
 std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail)
 {
     out << "\tOrigin IP Header Below:\n" << DELIMITER_SUBLINE << detail.e_ip;
-    // to-do: use detail.h_aux to print detail.buf
+    if (detail.e_ip.proto == IPv4_TYPE_UDP) {
+        out << DELIMITER_SUBLINE << *reinterpret_cast<const _udp_header_detail*>(detail.buf);
+    }
+    return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const _udp_header_detail &detail)
+{
+    out << "\tUDP Source Port: " << ntohs(detail.sport) << "\n";
+    out << "\tUDP Destination Port: " << ntohs(detail.dport) << "\n";
+    out << "\tUDP Size: " << ntohs(detail.len) << "\n";
+    return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const udp_header &header)
+{
+    out << header.h << DELIMITER_LINE << header.d;
+    out << "\tUDP Checksum: ";
+    if (header.d.crc == 0) {
+        out << "(empty)\n";
+    }
+    else {
+        out << calc_udp_checksum(&header.d, ntohs(header.d.len), header.h.d) << std::endl;
+    }
     return out;
 }

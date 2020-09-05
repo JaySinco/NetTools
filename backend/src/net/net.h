@@ -74,15 +74,9 @@ int ping(
     pcap_t *adhandle,
     const adapter_info &apt_info,
     const ip4_addr &target_ip,
-    int timeout_ms,
-    long &cost_ms,
-    ip_header &ih_recv);
-
-int trace_route(
-    pcap_t *adhandle,
-    const adapter_info &apt_info,
-    const ip4_addr &target_ip,
     u_char ttl,
     int timeout_ms,
     long &cost_ms,
+    ip_header &ih_recv,
     _icmp_error_detail &d_err);
+
