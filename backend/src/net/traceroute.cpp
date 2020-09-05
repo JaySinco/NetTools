@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
     int ttl = 1;
     while (true) {
         _icmp_error_detail d_err = {0};
-        timeval tm;
-        int rtn = trace_route(adhandle, apt_info, target_ip, ttl, 10000, tm, d_err);
+        long cost_ms;
+        int rtn = trace_route(adhandle, apt_info, target_ip, ttl, 10000, cost_ms, d_err);
         if (rtn == NTLS_TIMEOUT_ERROR) {
             std::cout << "timeout" << std::endl;
             break;

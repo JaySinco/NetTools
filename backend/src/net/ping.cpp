@@ -15,8 +15,10 @@ int main(int argc, char* argv[])
 
     ip4_addr target_ip;
     std::string target_name = argv[1];
+    std::ostringstream ip_desc;
     if (ip4_addr::is_valid(target_name)) {
         target_ip = ip4_addr(target_name);
+        ip_desc << target_ip;
     }
     else {
         VLOG(1) << "invalid ip address, try interpret as host name";
@@ -26,32 +28,40 @@ int main(int argc, char* argv[])
             LOG(ERROR) << "invalid ip or host name: " << target_name;
             return -1;
         }
+        ip_desc << target_name << "[" << target_ip << "]";
     }
 
-    std::cout << "target=" << target_ip << std::endl;
+    std::cout << "\nPing " << ip_desc.str() << ":"<< std::endl;
     adapter_info apt_info;
     pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
-    int ttl = 1;
-    while (true) {
-        _icmp_error_detail d_err = {0};
-        timeval tm;
-        int rtn = trace_route(adhandle, apt_info, target_ip, ttl, 10000, tm, d_err);
-        if (rtn == NTLS_TIMEOUT_ERROR) {
-            std::cout << "timeout" << std::endl;
-            break;
-        }
-        else if (rtn == NTLS_SUCC) {
-            std::cout << "reach " << target_ip << std::endl;
-            break;
-        }
-        else if (rtn == NTLS_RECV_ERROR_ICMP) {
-            std::cout << "route by " << d_err.h_aux.h.d.sia << std::endl;
+    constexpr int total_cnt = 4;
+    int recv_cnt = 0;
+    long min_cost = 9999;
+    long max_cost = -1;
+    long sum_cost = 0;
+    for (int i = 0; i < total_cnt; ++i) {
+        long cost_ms;
+        ip_header ih_recv;
+        int rtn = ping(adhandle, apt_info, target_ip, 3000, cost_ms, ih_recv);
+        std::cout << "Reply from " << target_ip << ": ";
+        if (rtn == NTLS_SUCC) {
+            ++recv_cnt;
+            min_cost = min(min_cost, cost_ms);
+            max_cost = max(max_cost, cost_ms);
+            sum_cost += cost_ms;
+            std::cout << "time=" << cost_ms << "ms"  << " ttl=" << static_cast<int>(ih_recv.d.ttl) << std::endl;
         }
         else {
-            std::cout << "error= " << rtn << std::endl;
-            break;
+            std::cout << "timeout" << std::endl;
         }
-        ++ttl;
+    }
+    std::cout << "\nStatistical information:" << std::endl;
+    std::cout << "    packets: sent=" << total_cnt << ", recv=" << recv_cnt
+        << ", lost=" << (total_cnt - recv_cnt) << " ("
+        << int(float(total_cnt - recv_cnt) / total_cnt * 100) << "% lost)\n";
+    if (sum_cost > 0) {
+        std::cout << "Estimated time of round trip:" << std::endl;
+        std::cout << "    min=" << min_cost << "ms, max=" << max_cost << "ms, avg=" << (sum_cost) / total_cnt << "ms\n";
     }
     NT_CATCH
 }

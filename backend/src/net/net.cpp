@@ -98,12 +98,12 @@ int packet_loop(
     pcap_t *adhandle,
     const std::chrono::system_clock::time_point &start_tm,
     int timeout_ms,
-    const loop_callback &cb)
+    const packet_loop_callback &cb)
 {
     int res;
-    pcap_pkthdr *header;
+    pcap_pkthdr *pkthdr;
     const u_char *pkt_data;
-    while((res = pcap_next_ex(adhandle, &header, &pkt_data)) >= 0)
+    while((res = pcap_next_ex(adhandle, &pkthdr, &pkt_data)) >= 0)
     {
         if (timeout_ms > 0)
         {
@@ -119,7 +119,7 @@ int packet_loop(
             continue;
         }
         auto eh = reinterpret_cast<const ethernet_header*>(pkt_data);
-        int rtn = cb(header, eh);
+        int rtn = cb(pkthdr, eh);
         if (rtn != NTLS_CONTINUE) {
             return rtn;
         }
@@ -169,7 +169,7 @@ int send_ip(
     u_char ttl,
     void *ip_data,
     size_t len_in_byte,
-    ip_header &ih_saved)
+    ip_header &ih_send)
 {
     size_t total_len = sizeof(ip_header) + len_in_byte;
     u_char *packet = new u_char[total_len]{ 0 };
@@ -192,7 +192,7 @@ int send_ip(
         LOG(ERROR) << "failed to send packet: " << pcap_geterr(adhandle);
         return NTLS_FAILED;
     }
-    ih_saved = *ih;
+    ih_send = *ih;
     return NTLS_SUCC;
 }
 
@@ -320,12 +320,37 @@ int ip2mac(
     return rtn;
 }
 
+void get_time_of_day(timeval *tv)
+{
+    SYSTEMTIME sys_tm;
+    GetLocalTime(&sys_tm);
+    tm tm;
+    tm.tm_year   = sys_tm.wYear - 1900;
+    tm.tm_mon   = sys_tm.wMonth - 1;
+    tm.tm_mday   = sys_tm.wDay;
+    tm.tm_hour   = sys_tm.wHour;
+    tm.tm_min   = sys_tm.wMinute;
+    tm.tm_sec   = sys_tm.wSecond;
+    tm. tm_isdst  = -1;
+    time_t clock = mktime(&tm);
+    tv->tv_sec = static_cast<long>(clock);
+    tv->tv_usec = sys_tm.wMilliseconds * 1000;
+}
+
+long operator-(const timeval &tv1, const timeval &tv2)
+{
+    long diff_sec = tv1.tv_sec - tv2.tv_sec;
+    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
+    return (diff_sec * 1000 + diff_ms);
+}
+
 int ping(
     pcap_t *adhandle,
     const adapter_info &apt_info,
     const ip4_addr &target_ip,
     int timeout_ms,
-    timeval &recv_tm)
+    long &cost_ms,
+    ip_header &ih_recv)
 {
     auto start_tm = std::chrono::system_clock::now();
     _icmp_header_detail ping_data { 0 };
@@ -342,9 +367,11 @@ int ping(
             throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
         }
     }
-    ip_header ih_saved;
+    timeval send_tv;
+    get_time_of_day(&send_tv);
+    ip_header ih_send;
     if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, 128,
-        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
+        &ping_data, sizeof(_icmp_header_detail), ih_send) != NTLS_SUCC)
     {
         throw std::runtime_error("failed to send ipv4 packet");
     }
@@ -356,7 +383,8 @@ int ping(
                 auto mh = reinterpret_cast<const icmp_header*>(eh);
                 if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
                     VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;
-                    recv_tm = pkthdr->ts;
+                    ih_recv = mh->h;
+                    cost_ms = pkthdr->ts - send_tv;
                     return NTLS_SUCC;
                 }
             }
@@ -372,7 +400,7 @@ int trace_route(
     const ip4_addr &target_ip,
     u_char ttl,
     int timeout_ms,
-    timeval &recv_tm,
+    long &cost_ms,
     _icmp_error_detail &d_err)
 {
     auto start_tm = std::chrono::system_clock::now();
@@ -390,9 +418,11 @@ int trace_route(
             throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
         }
     }
-    ip_header ih_saved;
+    timeval send_tv;
+    get_time_of_day(&send_tv);
+    ip_header ih_send;
     if (send_ip(adhandle, dest_mac, apt_info.mac, IPv4_TYPE_ICMP, apt_info.ip, target_ip, ttl,
-        &ping_data, sizeof(_icmp_header_detail), ih_saved) != NTLS_SUCC)
+        &ping_data, sizeof(_icmp_header_detail), ih_send) != NTLS_SUCC)
     {
         throw std::runtime_error("failed to send ipv4 packet");
     }
@@ -404,14 +434,14 @@ int trace_route(
                 auto mh = reinterpret_cast<const icmp_header*>(eh);
                 if (mh->d.type == ICMP_TYPE_PING_REPLY && mh->d.id == ping_data.id && mh->d.sn == ping_data.sn) {
                     VLOG_IF(1, is_local) << target_ip << " is at " << eh->d.sea;
-                    recv_tm = pkthdr->ts;
+                    cost_ms = pkthdr->ts - send_tv;
                     return NTLS_SUCC;
                 }
                 if (mh->d.is_typeof_error()) {
                     auto mh = reinterpret_cast<const _icmp_error_detail*>(eh);
-                    if (mh->e_ip.almost_same(ih_saved.d)) {
+                    if (mh->e_ip.almost_same(ih_send.d)) {
                         d_err = *mh;
-                        recv_tm = pkthdr->ts;
+                        cost_ms = pkthdr->ts - send_tv;
                         return NTLS_RECV_ERROR_ICMP;
                     }
                 }
