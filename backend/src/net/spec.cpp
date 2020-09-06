@@ -153,14 +153,21 @@ std::ostream &operator<<(std::ostream &out, const eth_addr &addr)
 
 u_short calc_checksum(const void *data, size_t len_in_byte)
 {
-    if (len_in_byte % 2 != 0) {
-        throw std::runtime_error("calculate checksum: data length is not an integer of 2");
+    bool is_odd = (len_in_byte % 2 != 0);
+    if (is_odd) {
+        void *buffer = new u_char[len_in_byte + 1]{ 0 };
+        std::memcpy(buffer, data, len_in_byte);
+        data = buffer;
+        len_in_byte += 1;
     }
     u_long checksum = 0;
     auto check_ptr = reinterpret_cast<const u_short *>(data);
     for (int i = 0; i < len_in_byte / 2; ++i) {
         checksum += check_ptr[i];
         checksum = (checksum >> 16) + (checksum & 0xffff);
+    }
+    if (is_odd) {
+        delete [] data;
     }
     return static_cast<u_short>(~checksum);
 }
