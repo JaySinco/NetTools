@@ -26,6 +26,12 @@ struct wsa_guard {
     ~wsa_guard();
 };
 
+struct ip_mac_cache {
+    ip4_addr ip;
+    eth_addr mac;
+    std::chrono::time_point<std::chrono::system_clock> tm;
+};
+
 std::ostream &operator<<(std::ostream &out, const adapter_info &apt);
 std::ostream &operator<<(std::ostream &out, const pcap_if_t *dev);
 
@@ -48,7 +54,8 @@ int ip2mac(
     const adapter_info &apt_info,
     const ip4_addr &ip,
     eth_addr &mac,
-    int timeout_ms);
+    int timeout_ms,
+    bool use_cache = true);
 
 int send_arp(
     pcap_t *adhandle,

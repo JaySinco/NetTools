@@ -2,6 +2,7 @@
 #include "net.h"
 #include <thread>
 #include <atomic>
+#include <map>
 #include <random>
 #include <iphlpapi.h>
 
@@ -296,9 +297,22 @@ int ip2mac(
     const adapter_info &apt_info,
     const ip4_addr &ip,
     eth_addr &mac,
-    int timeout_ms)
+    int timeout_ms,
+    bool use_cache)
 {
     auto start_tm = std::chrono::system_clock::now();
+    static std::map<ip4_addr, ip_mac_cache> ip_mac_map;
+    if (use_cache && ip_mac_map.count(ip) > 0) {
+        auto passed_sec = std::chrono::duration_cast<std::chrono::seconds>(start_tm - ip_mac_map[ip].tm);
+        if (passed_sec.count() < 30) {
+            VLOG(1) << "use cached mac for " << ip;
+            mac = ip_mac_map[ip].mac;
+            return NTLS_SUCC;
+        }
+        else {
+            VLOG(1) << "cached mac for " << ip << " expired, send arp to update";
+        }
+    }
     std::atomic<bool> over = false;
     std::thread send_loop_t([&]{
         while (!over) {
@@ -312,6 +326,11 @@ int ip2mac(
             if (ntohs(ah->d.op) == ARP_REPLY_OP) {
                 if (!ah->d.is_fake() && ah->d.sia == ip) {
                     mac = ah->d.sea;
+                    ip_mac_cache cache;
+                    cache.ip = ip;
+                    cache.mac = mac;
+                    cache.tm = std::chrono::system_clock::now();
+                    ip_mac_map[ip] = cache;
                     return NTLS_SUCC;
                 }
             }
