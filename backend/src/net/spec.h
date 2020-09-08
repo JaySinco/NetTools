@@ -195,7 +195,7 @@ struct _pseudo_udp_header_detail {
 struct _udp_header_detail {
     u_short sport; // Source port
     u_short dport; // Destination port
-    u_short len;   // Datagram length
+    u_short len;   // Datagram length, >= 8
     u_short crc;   // Checksum 
 };
 
