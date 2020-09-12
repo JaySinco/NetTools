@@ -14,3 +14,5 @@ std::wstring s2ws(const std::string &str);
 
 // get absolute resources directory path
 std::wstring get_resdir();
+// get absolute source root directory path
+std::wstring get_srcdir();
