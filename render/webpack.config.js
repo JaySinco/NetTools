@@ -14,22 +14,27 @@ module.exports = {
     performance: {
         hints: false
     },
+    externals: {
+        "react": "React",
+        "react-dom": "ReactDOM",
+        "antd": "antd",
+    },
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
                 use: [
                     {
-                        loader: 'ts-loader',
+                        loader: "ts-loader",
                         options: {
-                            configFile: path.resolve(__dirname, './tsconfig.json'),
+                            configFile: path.resolve(__dirname, "./tsconfig.json"),
                         }
                     }
                 ]
             },
             {
                 test: /\.css$/,
-                use: ['style-loader', 'css-loader'],
+                use: ["style-loader", "css-loader"],
               }
         ]
     },

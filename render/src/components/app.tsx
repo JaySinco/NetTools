@@ -1,4 +1,5 @@
 import React from 'react';
+import { message } from 'antd';
 
 function Square(props: {value: string|null, onClick: ()=>void}) {
     return (
@@ -32,6 +33,7 @@ class Board extends React.Component<{}, BoardState> {
     }
 
     handleClick(i: number) {
+        message.info("intput!");
         const squares = this.state.squares.slice();
         squares[i] = this.state.xIsNext ? "X" : "O";
         this.setState({

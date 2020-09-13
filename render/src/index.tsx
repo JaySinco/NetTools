@@ -4,4 +4,4 @@ import { App } from "./components/app"
 // import { ipcRender } from "./ipc";
 import "./css/style.css";
 
-ReactDOM.render(<App/>, document.getElementById('container'));
+ReactDOM.render(<App/>, document.getElementById('root'));
