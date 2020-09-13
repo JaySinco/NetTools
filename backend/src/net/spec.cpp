@@ -8,7 +8,7 @@ ip4_addr::ip4_addr(const std::string &s)
 {
     in_addr waddr;
     if (inet_pton(AF_INET, s.c_str(), &waddr) != 1) {
-        throw std::runtime_error(nt::sout << "failed to decode ipv4 address: " << s);
+        throw std::runtime_error(fmt::format("failed to decode ipv4 address: {}", s));
     }
     *this = ip4_addr(waddr);
 }

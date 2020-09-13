@@ -50,6 +50,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
   ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
+  ${CMAKE_SOURCE_DIR}/external/fmt/include/
   )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -63,12 +64,18 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
+add_library(fmt STATIC
+  ${CMAKE_SOURCE_DIR}/external/fmt/src/format.cc
+  ${CMAKE_SOURCE_DIR}/external/fmt/src/os.cc
+  )
+
 add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/common.cpp
   ${CMAKE_SOURCE_DIR}/src/net/spec.cpp
   ${CMAKE_SOURCE_DIR}/src/net/net.cpp
   )
 target_link_libraries(net
+  fmt
   wpcap.lib
   ws2_32.lib
   glog.lib

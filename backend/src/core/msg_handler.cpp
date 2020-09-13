@@ -52,7 +52,7 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> 
                 callback->Success("");
             }
             else {
-                callback->Failure(NTLS_FAILED, (nt::sout << "failed to execute pack script: " << GetLastError()).str());
+                callback->Failure(NTLS_FAILED, fmt::format("failed to execute pack script: {}", GetLastError()));
             }
         }).detach();
         return true;

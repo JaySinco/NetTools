@@ -4,6 +4,7 @@
 #include <atomic>
 #include <map>
 #include <random>
+#include <iomanip>
 #include <iphlpapi.h>
 
 static wsa_guard g_wsa_guarder;
@@ -29,13 +30,13 @@ pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &
 {
     apt_info = adapter_info::select_ip(ip, exact_match);
     if (apt_info.name.size() == 0) {
-        throw std::runtime_error(nt::sout << "no adapter found in same local network with " << ip);
+        throw std::runtime_error(fmt::format("no adapter found in same local network with {}", to_string(ip)));
     }
     pcap_t *adhandle;
     char errbuf[PCAP_ERRBUF_SIZE];
     if (!(adhandle= pcap_open(apt_info.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf)))
     {
-        throw std::runtime_error(nt::sout << "failed to open the adapter: " << apt_info.name);
+        throw std::runtime_error(fmt::format("failed to open the adapter: {}", apt_info.name));
     }
     return adhandle;
 }
@@ -49,7 +50,7 @@ adapter_info adapter_info::select_ip(const ip4_addr &subnet_ip, bool exact_match
     if (GetAdaptersInfo(pAdapterInfo, &buflen) == ERROR_BUFFER_OVERFLOW) {
         pAdapterInfo = reinterpret_cast<IP_ADAPTER_INFO*>(malloc(buflen));
         if (GetAdaptersInfo(pAdapterInfo, &buflen) != NO_ERROR) {
-            throw std::runtime_error(nt::sout << "failed to call GetAdaptersInfo");
+            throw std::runtime_error("failed to call GetAdaptersInfo");
         }
     }
     bool select_auto = (subnet_ip == PLACEHOLDER_IPv4_ADDR);
@@ -126,7 +127,7 @@ int packet_loop(
         }
     }
     if (res == -1) {
-        throw std::runtime_error(nt::sout << "failed to read packets: " << pcap_geterr(adhandle));
+        throw std::runtime_error(fmt::format("failed to read packets: {}", pcap_geterr(adhandle)));
     }
     throw std::runtime_error("stop reading packets due to unexpected error");
 }
@@ -388,7 +389,7 @@ int ping(
     if (!is_local) {
         VLOG(1) << "nonlocal target ip, send icmp to gateway instread of broadcasting";
         if (ip2mac(adhandle, apt_info, apt_info.gateway, dest_mac, 5000) != NTLS_SUCC) {
-            throw std::runtime_error(nt::sout << "can't resolve mac address of gateway " << apt_info.gateway);
+            throw std::runtime_error(fmt::format("can't resolve mac address of gateway {}", to_string(apt_info.gateway)));
         }
     }
     timeval send_tv;

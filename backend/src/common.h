@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
-#include <iomanip>
-#include <sstream>
+#include "fmt/core.h"
 #define NTLS_FAILED 0
 #define NTLS_SUCC 1
 #define NTLS_CONTINUE 2
@@ -15,19 +14,6 @@ std::string to_string(const T& v)
     std::ostringstream ss;
     ss << v;
     return ss.str();
-}
-
-namespace nt {
-    class StreamToCharImpl {
-    public:
-        template <typename T>
-        StreamToCharImpl &operator<<(const T&v) { ss << v; return *this; }
-        std::string str() { return ss.str(); }
-        operator std::string() { return ss.str(); }
-    private:
-        std::ostringstream ss;
-    };
-    #define sout StreamToCharImpl{}
 }
 
 // convert between utf8-string and wstring
