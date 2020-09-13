@@ -5,7 +5,7 @@ import { message } from 'antd';
 import { ipcRender } from "./ipc";
 import "./css/style.css";
 
-async function addGlobalShortcut(ev: KeyboardEvent) {
+async function handleGlobalShortcut(ev: KeyboardEvent) {
     switch (ev.code) {
     case "F6":
         const key = "loading_pack_render";
@@ -22,5 +22,5 @@ async function addGlobalShortcut(ev: KeyboardEvent) {
     }
 }
 
-document.addEventListener('keydown', addGlobalShortcut);
+document.addEventListener('keyup', handleGlobalShortcut);
 ReactDOM.render(<App/>, document.getElementById('root'));
