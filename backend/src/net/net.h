@@ -1,7 +1,6 @@
 #pragma once
 #include <chrono>
 #include <functional>
-#include "common.h"
 #include "pcap.h"
 #include "spec.h"
 #define NT_TRY try {

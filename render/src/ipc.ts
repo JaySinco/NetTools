@@ -50,14 +50,14 @@ class IpcRender {
     }
 
     public send(header: string, body?: any): Promise<string> {
-        return new Promise((reolve, reject) => {
+        return new Promise((resolve, reject) => {
             window.cefQuery({
                 request: `${header}: ${body !== undefined ? JSON.stringify(body) : ""}`,
                 onSuccess: (response: string) => {
-                    reolve(response);
+                    resolve(response);
                 },
                 onFailure: (err_code: string, err_msg: string) => {
-                    reject(new Error(`${err_code}: ${err_msg}`));
+                    reject(new Error(`${err_msg}`));
                 }
             });
         });

@@ -26,8 +26,6 @@ cp ${source_dir}/node_modules/react-dom/umd/react-dom.production.min.js ${output
 && \
 cp ${source_dir}/node_modules/antd/dist/antd.min.js ${output_dir}/ \
 && \
-cp ${source_dir}/node_modules/antd/dist/antd.min.js.map ${output_dir}/ \
-&& \
 cp ${source_dir}/node_modules/antd/dist/antd.min.css ${output_dir}/ \
 && \
 cp -r ${source_dir}/src/pages/*.html ${output_dir}/

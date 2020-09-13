@@ -1,11 +1,10 @@
 #pragma once
 #include <string>
 #include <iostream>
-#include <iomanip>
-#include <sstream>
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include "common.h"
 
 #define ETHERNET_ADDRESS_LEN 6
 #define IPV4_ADDRESS_LEN 4
@@ -49,27 +48,6 @@
 #define PTR_AFTER(p) (((char*)(p))+sizeof(decltype(*(p))))
 #define DELIMITER_LINE "\t------------------------\n"
 #define DELIMITER_SUBLINE "\t+-+-+-+-+-+-+-+-+-+-+-+-\n"
-
-template <typename T>
-std::string to_string(const T& v)
-{
-    std::ostringstream ss;
-    ss << v;
-    return ss.str();
-}
-
-namespace nt {
-    class StreamToCharImpl {
-    public:
-        template <typename T>
-        StreamToCharImpl &operator<<(const T&v) { ss << v; return *this; }
-
-        operator std::string() { return ss.str(); }
-    private:
-        std::ostringstream ss;
-    };
-    #define sout StreamToCharImpl{}
-}
 
 struct ip4_addr {
     u_char b1, b2, b3, b4;

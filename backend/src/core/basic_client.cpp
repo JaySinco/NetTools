@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <thread>
 #include "include/base/cef_bind.h"
 #include "include/cef_app.h"
 #include "include/cef_parser.h"
@@ -7,7 +6,6 @@
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
-#include "common.h"
 #include "basic_client.h"
 #include "msg_handler.h"
 
@@ -98,23 +96,6 @@ bool BasicClient::OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& e
     if (event.type == KEYEVENT_RAWKEYDOWN) {
         if (event.windows_key_code == VK_F5) {
             browser->Reload();
-            return true;
-        }
-        if (event.windows_key_code == VK_F6) {
-            std::thread([=] {
-                SHELLEXECUTEINFOW execInfo = { 0 };
-                execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-                execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-                execInfo.lpVerb = L"open";
-                execInfo.lpFile = L"C:\\Program Files\\Git\\bin\\bash.exe";
-                execInfo.lpParameters = L"pack.sh";
-                execInfo.lpDirectory = get_srcdir().c_str();
-                execInfo.nShow = SW_SHOW;
-                if (ShellExecuteExW(&execInfo)) {
-                    WaitForSingleObject(execInfo.hProcess, INFINITE);
-                    browser->Reload();
-                }
-            }).detach();
             return true;
         }
         if (event.windows_key_code == VK_F12) {
