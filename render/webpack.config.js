@@ -1,12 +1,12 @@
 const path = require("path");
 
 module.exports = {
-    mode: "development", // development or production
+    mode: "production", // development or production
     devtool: "inline-source-map",
     entry: "./src/index.tsx",
     output: {
         path: path.resolve(__dirname, "../bin/resources/"),
-        filename: "bundle.js"
+        filename: "app.bundle.js"
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js"]
@@ -37,5 +37,5 @@ module.exports = {
                 use: ["style-loader", "css-loader"],
               }
         ]
-    },
+    }
 };
