@@ -3,14 +3,12 @@
         "bin": true,
         "backend/dest": true,
         "backend/external": true,
-        "backend/src/json.hpp": true,
         "render/node_modules": true,
     },
     "files.watcherExclude": {
         "bin": true,
         "backend/dest": true,
         "backend/external": true,
-        "backend/src/json.hpp": true,
         "render/node_modules": true,
     },
     "C_Cpp.default.includePath": [
@@ -19,7 +17,8 @@
         "${workspaceFolder}/backend/external/gflags/include/",
         "${workspaceFolder}/backend/external/glog/include/",
         "${workspaceFolder}/backend/external/npcap/include/",
-        "${workspaceFolder}/backend/external/fmt/include/"
+        "${workspaceFolder}/backend/external/fmt/include/",
+        "${workspaceFolder}/backend/external/json/include/"
     ],
     "C_Cpp.autoAddFileAssociations": false,
     "explorer.autoReveal": false

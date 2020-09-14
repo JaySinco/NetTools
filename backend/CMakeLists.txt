@@ -51,6 +51,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
   ${CMAKE_SOURCE_DIR}/external/fmt/include/
+  ${CMAKE_SOURCE_DIR}/external/json/include/
   )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
