@@ -16,11 +16,11 @@ async function handleGlobalShortcut(ev: KeyboardEvent) {
             location.reload();
         }
         catch (e) {
-            message.error({ content: `${e}`, key, duration: 3 })
+            message.error({ content: `${e}`, key, duration: 3 });
         }
         break;
     }
 }
 
 document.addEventListener('keyup', handleGlobalShortcut);
-ReactDOM.render(<App/>, document.getElementById('root'));
+ReactDOM.render(<App />, document.getElementById('root'));
