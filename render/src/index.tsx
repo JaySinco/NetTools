@@ -12,7 +12,7 @@ async function handleGlobalShortcut(ev: KeyboardEvent) {
         try {
             message.loading({ content: "packing render...", key, duration: 0 });
             await ipcRender.send("pack_render");
-            await message.success({ content: "render packed, reloading browser in 2s", key, duration: 2 });
+            await message.success({ content: "render packed, reloading browser in 1s", key, duration: 1 });
             location.reload();
         }
         catch (e) {
