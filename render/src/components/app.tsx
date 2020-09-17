@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface AddColorFormProps {
-    onNewColor: (title: string, color: string) => void,
+    onNewColor: (title: string, color: string) => void
 }
 
 class AddColorForm extends React.Component<AddColorFormProps> {
@@ -33,12 +33,75 @@ class AddColorForm extends React.Component<AddColorFormProps> {
     }
 }
 
-export class App extends React.Component {
-    logColor = (title: string, color: string) => {
+interface StarProps {
+    selected: boolean,
+    onClick: (ev: React.MouseEvent) => void;
+}
+
+const Star = (props: StarProps) => {
+    return (
+        <div className={props.selected ? "star selected" : "star"}
+             onClick={props.onClick}>
+        </div>
+    )
+}
+
+interface StarRatingProps {
+    highest: number
+    rating: number
+    onRatingChange: (newRating: number) => void
+}
+
+const StarRating = (props: StarRatingProps) => {
+    const { highest, rating, onRatingChange } = props;
+    return (
+        <div>
+            {[...Array(highest)].map(
+                (i, n) => (
+                    <Star selected={(n+1) <= rating ? true : false}
+                          onClick={ev => onRatingChange(n+1)}
+                    />)
+            )}
+        </div>
+    )
+}
+
+interface ColorRatingProps {
+
+}
+
+interface ColorRatingState {
+    rating: number
+}
+
+class ColorRating extends React.Component<ColorRatingProps, ColorRatingState> {
+    constructor(props: ColorRatingProps) {
+        super(props);
+        this.state = {
+            rating: 0 
+        };
+    }
+
+    onNewColor = (title: string, color: string) => {
         console.log(`New Color: ${title} ${color}`)
     }
-    
+
+    onRatingChange = (newRating: number) => {
+        this.setState({
+            ...this.state,
+            rating: newRating,
+        })
+    }
+
     render() {
-        return <AddColorForm onNewColor={this.logColor} />;
+        const { rating } = this.state;
+        return (
+            <div>
+                <AddColorForm onNewColor={this.onNewColor} />
+                <StarRating highest={5} rating={rating} onRatingChange={this.onRatingChange} />
+            </div>
+        )
     }
 }
+
+export const App = () => <ColorRating />;
