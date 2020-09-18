@@ -1,4 +1,5 @@
-const path = require("path");
+const path = require("path")
+const PrettierPlugin = require("prettier-webpack-plugin");
 
 module.exports = {
     mode: "production", // development or production
@@ -37,5 +38,8 @@ module.exports = {
                 use: ["style-loader", "css-loader"],
               }
         ]
-    }
-};
+    },
+    plugins: [
+        new PrettierPlugin()
+    ],
+}
