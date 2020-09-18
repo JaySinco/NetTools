@@ -1,7 +1,7 @@
 import React from "react"
 import { v4 as uuid } from "uuid"
 import AddColorForm from "./add-color-form"
-import ColorRatingCard from "./color-rating-card"
+import ColorList from "./color-list"
 
 type State = {
     colors: Array<{
@@ -37,8 +37,19 @@ class ColorRating extends React.Component<{}, State> {
     }
 
     onNewColor = (title: string, color: string) => {
-        let colors = this.state.colors
-        colors.push({ id: uuid(), title, color, rating: 0 })
+        if (title.length <= 0) return
+        let colors = [
+            ...this.state.colors,
+            { id: uuid(), title, color, rating: 0 },
+        ]
+        this.setState({
+            ...this.state,
+            colors,
+        })
+    }
+
+    onColorRemove = (id: string) => {
+        let colors = this.state.colors.filter((c) => c.id !== id)
         this.setState({
             ...this.state,
             colors,
@@ -46,12 +57,9 @@ class ColorRating extends React.Component<{}, State> {
     }
 
     onRatingChange = (id: string, newRating: number) => {
-        let colors = this.state.colors
-        for (let i = 0; i < colors.length; ++i) {
-            if (colors[i].id === id) {
-                colors[i].rating = newRating
-            }
-        }
+        let colors = this.state.colors.map((c) =>
+            c.id === id ? { ...c, rating: newRating } : c
+        )
         this.setState({
             ...this.state,
             colors,
@@ -59,16 +67,16 @@ class ColorRating extends React.Component<{}, State> {
     }
 
     render() {
+        const { onNewColor, onRatingChange, onColorRemove } = this
         return (
             <div>
-                <AddColorForm onNewColor={this.onNewColor} />
-                {this.state.colors.map((v) => (
-                    <ColorRatingCard
-                        {...v}
-                        fullmark={5}
-                        onRatingChange={this.onRatingChange}
-                    />
-                ))}
+                <AddColorForm onNewColor={onNewColor} />
+                <ColorList
+                    colors={this.state.colors}
+                    fullmark={5}
+                    onRatingChange={onRatingChange}
+                    onColorRemove={onColorRemove}
+                />
             </div>
         )
     }

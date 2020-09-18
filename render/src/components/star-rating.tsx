@@ -1,16 +1,5 @@
 import React from "react"
-
-const Star = (props: {
-    selected: boolean
-    onClick: (ev: React.MouseEvent) => void
-}) => {
-    return (
-        <div
-            className={props.selected ? "star selected" : "star"}
-            onClick={props.onClick}
-        ></div>
-    )
-}
+import Star from "./star"
 
 type Props = {
     fullmark: number
