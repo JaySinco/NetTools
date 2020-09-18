@@ -2,17 +2,14 @@
 #include "include/cef_app.h"
 #include "include/wrapper/cef_message_router.h"
 
-class BasicApp: public CefApp,
-                public CefBrowserProcessHandler,
-                public CefRenderProcessHandler
+class BasicApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler
 {
-public:
-    BasicApp(const std::wstring &wnd_title,
-             int wnd_width,
-             int wnd_height,
-             const std::wstring &app_url):
-        wnd_title_(wnd_title), wnd_width_(wnd_width), wnd_height_(wnd_height),
-        app_url_(app_url) {}
+   public:
+    BasicApp(const std::wstring &wnd_title, int wnd_width, int wnd_height,
+             const std::wstring &app_url)
+        : wnd_title_(wnd_title), wnd_width_(wnd_width), wnd_height_(wnd_height), app_url_(app_url)
+    {
+    }
 
     // CefApp methods:
     CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override { return this; }
@@ -24,13 +21,14 @@ public:
     // CefRenderProcessHandler methods:
     void OnWebKitInitialized() override;
     void OnContextCreated(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        CefRefPtr<CefV8Context> context) override;
+                          CefRefPtr<CefV8Context> context) override;
     void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        CefRefPtr<CefV8Context> context) override;
+                           CefRefPtr<CefV8Context> context) override;
     bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
+                                  CefProcessId source_process,
+                                  CefRefPtr<CefProcessMessage> message) override;
 
-private:
+   private:
     std::wstring wnd_title_;
     int wnd_width_;
     int wnd_height_;

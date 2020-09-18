@@ -19,8 +19,7 @@ int main(int argc, char* argv[])
     if (ip4_addr::is_valid(target_name)) {
         target_ip = ip4_addr(target_name);
         ip_desc << target_ip;
-    }
-    else {
+    } else {
         VLOG(1) << "invalid ip address, try interpret as host name";
         bool succ = false;
         target_ip = ip4_addr::from_hostname(target_name, succ);
@@ -31,9 +30,9 @@ int main(int argc, char* argv[])
         ip_desc << target_name << " [" << target_ip << "]";
     }
 
-    std::cout << "\nPing " << ip_desc.str() << ":"<< std::endl;
+    std::cout << "\nPing " << ip_desc.str() << ":" << std::endl;
     adapter_info apt_info;
-    pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
+    pcap_t* adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
     constexpr int total_cnt = 4;
     int recv_cnt = 0;
     long min_cost = 999999;
@@ -50,19 +49,20 @@ int main(int argc, char* argv[])
             min_cost = min(min_cost, cost_ms);
             max_cost = max(max_cost, cost_ms);
             sum_cost += cost_ms;
-            std::cout << "time=" << cost_ms << "ms"  << " ttl=" << static_cast<int>(ih_recv.d.ttl) << std::endl;
-        }
-        else {
+            std::cout << "time=" << cost_ms << "ms"
+                      << " ttl=" << static_cast<int>(ih_recv.d.ttl) << std::endl;
+        } else {
             std::cout << "timeout" << std::endl;
         }
     }
     std::cout << "\nStatistical information:" << std::endl;
     std::cout << "    packets: sent=" << total_cnt << ", recv=" << recv_cnt
-        << ", lost=" << (total_cnt - recv_cnt) << " ("
-        << int(float(total_cnt - recv_cnt) / total_cnt * 100) << "% lost)\n";
+              << ", lost=" << (total_cnt - recv_cnt) << " ("
+              << int(float(total_cnt - recv_cnt) / total_cnt * 100) << "% lost)\n";
     if (sum_cost > 0) {
         std::cout << "Estimated time of round trip:" << std::endl;
-        std::cout << "    min=" << min_cost << "ms, max=" << max_cost << "ms, avg=" << (sum_cost) / total_cnt << "ms\n";
+        std::cout << "    min=" << min_cost << "ms, max=" << max_cost
+                  << "ms, avg=" << (sum_cost) / total_cnt << "ms\n";
     }
     NT_CATCH
 }

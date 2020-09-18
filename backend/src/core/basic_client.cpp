@@ -10,7 +10,8 @@
 #include "msg_handler.h"
 
 bool BasicClient::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
+                                           CefProcessId source_process,
+                                           CefRefPtr<CefProcessMessage> message)
 {
     CEF_REQUIRE_UI_THREAD();
     return message_router_->OnProcessMessageReceived(browser, frame, source_process, message);
@@ -59,25 +60,31 @@ void BasicClient::OnBeforeClose(CefRefPtr<CefBrowser> browser)
     }
 }
 
-bool BasicClient::OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& target_url,
-    const CefString& target_frame_name, CefLifeSpanHandler::WindowOpenDisposition target_disposition, bool user_gesture,
-    const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
-    CefBrowserSettings& settings, CefRefPtr<CefDictionaryValue>& extra_info, bool* no_javascript_access)
+bool BasicClient::OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                                const CefString& target_url, const CefString& target_frame_name,
+                                CefLifeSpanHandler::WindowOpenDisposition target_disposition,
+                                bool user_gesture, const CefPopupFeatures& popupFeatures,
+                                CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
+                                CefBrowserSettings& settings,
+                                CefRefPtr<CefDictionaryValue>& extra_info,
+                                bool* no_javascript_access)
 {
     CEF_REQUIRE_UI_THREAD();
     browser->GetMainFrame()->LoadURL(target_url);
     return true;
 }
 
-bool BasicClient::OnOpenURLFromTab(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& target_url,
-    CefRequestHandler::WindowOpenDisposition target_disposition, bool user_gesture)
+bool BasicClient::OnOpenURLFromTab(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                                   const CefString& target_url,
+                                   CefRequestHandler::WindowOpenDisposition target_disposition,
+                                   bool user_gesture)
 {
     CEF_REQUIRE_UI_THREAD();
     return false;
 }
 
 bool BasicClient::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    CefRefPtr<CefRequest> request, bool user_gesture, bool is_redirect)
+                                 CefRefPtr<CefRequest> request, bool user_gesture, bool is_redirect)
 {
     CEF_REQUIRE_UI_THREAD();
     message_router_->OnBeforeBrowse(browser, frame);
@@ -90,7 +97,8 @@ void BasicClient::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, Termi
     message_router_->OnRenderProcessTerminated(browser);
 }
 
-bool BasicClient::OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event, CefEventHandle os_event)
+bool BasicClient::OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event,
+                             CefEventHandle os_event)
 {
     CEF_REQUIRE_UI_THREAD();
     if (event.type == KEYEVENT_RAWKEYDOWN) {
@@ -101,8 +109,7 @@ bool BasicClient::OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& e
         if (event.windows_key_code == VK_F12) {
             if (browser->GetHost()->HasDevTools()) {
                 browser->GetHost()->CloseDevTools();
-            }
-            else {
+            } else {
                 CefBrowserSettings browser_settings;
                 CefWindowInfo window_info;
                 HWND parent = browser->GetHost()->GetWindowHandle();
@@ -130,20 +137,20 @@ bool BasicClient::OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& e
     return false;
 }
 
-void BasicClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode,
-    const CefString& errorText, const CefString& failedUrl)
+void BasicClient::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+                              ErrorCode errorCode, const CefString& errorText,
+                              const CefString& failedUrl)
 {
     CEF_REQUIRE_UI_THREAD();
-    if (errorCode == ERR_ABORTED)
-        return;
+    if (errorCode == ERR_ABORTED) return;
     std::stringstream ss;
     ss << "<html><body bgcolor=\"white\"><h2>Failed to load URL " << std::string(failedUrl)
-        << " with error " << std::string(errorText) << " (" << errorCode << ").</h2></body></html>";
+       << " with error " << std::string(errorText) << " (" << errorCode << ").</h2></body></html>";
     frame->LoadURL(GetDataURI(ss.str(), "text/html"));
 }
 
 std::string BasicClient::GetDataURI(const std::string& data, const std::string& mime_type)
 {
-    return "data:" + mime_type + ";base64," + CefURIEncode(
-        CefBase64Encode(data.data(), data.size()), false).ToString();
+    return "data:" + mime_type + ";base64," +
+           CefURIEncode(CefBase64Encode(data.data(), data.size()), false).ToString();
 }

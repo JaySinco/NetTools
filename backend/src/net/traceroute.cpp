@@ -20,8 +20,7 @@ int main(int argc, char* argv[])
     if (ip4_addr::is_valid(target_name)) {
         target_ip = ip4_addr(target_name);
         ip_desc << target_ip;
-    }
-    else {
+    } else {
         VLOG(1) << "invalid ip address, try interpret as host name";
         bool succ = false;
         target_ip = ip4_addr::from_hostname(target_name, succ);
@@ -34,7 +33,7 @@ int main(int argc, char* argv[])
 
     std::cout << "\nRoute traced to " << ip_desc.str() << "\n" << std::endl;
     adapter_info apt_info;
-    pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
+    pcap_t* adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
     int ttl = 0;
     constexpr int epoch_cnt = 3;
     while (true) {
@@ -51,20 +50,17 @@ int main(int argc, char* argv[])
             if (rtn == NTLS_TIMEOUT_ERROR) {
                 ++timeout_cnt;
                 std::cout << "       *" << std::flush;
-            }
-            else if (rtn == NTLS_SUCC) {
+            } else if (rtn == NTLS_SUCC) {
                 route_ip = target_ip;
                 std::cout << cost_ms << "ms" << std::flush;
-            }
-            else if (rtn == NTLS_RECV_ERROR_ICMP) {
+            } else if (rtn == NTLS_RECV_ERROR_ICMP) {
                 route_ip = d_err.h_aux.h.d.sia;
                 std::cout << cost_ms << "ms" << std::flush;
             }
         }
         if (timeout_cnt >= epoch_cnt) {
             std::cout << "  -- timeout --" << std::endl;
-        }
-        else {
+        } else {
             std::cout << "  " << route_ip << std::endl;
             if (route_ip == target_ip) {
                 std::cout << "\nTracking is complete." << std::endl;

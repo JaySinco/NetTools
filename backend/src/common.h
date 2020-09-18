@@ -9,7 +9,7 @@
 #define NTLS_RECV_ERROR_ICMP 10001
 
 template <typename T>
-std::string to_string(const T& v)
+std::string to_string(const T &v)
 {
     std::ostringstream ss;
     ss << v;

