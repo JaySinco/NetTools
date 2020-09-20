@@ -2,7 +2,7 @@ const path = require("path")
 const PrettierPlugin = require("prettier-webpack-plugin");
 
 module.exports = {
-    mode: "production", // development or production
+    mode: "development", // development or production
     devtool: "inline-source-map",
     entry: "./src/index.tsx",
     output: {

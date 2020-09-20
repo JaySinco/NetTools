@@ -1,5 +1,6 @@
 import React from "react"
 import ReactDOM from "react-dom"
+import { configure } from "mobx"
 import App from "./components/color-rating"
 import { message } from "antd"
 import { ipcRender } from "./ipc"
@@ -29,5 +30,6 @@ async function handleGlobalShortcut(ev: KeyboardEvent) {
     }
 }
 
+configure({ enforceActions: "observed" })
 document.addEventListener("keyup", handleGlobalShortcut)
 ReactDOM.render(<App />, document.getElementById("root"))

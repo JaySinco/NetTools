@@ -1,15 +1,14 @@
 import React from "react"
+import { observer } from "mobx-react"
+import colorRatingStore from "./color-rating-store"
 
-type Props = {
-    onNewColor: (title: string, color: string) => void
-}
-
-class AddColorForm extends React.Component<Props> {
+@observer
+class AddColorForm extends React.Component {
     textRef: React.RefObject<HTMLInputElement> = React.createRef()
     colorRef: React.RefObject<HTMLInputElement> = React.createRef()
 
     submit = (e: React.FormEvent) => {
-        const { onNewColor } = this.props
+        const { onNewColor } = colorRatingStore
         e.preventDefault()
         onNewColor(this.textRef.current!.value, this.colorRef.current!.value)
         this.textRef.current!.value = ""

@@ -1,20 +1,10 @@
 import React from "react"
+import { observer } from "mobx-react"
 import Color from "./color"
+import colorRatingStore from "./color-rating-store"
 
-type Props = {
-    colors: Array<{
-        id: string
-        title: string
-        color: string
-        rating: number
-    }>
-    fullmark: number
-    onRatingChange: (id: string, newRating: number) => void
-    onColorRemove: (id: string) => void
-}
-
-const ColorList = (props: Props) => {
-    const { colors, fullmark, onRatingChange, onColorRemove } = props
+const ColorList = observer(() => {
+    const { colors, fullmark, onRatingChange, onColorRemove } = colorRatingStore
     return (
         <div>
             {colors.length <= 0 ? (
@@ -33,6 +23,6 @@ const ColorList = (props: Props) => {
             )}
         </div>
     )
-}
+})
 
 export default ColorList
