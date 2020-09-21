@@ -20,7 +20,7 @@ std::string to_string(const T &v)
 std::string ws2s(const std::wstring &wstr);
 std::wstring s2ws(const std::string &str);
 
-// get absolute resources directory path
-std::wstring get_resdir();
-// get absolute source root directory path
-std::wstring get_srcdir();
+// get absolute directory path
+std::wstring get_curdir();  // binary current dir
+std::wstring get_resdir();  // resources dir
+std::wstring get_srcdir();  // code source dir

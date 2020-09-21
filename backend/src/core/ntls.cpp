@@ -22,6 +22,7 @@ int wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int
     CefSettings settings;
     settings.no_sandbox = true;
     settings.remote_debugging_port = 8081;
+    CefString(&settings.cache_path).FromWString(get_curdir() + L"\\cache");
     CefInitialize(main_args, settings, app, nullptr);
     CefRunMessageLoop();
     CefShutdown();
