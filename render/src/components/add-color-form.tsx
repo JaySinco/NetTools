@@ -1,8 +1,6 @@
 import React from "react"
-import { observer } from "mobx-react"
 import colorRatingStore from "./color-rating-store"
 
-@observer
 class AddColorForm extends React.Component {
     textRef: React.RefObject<HTMLInputElement> = React.createRef()
     colorRef: React.RefObject<HTMLInputElement> = React.createRef()
