@@ -20,17 +20,17 @@ const Color = (props: Props) => {
         onColorRemove,
     } = props
     return (
-        <section>
-            <h1>{title}</h1>
-            <button onClick={(_) => onColorRemove()}>X</button>
-            <div style={{ backgroundColor: color, height: "100px" }}></div>
+        <section className="color-card">
             <div>
-                <StarRating
-                    fullmark={fullmark}
-                    rating={rating}
-                    onRatingChange={(newRating) => onRatingChange(newRating)}
-                />
+                <h1>{title}</h1>
+                <button onClick={(_) => onColorRemove()}>X</button>
             </div>
+            <div style={{ backgroundColor: color, height: "100px" }}></div>
+            <StarRating
+                fullmark={fullmark}
+                rating={rating}
+                onRatingChange={(newRating) => onRatingChange(newRating)}
+            />
         </section>
     )
 }

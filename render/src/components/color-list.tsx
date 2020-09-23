@@ -6,7 +6,7 @@ import colorRatingStore from "./color-rating-store"
 const ColorList = observer(() => {
     const { colors, fullmark, onRatingChange, onColorRemove } = colorRatingStore
     return (
-        <div>
+        <div className="color-list">
             {colors.length <= 0 ? (
                 <p>No Colors Listed. (Add a Color)</p>
             ) : (

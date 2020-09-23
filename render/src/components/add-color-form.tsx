@@ -16,7 +16,7 @@ class AddColorForm extends React.Component {
 
     render() {
         return (
-            <form onSubmit={this.submit}>
+            <form onSubmit={this.submit} className="color-form">
                 <input
                     ref={this.textRef}
                     type="text"

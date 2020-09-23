@@ -10,7 +10,7 @@ type Props = {
 const StarRating = (props: Props) => {
     const { fullmark, rating, onRatingChange } = props
     return (
-        <div>
+        <div className="star-rating">
             {[...Array(fullmark).keys()].map((i) => (
                 <Star
                     selected={i + 1 <= rating ? true : false}

@@ -5,15 +5,16 @@
     top: 0px;
     bottom: 0px;
     margin: 0px;
-    padding: 0px;
+    padding-left: 2vw;
+    padding-top: 1vw;
 }
 
 .star {
     cursor: pointer;
-    height: 25px;
-    width: 25px;
+    height: 3vw;
+    width: 3vw;
     margin: 2px;
-    float: left;
+    display: inline-block;
     background-color: grey;
     clip-path: polygon(
         50% 0%,
@@ -31,4 +32,44 @@
 
 .star.selected {
     background-color: red;
+}
+
+.star-rating p {
+    display: block;
+}
+
+.color-card {
+    display: inline-block;
+    width: 48vw;
+    padding-right: 2vw;
+    padding-top: 2vw;
+}
+
+.color-card h1 {
+    font-size: 2vw;
+    display: inline;
+}
+
+.color-card button {
+    font-size: 1.5vw;
+    float: right;
+}
+
+.color-form input[type="text"] {
+    font-size: 3vw;
+    width: 80vw;
+    height: 6vw;
+    margin-right: 0.5vw;
+}
+
+.color-form input[type="color"] {
+    width: 6vw;
+    height: 6vw;
+    margin-right: 1vw;
+}
+
+.color-form button {
+    font-size: 2vw;
+    height: 6vw;
+    width: 9vw;
 }
