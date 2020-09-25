@@ -210,6 +210,12 @@ struct dns_header
     u_short ern;    // Extra resource record number
 };
 
+struct dns_query_tailer
+{
+    u_short type;  // Query type
+    u_short cls;   // Query class
+};
+
 u_short calc_checksum(const void *data, size_t len_in_byte);
 
 u_short calc_udp_checksum(const void *data, size_t len_in_byte,

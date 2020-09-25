@@ -389,27 +389,35 @@ int ping(pcap_t *adhandle, const adapter_info &apt_info, const ip4_addr &target_
     return rtn;
 }
 
-std::string encode_domain_name(const std::string &domain)
+Bytes encode_domain_name(const std::string &domain)
 {
-    std::string bytes;
+    Bytes bytes;
     auto svec = string_split(domain, ".");
     for (const auto &s : svec) {
         if (s.size() > 63) {
             throw std::runtime_error(fmt::format("segment of domain exceed 63: {}", s));
         }
-        bytes.push_back(static_cast<char>(s.size()));
-        bytes.append(s);
+        bytes.push_back(static_cast<u_char>(s.size()));
+        bytes.insert(bytes.end(), s.cbegin(), s.cend());
     }
     bytes.push_back(0);
     return bytes;
 }
 
-std::string make_dns_query(const std::string &domain, u_short &id)
+Bytes make_dns_query(const std::string &domain, u_short &id)
 {
-    std::string bytes;
+    Bytes bytes;
     dns_header dh = {0};
     dh.id = rand_ushort();
     id = dh.id;
-    dh.flags = htons(0x300); // 0-0000-0-1-1-0-000-0000
-    dh.qrn = 1;
+    dh.flags = htons(0x300);  // 0-0000-0-1-1-0-000-0000
+    dh.qrn = htons(1);
+    const u_char *pdh = reinterpret_cast<u_char *>(&dh);
+    bytes.insert(bytes.end(), pdh, pdh + sizeof(dns_header));
+    Bytes query_name = encode_domain_name(domain);
+    bytes.insert(bytes.end(), query_name.cbegin(), query_name.cend());
+    dns_query_tailer qt = {htons(1), htons(1)};
+    const u_char *pqt = reinterpret_cast<u_char *>(&qt);
+    bytes.insert(bytes.end(), pqt, pqt + sizeof(dns_query_tailer));
+    return bytes;
 }
