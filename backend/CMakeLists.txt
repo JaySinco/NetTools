@@ -99,6 +99,9 @@ target_link_libraries(ping net)
 add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/net/traceroute.cpp)
 target_link_libraries(traceroute net)
 
+add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
+target_link_libraries(dns net)
+
 add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
   ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp

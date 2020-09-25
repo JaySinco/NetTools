@@ -200,9 +200,21 @@ struct udp_header
     _udp_header_detail d;  // UDP detail
 };
 
+struct dns_header
+{
+    u_short id;     // Identification
+    u_short flags;  // Flags
+    u_short qrn;    // Query number
+    u_short rrn;    // Resource record number
+    u_short arn;    // Auth resource record number
+    u_short ern;    // Extra resource record number
+};
+
 u_short calc_checksum(const void *data, size_t len_in_byte);
+
 u_short calc_udp_checksum(const void *data, size_t len_in_byte,
                           const _pseudo_udp_header_detail &dt);
+
 u_short calc_udp_checksum(const void *data, size_t len_in_byte, const _ip_header_detail &it);
 
 std::ostream &operator<<(std::ostream &out, const _ethernet_header_detail &detail);

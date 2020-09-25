@@ -1,7 +1,7 @@
 #include <iomanip>
 #include "net.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     NT_TRY
     google::InitGoogleLogging(argv[0]);
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
     std::cout << "\nRoute traced to " << ip_desc.str() << "\n" << std::endl;
     adapter_info apt_info;
-    pcap_t* adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
+    pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
     int ttl = 0;
     constexpr int epoch_cnt = 3;
     while (true) {

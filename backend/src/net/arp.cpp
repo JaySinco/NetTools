@@ -10,7 +10,7 @@ std::atomic<bool> end_attack = false;
 
 void on_interrupt(int) { end_attack = true; }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     NT_TRY
     google::InitGoogleLogging(argv[0]);
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
         input_ip = ip4_addr(argv[1]);
     }
     adapter_info apt_info;
-    pcap_t* adhandle = open_target_adaptor(input_ip, false, apt_info);
+    pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);
 
     if (FLAGS_attack) {
         if (apt_info.gateway == PLACEHOLDER_IPv4_ADDR) {

@@ -3,6 +3,8 @@ IndentWidth: 4
 ColumnLimit: 100
 SortIncludes: false
 BreakBeforeBraces: Custom
+DerivePointerAlignment: false
+PointerAlignment: Right
 BraceWrapping:   
   AfterClass: true
   AfterControlStatement: false

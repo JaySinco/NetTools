@@ -24,3 +24,7 @@ std::wstring s2ws(const std::string &str);
 std::wstring get_curdir();  // binary current dir
 std::wstring get_resdir();  // resources dir
 std::wstring get_srcdir();  // code source dir
+
+// split string by delimit
+std::vector<std::string> string_split(const std::string &str, const std::string &delimit = "\n",
+                                      bool ignore_empty = true);

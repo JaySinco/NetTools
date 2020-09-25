@@ -1,6 +1,6 @@
 #include "net.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     NT_TRY
     google::InitGoogleLogging(argv[0]);
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
     std::cout << "\nPing " << ip_desc.str() << ":" << std::endl;
     adapter_info apt_info;
-    pcap_t* adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
+    pcap_t *adhandle = open_target_adaptor(PLACEHOLDER_IPv4_ADDR, false, apt_info);
     constexpr int total_cnt = 4;
     int recv_cnt = 0;
     long min_cost = 999999;

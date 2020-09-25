@@ -24,23 +24,23 @@ class BasicClient : public CefClient,
                                   CefRefPtr<CefProcessMessage> message) override;
 
     // CefDisplayHandler methods:
-    void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override;
+    void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString &title) override;
 
     // CefLifeSpanHandler methods:
     void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
     bool DoClose(CefRefPtr<CefBrowser> browser) override;
     void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
     bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-                       const CefString& target_url, const CefString& target_frame_name,
+                       const CefString &target_url, const CefString &target_frame_name,
                        CefLifeSpanHandler::WindowOpenDisposition target_disposition,
-                       bool user_gesture, const CefPopupFeatures& popupFeatures,
-                       CefWindowInfo& windowInfo, CefRefPtr<CefClient>& client,
-                       CefBrowserSettings& settings, CefRefPtr<CefDictionaryValue>& extra_info,
-                       bool* no_javascript_access);
+                       bool user_gesture, const CefPopupFeatures &popupFeatures,
+                       CefWindowInfo &windowInfo, CefRefPtr<CefClient> &client,
+                       CefBrowserSettings &settings, CefRefPtr<CefDictionaryValue> &extra_info,
+                       bool *no_javascript_access);
 
     // CefRequestHandler methods:
     bool OnOpenURLFromTab(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-                          const CefString& target_url,
+                          const CefString &target_url,
                           CefRequestHandler::WindowOpenDisposition target_disposition,
                           bool user_gesture) override;
     bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
@@ -50,15 +50,15 @@ class BasicClient : public CefClient,
                                    TerminationStatus status) override;
 
     // CefKeyboardHandler methods:
-    bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event,
+    bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent &event,
                     CefEventHandle os_event);
 
     // CefLoadHandler methods:
     void OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode,
-                     const CefString& errorText, const CefString& failedUrl) override;
+                     const CefString &errorText, const CefString &failedUrl) override;
 
    private:
-    std::string GetDataURI(const std::string& data, const std::string& mime_type);
+    std::string GetDataURI(const std::string &data, const std::string &mime_type);
 
     std::list<CefRefPtr<CefBrowser>> browser_list_;
     CefRefPtr<CefMessageRouterBrowserSide> message_router_;
