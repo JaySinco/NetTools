@@ -53,6 +53,8 @@
 #define DELIMITER_LINE "\t------------------------\n"
 #define DELIMITER_SUBLINE "\t+-+-+-+-+-+-+-+-+-+-+-+-\n"
 
+using Bytes = std::vector<u_char>;
+
 struct ip4_addr
 {
     u_char b1, b2, b3, b4;
@@ -205,7 +207,7 @@ struct dns_header
     u_short id;     // Identification
     u_short flags;  // Flags
     u_short qrn;    // Query number
-    u_short rrn;    // Resource record number
+    u_short rrn;    // Reply resource record number
     u_short arn;    // Auth resource record number
     u_short ern;    // Extra resource record number
 };
@@ -214,6 +216,24 @@ struct dns_query_tailer
 {
     u_short type;  // Query type
     u_short cls;   // Query class
+};
+
+struct dns_res_record
+{
+    std::string domain;  // Domain
+    u_short type;        // Query type
+    u_short cls;         // Query class
+    u_int ttl;           // Time to live
+    u_short data_len;    // Resource data length
+    Bytes res_data;      // Resource data
+};
+
+struct dns_reply
+{
+    dns_header h;                       // DNS header
+    std::vector<dns_res_record> reply;  // Reply
+    std::vector<dns_res_record> auth;   // Auth
+    std::vector<dns_res_record> extra;  // Extra
 };
 
 u_short calc_checksum(const void *data, size_t len_in_byte);
@@ -234,3 +254,6 @@ std::ostream &operator<<(std::ostream &out, const _icmp_netmask_detail &detail);
 std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail);
 std::ostream &operator<<(std::ostream &out, const _udp_header_detail &detail);
 std::ostream &operator<<(std::ostream &out, const udp_header &header);
+std::ostream &operator<<(std::ostream &out, const dns_header &header);
+std::ostream &operator<<(std::ostream &out, const dns_res_record &record);
+std::ostream &operator<<(std::ostream &out, const dns_reply &reply);

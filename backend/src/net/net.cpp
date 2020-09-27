@@ -404,6 +404,23 @@ Bytes encode_domain_name(const std::string &domain)
     return bytes;
 }
 
+std::string decode_domain_name(const Bytes &dns_pkt, Bytes::const_iterator &it)
+{
+    std::string domain;
+    for (; it < dns_pkt.cend() && *it != 0;) {
+        size_t cnt = *it;
+        if (cnt >> 6 != 3) {
+            domain += '.';
+            domain += std::string(it + 1, it + cnt + 1);
+            it += cnt + 1;
+        } else {
+            // compress
+            break;
+        }
+    }
+    return domain;
+}
+
 Bytes make_dns_query(const std::string &domain, u_short &id)
 {
     Bytes bytes;
@@ -420,4 +437,38 @@ Bytes make_dns_query(const std::string &domain, u_short &id)
     const u_char *pqt = reinterpret_cast<u_char *>(&qt);
     bytes.insert(bytes.end(), pqt, pqt + sizeof(dns_query_tailer));
     return bytes;
+}
+
+dns_reply parse_dns_reply(const Bytes &data)
+{
+    VLOG(3) << "raw dns reply data size=" << data.size();
+    dns_reply reply;
+    reply.h = *reinterpret_cast<const dns_header *>(data.data());
+    if (ntohs(reply.h.rrn) < 1) {
+        throw std::runtime_error(fmt::format("invalid dns reply header: qrn={}, rrn={}",
+                                             ntohs(reply.h.qrn), ntohs(reply.h.rrn)));
+    }
+    auto it = data.cbegin() + sizeof(dns_header);
+    for (int i = 0; i < ntohs(reply.h.qrn); ++i) {
+        VLOG(3) << "domain=" << decode_domain_name(data, it);
+        VLOG(3) << "type=" << htons(*reinterpret_cast<const u_short *>(&*it));
+        it += sizeof(u_short);
+        VLOG(3) << "cls=" << htons(*reinterpret_cast<const u_short *>(&*it));
+        it += sizeof(u_short);
+    }
+    for (int i = 0; i < ntohs(reply.h.rrn); ++i) {
+        dns_res_record rr;
+        rr.domain = decode_domain_name(data, it);
+        rr.type = *reinterpret_cast<const u_short *>(&*it);
+        it += sizeof(u_short);
+        rr.cls = *reinterpret_cast<const u_short *>(&*it);
+        it += sizeof(u_short);
+        rr.ttl = *reinterpret_cast<const u_int *>(&*it);
+        it += sizeof(u_int);
+        rr.data_len = *reinterpret_cast<const u_short *>(&*it);
+        it += sizeof(u_short);
+        rr.res_data = Bytes(it, it + ntohs(rr.data_len));
+        reply.reply.push_back(rr);
+    }
+    return reply;
 }

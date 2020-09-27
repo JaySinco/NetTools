@@ -21,6 +21,7 @@ void dns_client(const std::string &domain, const std::string &dns_server)
     }
     u_short id = 0;
     Bytes packet = make_dns_query(domain, id);
+    VLOG(1) << "dns id=" << id;
     if (sendto(s, reinterpret_cast<const char *>(packet.data()), static_cast<int>(packet.size()), 0,
                reinterpret_cast<sockaddr *>(&addr), sizeof(sockaddr_in)) == SOCKET_ERROR) {
         throw std::runtime_error(fmt::format("failed to send dns data: {}", WSAGetLastError()));
@@ -33,6 +34,8 @@ void dns_client(const std::string &domain, const std::string &dns_server)
         throw std::runtime_error(fmt::format("failed to receive dns data: {}", WSAGetLastError()));
     }
     VLOG(1) << "got " << recv_len << " bytes!";
+    dns_reply reply = parse_dns_reply(Bytes(buf, buf + recv_len));
+    std::cout << reply << std::endl;
 }
 
 int main(int argc, char *argv[])

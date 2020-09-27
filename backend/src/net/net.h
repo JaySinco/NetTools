@@ -8,8 +8,6 @@
     }            \
     catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
 
-using Bytes = std::vector<u_char>;
-
 struct adapter_info
 {
     std::string name;
@@ -46,7 +44,9 @@ void get_time_of_day(timeval *tv);
 long operator-(const timeval &tv1, const timeval &tv2);
 
 Bytes encode_domain_name(const std::string &domain);
+std::string decode_domain_name(const Bytes &dns_pkt, Bytes::const_iterator &it);
 Bytes make_dns_query(const std::string &domain, u_short &id);
+dns_reply parse_dns_reply(const Bytes &data);
 
 pcap_t *open_target_adaptor(const ip4_addr &ip, bool exact_match, adapter_info &apt_info);
 std::ostream &print_packet(std::ostream &out, const pcap_pkthdr *pkthdr, const ethernet_header *eh);

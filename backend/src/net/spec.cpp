@@ -513,3 +513,22 @@ std::ostream &operator<<(std::ostream &out, const udp_header &header)
     }
     return out;
 }
+
+std::ostream &operator<<(std::ostream &out, const dns_header &header)
+{
+    return out << fmt::format("{}({}/{}/{}/{})", header.id, ntohs(header.qrn), ntohs(header.rrn),
+                              ntohs(header.arn), ntohs(header.ern));
+}
+std::ostream &operator<<(std::ostream &out, const dns_res_record &record)
+{
+    return out << fmt::format("{}(ttl={}, len={})", record.domain, ntohl(record.ttl),
+                              ntohs(record.data_len));
+}
+std::ostream &operator<<(std::ostream &out, const dns_reply &reply)
+{
+    out << "DNS Header: " << reply.h << std::endl;
+    for (const auto &r : reply.reply) {
+        out << r << std::endl;
+    }
+    return out;
+}
