@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <sstream>
 #include <codecvt>
 #include "common.h"
 
@@ -29,6 +30,17 @@ std::wstring get_srcdir()
     std::wstring pwd = get_curdir();
     size_t pos = pwd.find_last_of(L"\\");
     return pwd.substr(0, pos);
+}
+
+std::string string_join(const std::vector<std::string> &svec, const std::string &delimit)
+{
+    if (svec.empty()) return "";
+    std::ostringstream ss;
+    ss << svec[0];
+    for (int i = 1; i < svec.size(); ++i) {
+        ss << delimit << svec[i];
+    }
+    return ss.str();
 }
 
 std::vector<std::string> string_split(const std::string &str, const std::string &delimit,

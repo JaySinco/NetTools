@@ -45,8 +45,12 @@ int main(int argc, char *argv[])
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
+    if (argc < 2) {
+        LOG(ERROR) << "empty domain name, please input domain name";
+        return -1;
+    }
 
-    dns_client("www.baidu.com", "223.5.5.5");
+    dns_client(argv[1], "172.16.108.1");
 
     NT_CATCH
 }

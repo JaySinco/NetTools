@@ -514,20 +514,109 @@ std::ostream &operator<<(std::ostream &out, const udp_header &header)
     return out;
 }
 
+std::string describe_dns_type(u_short type)
+{
+    std::string desc = std::to_string(type);
+    switch (type) {
+        case DNS_TYPE_A:
+            desc = "A";
+            break;
+        case DNS_TYPE_NS:
+            desc = "NS";
+            break;
+        case DNS_TYPE_CNAME:
+            desc = "CNAME";
+            break;
+        case DNS_TYPE_PTR:
+            desc = "PTR";
+            break;
+        case DNS_TYPE_HINFO:
+            desc = "HINFO";
+            break;
+        case DNS_TYPE_MX:
+            desc = "MX";
+            break;
+        case DNS_TYPE_AXFR:
+            desc = "AXFR";
+            break;
+        case DNS_TYPE_ANY:
+            desc = "ANY";
+            break;
+    }
+    return desc;
+}
+
 std::ostream &operator<<(std::ostream &out, const dns_header &header)
 {
-    return out << fmt::format("{}({}/{}/{}/{})", header.id, ntohs(header.qrn), ntohs(header.rrn),
-                              ntohs(header.arn), ntohs(header.ern));
+    out << "\tDNS Identification: " << header.id << std::endl;
+    u_short flag = ntohs(header.flags);
+    bool qr = (flag >> 15) & 0x1;
+    out << "\tQR: " << (qr ? "Reply" : "Query") << std::endl;
+    int opcode = (flag >> 11) & 0xf;
+    out << "\tOpcode: " << opcode << std::endl;
+    bool authoritative_answer = (flag >> 10) & 0x1;
+    out << "\tAuthoritative Answer: " << (authoritative_answer ? "Yes" : "No") << std::endl;
+    bool truncated = (flag >> 9) & 0x1;
+    out << "\tTruncated: " << (truncated ? "Yes" : "No") << std::endl;
+    bool recursion_desired = (flag >> 8) & 0x1;
+    out << "\tRecursion Desired: " << (recursion_desired ? "Yes" : "No") << std::endl;
+    bool recursion_available = (flag >> 7) & 0x1;
+    out << "\tRecursion Available: " << (recursion_available ? "Yes" : "No") << std::endl;
+    int rccode = flag & 0xf;
+    out << "\tRccode: "
+        << (rccode == DNS_RCODE_NO_ERROR ? "Success" : fmt::format("Error({})", rccode))
+        << std::endl;
+    out << "\tQuery Count: " << ntohs(header.qrn) << std::endl;
+    out << "\tReply Resource Count: " << ntohs(header.rrn) << std::endl;
+    out << "\tAuthorize Resource Count: " << ntohs(header.arn) << std::endl;
+    out << "\tExtra Resource Count: " << ntohs(header.ern) << std::endl;
+    return out;
 }
+
+std::ostream &operator<<(std::ostream &out, const dns_query_record &record)
+{
+    out << "\tDomain: " << record.domain << std::endl;
+    out << "\tType: " << describe_dns_type(htons(record.t.type)) << std::endl;
+    out << "\tClass: " << htons(record.t.cls) << std::endl;
+    return out;
+}
+
 std::ostream &operator<<(std::ostream &out, const dns_res_record &record)
 {
-    return out << fmt::format("{}(ttl={}, len={})", record.domain, ntohl(record.ttl),
-                              ntohs(record.data_len));
+    std::string domain = record.domain.size() ? record.domain : "(ROOT)";
+    out << "\tDomain: " << domain << std::endl;
+    out << "\tType: " << describe_dns_type(htons(record.type)) << std::endl;
+    out << "\tTTL:" << ntohl(record.ttl) << " sec\n";
+    out << "\tData Size: " << ntohs(record.data_len) << " bytes\n";
+    return out;
 }
+
 std::ostream &operator<<(std::ostream &out, const dns_reply &reply)
 {
-    out << "DNS Header: " << reply.h << std::endl;
+    out << "==== Header ====\n";
+    out << reply.h << std::endl;
+    if (reply.query.size() > 0) {
+        out << "==== Query ====\n";
+    }
+    for (const auto &q : reply.query) {
+        out << q << std::endl;
+    }
+    if (reply.reply.size() > 0) {
+        out << "==== Reply ====\n";
+    }
     for (const auto &r : reply.reply) {
+        out << r << std::endl;
+    }
+    if (reply.auth.size() > 0) {
+        out << "==== Authorize ====\n";
+    }
+    for (const auto &r : reply.auth) {
+        out << r << std::endl;
+    }
+    if (reply.extra.size() > 0) {
+        out << "==== Extra ====\n";
+    }
+    for (const auto &r : reply.extra) {
         out << r << std::endl;
     }
     return out;

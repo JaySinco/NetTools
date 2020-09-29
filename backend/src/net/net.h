@@ -45,6 +45,8 @@ long operator-(const timeval &tv1, const timeval &tv2);
 
 Bytes encode_domain_name(const std::string &domain);
 std::string decode_domain_name(const Bytes &dns_pkt, Bytes::const_iterator &it);
+u_short make_dns_flag(bool qr, int opcode, bool authoritative_answer, bool truncated,
+                      bool recursion_desired, bool recursion_available, int rccode);
 Bytes make_dns_query(const std::string &domain, u_short &id);
 dns_reply parse_dns_reply(const Bytes &data);
 

@@ -406,19 +406,38 @@ Bytes encode_domain_name(const std::string &domain)
 
 std::string decode_domain_name(const Bytes &dns_pkt, Bytes::const_iterator &it)
 {
-    std::string domain;
+    std::vector<std::string> domain_vec;
+    bool compressed = false;
     for (; it < dns_pkt.cend() && *it != 0;) {
         size_t cnt = *it;
-        if (cnt >> 6 != 3) {
-            domain += '.';
-            domain += std::string(it + 1, it + cnt + 1);
+        if ((cnt & 0xc0) != 0xc0) {
+            domain_vec.push_back(std::string(it + 1, it + cnt + 1));
             it += cnt + 1;
         } else {
-            // compress
+            compressed = true;
+            u_short index = ((cnt & 0x3f) << 8) | it[1];
+            Bytes::const_iterator new_it = dns_pkt.cbegin() + index;
+            domain_vec.push_back(decode_domain_name(dns_pkt, new_it));
+            it += 2;
             break;
         }
     }
-    return domain;
+    if (!compressed) ++it;
+    return string_join(domain_vec, ".");
+}
+
+u_short make_dns_flag(bool qr, int opcode, bool authoritative_answer, bool truncated,
+                      bool recursion_desired, bool recursion_available, int rccode)
+{
+    u_short flag = 0;
+    flag |= qr << 15;
+    flag |= (opcode & 0xf) << 11;
+    flag |= authoritative_answer << 10;
+    flag |= truncated << 9;
+    flag |= recursion_desired << 8;
+    flag |= recursion_available << 7;
+    flag |= (rccode & 0xf);
+    return flag;
 }
 
 Bytes make_dns_query(const std::string &domain, u_short &id)
@@ -427,13 +446,14 @@ Bytes make_dns_query(const std::string &domain, u_short &id)
     dns_header dh = {0};
     dh.id = rand_ushort();
     id = dh.id;
-    dh.flags = htons(0x300);  // 0-0000-0-1-1-0-000-0000
+    dh.flags = htons(make_dns_flag(false, DNS_OPCODE_QUERY_STANDARD, false, true, true, false,
+                                   DNS_RCODE_NO_ERROR));
     dh.qrn = htons(1);
     const u_char *pdh = reinterpret_cast<u_char *>(&dh);
     bytes.insert(bytes.end(), pdh, pdh + sizeof(dns_header));
     Bytes query_name = encode_domain_name(domain);
     bytes.insert(bytes.end(), query_name.cbegin(), query_name.cend());
-    dns_query_tailer qt = {htons(1), htons(1)};
+    dns_query_tailer qt = {htons(DNS_TYPE_A), htons(DNS_TYPE_CLASS_INTERNET_ADDR)};
     const u_char *pqt = reinterpret_cast<u_char *>(&qt);
     bytes.insert(bytes.end(), pqt, pqt + sizeof(dns_query_tailer));
     return bytes;
@@ -444,31 +464,34 @@ dns_reply parse_dns_reply(const Bytes &data)
     VLOG(3) << "raw dns reply data size=" << data.size();
     dns_reply reply;
     reply.h = *reinterpret_cast<const dns_header *>(data.data());
-    if (ntohs(reply.h.rrn) < 1) {
-        throw std::runtime_error(fmt::format("invalid dns reply header: qrn={}, rrn={}",
-                                             ntohs(reply.h.qrn), ntohs(reply.h.rrn)));
-    }
     auto it = data.cbegin() + sizeof(dns_header);
     for (int i = 0; i < ntohs(reply.h.qrn); ++i) {
-        VLOG(3) << "domain=" << decode_domain_name(data, it);
-        VLOG(3) << "type=" << htons(*reinterpret_cast<const u_short *>(&*it));
+        dns_query_record qr;
+        qr.domain = decode_domain_name(data, it);
+        qr.t.type = *reinterpret_cast<const u_short *>(&*it);
         it += sizeof(u_short);
-        VLOG(3) << "cls=" << htons(*reinterpret_cast<const u_short *>(&*it));
+        qr.t.cls = *reinterpret_cast<const u_short *>(&*it);
         it += sizeof(u_short);
+        reply.query.push_back(qr);
     }
-    for (int i = 0; i < ntohs(reply.h.rrn); ++i) {
-        dns_res_record rr;
-        rr.domain = decode_domain_name(data, it);
-        rr.type = *reinterpret_cast<const u_short *>(&*it);
-        it += sizeof(u_short);
-        rr.cls = *reinterpret_cast<const u_short *>(&*it);
-        it += sizeof(u_short);
-        rr.ttl = *reinterpret_cast<const u_int *>(&*it);
-        it += sizeof(u_int);
-        rr.data_len = *reinterpret_cast<const u_short *>(&*it);
-        it += sizeof(u_short);
-        rr.res_data = Bytes(it, it + ntohs(rr.data_len));
-        reply.reply.push_back(rr);
-    }
+    auto parse_res = [&](std::vector<dns_res_record> &vec, u_short count) {
+        for (int i = 0; i < ntohs(count); ++i) {
+            dns_res_record rr;
+            rr.domain = decode_domain_name(data, it);
+            rr.type = *reinterpret_cast<const u_short *>(&*it);
+            it += sizeof(u_short);
+            rr.cls = *reinterpret_cast<const u_short *>(&*it);
+            it += sizeof(u_short);
+            rr.ttl = *reinterpret_cast<const u_int *>(&*it);
+            it += sizeof(u_int);
+            rr.data_len = *reinterpret_cast<const u_short *>(&*it);
+            it += sizeof(u_short);
+            rr.res_data = Bytes(it, it + ntohs(rr.data_len));
+            vec.push_back(rr);
+        }
+    };
+    parse_res(reply.reply, reply.h.rrn);
+    parse_res(reply.auth, reply.h.arn);
+    parse_res(reply.extra, reply.h.ern);
     return reply;
 }

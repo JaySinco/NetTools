@@ -40,6 +40,21 @@
 #define ICMP_TYPE_NETMASK_ASK 17
 #define ICMP_TYPE_NETMASK_REPLY 18
 
+#define DNS_TYPE_CLASS_INTERNET_ADDR 1
+#define DNS_TYPE_A 1
+#define DNS_TYPE_NS 2
+#define DNS_TYPE_CNAME 5
+#define DNS_TYPE_PTR 12
+#define DNS_TYPE_HINFO 13
+#define DNS_TYPE_MX 15
+#define DNS_TYPE_AXFR 252
+#define DNS_TYPE_ANY 255
+#define DNS_OPCODE_QUERY_STANDARD 0
+#define DNS_OPCODE_QUERY_REVERSE 1
+#define DNS_OPCODE_QUERY_SERVER_STATUS 2
+#define DNS_RCODE_NO_ERROR 0
+#define DNS_RCODE_NAME_ERROR 3
+
 #define BROADCAST_IPv4_ADDR \
     ip4_addr { 0xff, 0xff, 0xff, 0xff }
 #define PLACEHOLDER_IPv4_ADDR \
@@ -218,6 +233,12 @@ struct dns_query_tailer
     u_short cls;   // Query class
 };
 
+struct dns_query_record
+{
+    std::string domain;  // Query domain
+    dns_query_tailer t;  // Query tailer
+};
+
 struct dns_res_record
 {
     std::string domain;  // Domain
@@ -230,10 +251,11 @@ struct dns_res_record
 
 struct dns_reply
 {
-    dns_header h;                       // DNS header
-    std::vector<dns_res_record> reply;  // Reply
-    std::vector<dns_res_record> auth;   // Auth
-    std::vector<dns_res_record> extra;  // Extra
+    dns_header h;                         // DNS header
+    std::vector<dns_query_record> query;  // Query
+    std::vector<dns_res_record> reply;    // Reply
+    std::vector<dns_res_record> auth;     // Auth
+    std::vector<dns_res_record> extra;    // Extra
 };
 
 u_short calc_checksum(const void *data, size_t len_in_byte);
@@ -255,5 +277,6 @@ std::ostream &operator<<(std::ostream &out, const _icmp_error_detail &detail);
 std::ostream &operator<<(std::ostream &out, const _udp_header_detail &detail);
 std::ostream &operator<<(std::ostream &out, const udp_header &header);
 std::ostream &operator<<(std::ostream &out, const dns_header &header);
+std::ostream &operator<<(std::ostream &out, const dns_query_record &record);
 std::ostream &operator<<(std::ostream &out, const dns_res_record &record);
 std::ostream &operator<<(std::ostream &out, const dns_reply &reply);
