@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    dns_client(argv[1], "172.16.108.1");
+    dns_client(argv[1], "8.8.8.8");
 
     NT_CATCH
 }
