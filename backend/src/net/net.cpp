@@ -487,6 +487,7 @@ dns_reply parse_dns_reply(const Bytes &data)
             rr.data_len = *reinterpret_cast<const u_short *>(&*it);
             it += sizeof(u_short);
             rr.res_data = Bytes(it, it + ntohs(rr.data_len));
+            it += ntohs(rr.data_len);
             vec.push_back(rr);
         }
     };

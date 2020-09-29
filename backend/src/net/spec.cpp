@@ -583,11 +583,22 @@ std::ostream &operator<<(std::ostream &out, const dns_query_record &record)
 
 std::ostream &operator<<(std::ostream &out, const dns_res_record &record)
 {
-    std::string domain = record.domain.size() ? record.domain : "(ROOT)";
+    std::string domain = record.domain.size() ? record.domain : "(Empty)";
     out << "\tDomain: " << domain << std::endl;
     out << "\tType: " << describe_dns_type(htons(record.type)) << std::endl;
     out << "\tTTL:" << ntohl(record.ttl) << " sec\n";
     out << "\tData Size: " << ntohs(record.data_len) << " bytes\n";
+    std::string data = "(Unknow)";
+    auto data_ptr = reinterpret_cast<const void *>(record.res_data.data());
+    switch (htons(record.type)) {
+        case DNS_TYPE_A:
+            data = to_string(*reinterpret_cast<const ip4_addr *>(data_ptr));
+            break;
+        case DNS_TYPE_CNAME:
+            data = std::string(reinterpret_cast<const char *>(data_ptr), record.res_data.size());
+            break;
+    }
+    out << "\tData: " << data << std::endl;
     return out;
 }
 
