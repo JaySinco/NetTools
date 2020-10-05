@@ -1,6 +1,8 @@
 #include <winsock2.h>
 #include "net.h"
 
+DEFINE_string(ip, "8.8.8.8", "dns server ip");
+
 void dns_client(const std::string &domain, const std::string &dns_server)
 {
     SOCKET s = socket(AF_INET, SOCK_DGRAM, IPv4_TYPE_UDP);
@@ -49,8 +51,6 @@ int main(int argc, char *argv[])
         LOG(ERROR) << "empty domain name, please input domain name";
         return -1;
     }
-
-    dns_client(argv[1], "8.8.8.8");
-
+    dns_client(argv[1], FLAGS_ip);
     NT_CATCH
 }
