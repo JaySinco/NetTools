@@ -486,8 +486,13 @@ dns_reply parse_dns_reply(const Bytes &data)
             it += sizeof(u_int);
             rr.data_len = *reinterpret_cast<const u_short *>(&*it);
             it += sizeof(u_short);
-            rr.res_data = Bytes(it, it + ntohs(rr.data_len));
-            it += ntohs(rr.data_len);
+            if (ntohs(rr.type) == DNS_TYPE_CNAME) {
+                std::string alias = decode_domain_name(data, it);
+                rr.res_data.insert(rr.res_data.cend(), alias.cbegin(), alias.cend());
+            } else {
+                rr.res_data = Bytes(it, it + ntohs(rr.data_len));
+                it += ntohs(rr.data_len);
+            }
             vec.push_back(rr);
         }
     };
