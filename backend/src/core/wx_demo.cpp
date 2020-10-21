@@ -5,16 +5,16 @@
 
 class MyApp : public wxApp
 {
-   public:
+public:
     virtual bool OnInit();
 };
 
 class MyFrame : public wxFrame
 {
-   public:
+public:
     MyFrame();
 
-   private:
+private:
     void OnHello(wxCommandEvent &event);
     void OnExit(wxCommandEvent &event);
     void OnAbout(wxCommandEvent &event);

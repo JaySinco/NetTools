@@ -10,7 +10,7 @@ class BasicClient : public CefClient,
                     public CefKeyboardHandler,
                     public CefLoadHandler
 {
-   public:
+public:
     BasicClient() {}
 
     // CefClient methods:
@@ -57,7 +57,7 @@ class BasicClient : public CefClient,
     void OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, ErrorCode errorCode,
                      const CefString &errorText, const CefString &failedUrl) override;
 
-   private:
+private:
     std::string GetDataURI(const std::string &data, const std::string &mime_type);
 
     std::list<CefRefPtr<CefBrowser>> browser_list_;

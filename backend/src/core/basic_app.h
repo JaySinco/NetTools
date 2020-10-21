@@ -4,7 +4,7 @@
 
 class BasicApp : public CefApp, public CefBrowserProcessHandler, public CefRenderProcessHandler
 {
-   public:
+public:
     BasicApp(const std::wstring &wnd_title, int wnd_width, int wnd_height,
              const std::wstring &app_url)
         : wnd_title_(wnd_title), wnd_width_(wnd_width), wnd_height_(wnd_height), app_url_(app_url)
@@ -28,7 +28,7 @@ class BasicApp : public CefApp, public CefBrowserProcessHandler, public CefRende
                                   CefProcessId source_process,
                                   CefRefPtr<CefProcessMessage> message) override;
 
-   private:
+private:
     std::wstring wnd_title_;
     int wnd_width_;
     int wnd_height_;
