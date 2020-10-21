@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     FLAGS_minloglevel = 0;
 
     if (argc < 2 && !FLAGS_attack) {
-        LOG(ERROR) << "empty ipv4 address, please set --ip";
+        LOG(ERROR) << "empty ipv4 address, please input ip";
         return -1;
     }
 

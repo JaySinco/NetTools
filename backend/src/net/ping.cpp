@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     FLAGS_minloglevel = 0;
 
     if (argc < 2) {
-        LOG(ERROR) << "empty target name, please iput ip or host name";
+        LOG(ERROR) << "empty target name, please input ip or host name";
         return -1;
     }
 
