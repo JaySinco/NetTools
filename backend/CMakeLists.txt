@@ -47,6 +47,8 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/
   ${CMAKE_SOURCE_DIR}/external/libcef/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
   ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
@@ -58,6 +60,7 @@ include_directories(${INCLUDE_DIR})
 
 set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/libcef/lib/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/gflags/lib/
   ${CMAKE_SOURCE_DIR}/external/glog/lib/
   ${CMAKE_SOURCE_DIR}/external/npcap/lib/
@@ -119,3 +122,5 @@ add_custom_command(TARGET ntls
   ${CMAKE_SOURCE_DIR}/external/libcef/bin/
   $<TARGET_FILE_DIR:ntls>
   )
+
+add_executable(wx_demo WIN32 ${CMAKE_SOURCE_DIR}/src/core/wx_demo.cpp)

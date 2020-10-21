@@ -1,4 +1,5 @@
 bin/
 backend/dest/
 backend/external/libcef/
+backend/external/wxWidgets/
 render/node_modules/
