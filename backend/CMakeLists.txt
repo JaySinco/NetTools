@@ -123,4 +123,4 @@ add_custom_command(TARGET ntls
   $<TARGET_FILE_DIR:ntls>
   )
 
-add_executable(wx_demo WIN32 ${CMAKE_SOURCE_DIR}/src/core/wx_demo.cpp)
+add_executable(demo WIN32 ${CMAKE_SOURCE_DIR}/src/wx/demo.cpp)

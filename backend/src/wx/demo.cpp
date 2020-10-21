@@ -1,6 +1,4 @@
-#define __WXMSW__
 #define _UNICODE
-
 #include <wx/wx.h>
 
 class MyApp : public wxApp
