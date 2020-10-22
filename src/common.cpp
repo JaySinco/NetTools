@@ -23,15 +23,6 @@ std::wstring get_curdir()
     return szFilePath;
 }
 
-std::wstring get_resdir() { return get_curdir() + L"\\resources"; }
-
-std::wstring get_srcdir()
-{
-    std::wstring pwd = get_curdir();
-    size_t pos = pwd.find_last_of(L"\\");
-    return pwd.substr(0, pos);
-}
-
 std::string string_join(const std::vector<std::string> &svec, const std::string &delimit)
 {
     if (svec.empty()) return "";

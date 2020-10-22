@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 #include "fmt/core.h"
 #define NTLS_FAILED 0
 #define NTLS_SUCC 1
@@ -20,10 +23,8 @@ std::string to_string(const T &v)
 std::string ws2s(const std::wstring &wstr);
 std::wstring s2ws(const std::string &str);
 
-// get absolute directory path
-std::wstring get_curdir();  // binary current dir
-std::wstring get_resdir();  // resources dir
-std::wstring get_srcdir();  // code source dir
+// get current binary absolute path
+std::wstring get_curdir();
 
 // split&join string by delimit
 std::string string_join(const std::vector<std::string> &svec, const std::string &delimit);

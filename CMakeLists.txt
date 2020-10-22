@@ -107,6 +107,7 @@ add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
 target_link_libraries(ntls
+  net
   )
 add_custom_command(TARGET ntls
   POST_BUILD
