@@ -46,24 +46,22 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/
-  ${CMAKE_SOURCE_DIR}/external/libcef/
-  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
-  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
   ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
   ${CMAKE_SOURCE_DIR}/external/fmt/include/
   ${CMAKE_SOURCE_DIR}/external/json/include/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
   )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
 
 set(LINK_DIR
-  ${CMAKE_SOURCE_DIR}/external/libcef/lib/
-  ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/gflags/lib/
   ${CMAKE_SOURCE_DIR}/external/glog/lib/
   ${CMAKE_SOURCE_DIR}/external/npcap/lib/
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -106,21 +104,13 @@ add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
 target_link_libraries(dns net)
 
 add_executable(ntls WIN32
-  ${CMAKE_SOURCE_DIR}/src/core/basic_client.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/basic_app.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/msg_handler.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/ntls.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
 target_link_libraries(ntls
-  net
-  libcef.lib
-  libcef_dll_wrapper.lib
   )
 add_custom_command(TARGET ntls
   POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-  ${CMAKE_SOURCE_DIR}/external/libcef/bin/
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-0.9995.exe
   $<TARGET_FILE_DIR:ntls>
   )
-
-add_executable(demo WIN32 ${CMAKE_SOURCE_DIR}/src/wx/demo.cpp)
