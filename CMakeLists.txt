@@ -1,45 +1,8 @@
-cmake_minimum_required(VERSION 3.2)
-
-macro(configure_msvc_runtime)
-  if(MSVC)
-    if("${MSVC_RUNTIME}" STREQUAL "")
-      set(MSVC_RUNTIME "static")
-    endif()
-    set(variables
-      CMAKE_C_FLAGS_DEBUG
-      CMAKE_C_FLAGS_MINSIZEREL
-      CMAKE_C_FLAGS_RELEASE
-      CMAKE_C_FLAGS_RELWITHDEBINFO
-      CMAKE_CXX_FLAGS_DEBUG
-      CMAKE_CXX_FLAGS_MINSIZEREL
-      CMAKE_CXX_FLAGS_RELEASE
-      CMAKE_CXX_FLAGS_RELWITHDEBINFO
-    )
-    if(${MSVC_RUNTIME} STREQUAL "static")
-      message(STATUS
-        "MSVC -> forcing use of statically-linked runtime."
-      )
-      foreach(variable ${variables})
-        if(${variable} MATCHES "/MD")
-          string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
-        endif()
-      endforeach()
-    else()
-      message(STATUS
-        "MSVC -> forcing use of dynamically-linked runtime."
-      )
-      foreach(variable ${variables})
-        if(${variable} MATCHES "/MT")
-          string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
-        endif()
-      endforeach()
-    endif()
-  endif()
-endmacro()
+cmake_minimum_required(VERSION 3.16)
 
 project(NetTools)
 
-configure_msvc_runtime()
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
@@ -85,6 +48,21 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
+add_executable(ntls WIN32
+  ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
+  )
+target_link_libraries(ntls net)
+target_compile_definitions(ntls PRIVATE _UNICODE)
+target_precompile_headers(ntls
+  PRIVATE ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/wx/wxprec.h
+  )
+add_custom_command(TARGET ntls
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-0.9995.exe
+  $<TARGET_FILE_DIR:ntls>
+  )
+
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/net/lsdev.cpp)
 target_link_libraries(lsdev net)
 
@@ -102,16 +80,3 @@ target_link_libraries(traceroute net)
 
 add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
 target_link_libraries(dns net)
-
-add_executable(ntls WIN32
-  ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
-  )
-target_link_libraries(ntls
-  net
-  )
-add_custom_command(TARGET ntls
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-0.9995.exe
-  $<TARGET_FILE_DIR:ntls>
-  )

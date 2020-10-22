@@ -1,5 +1,8 @@
-#define _UNICODE
-#include <wx/wx.h>
+#include "wx/wxprec.h"
+#ifndef WX_PRECOMP
+#include "wx/wx.h"
+#endif
+#include "common.h"
 
 class MyApp : public wxApp
 {
@@ -27,6 +30,12 @@ wxIMPLEMENT_APP(MyApp);
 
 bool MyApp::OnInit()
 {
+    google::InitGoogleLogging(argv[0]);
+    char **argv_ = argv;
+    gflags::ParseCommandLineFlags(&argc, &argv_, true);
+    FLAGS_logtostderr = 1;
+    FLAGS_minloglevel = 0;
+
     MyFrame *frame = new MyFrame();
     frame->Show(true);
     return true;
