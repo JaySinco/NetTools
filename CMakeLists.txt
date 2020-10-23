@@ -49,7 +49,8 @@ target_link_libraries(net
   )
 
 add_executable(ntls WIN32
-  ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/ntls.cpp
   )
 target_link_libraries(ntls net)
 target_compile_definitions(ntls PRIVATE _UNICODE)
