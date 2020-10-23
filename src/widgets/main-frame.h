@@ -1,12 +1,5 @@
-#include "wx/wxprec.h"
-#ifndef WX_PRECOMP
-#include "wx/wx.h"
-#endif
-
-enum
-{
-    ID_Hello = 1
-};
+#pragma once
+#include "base.h"
 
 class MainFrame : public wxFrame
 {
