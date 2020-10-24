@@ -7,5 +7,5 @@
 
 enum
 {
-    ntID_HELLO = 1,
+    ntID_MENU_HELLO = wxID_HIGHEST + 1,
 };

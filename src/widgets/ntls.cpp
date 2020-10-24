@@ -12,11 +12,8 @@ wxIMPLEMENT_APP(NtlsApp);
 
 bool NtlsApp::OnInit()
 {
-    google::InitGoogleLogging(argv[0]);
-    char **argv_ = argv;
-    gflags::ParseCommandLineFlags(&argc, &argv_, true);
-    FLAGS_logtostderr = 1;
-    FLAGS_minloglevel = 0;
+    wxLog *logger = new wxLogStream(&std::cerr);
+    wxLog::SetActiveTarget(logger);
 
     MainFrame *frame = new MainFrame();
     frame->Show(true);
@@ -25,6 +22,6 @@ bool NtlsApp::OnInit()
 
 int NtlsApp::OnExit()
 {
-    LOG(INFO) << "application about to exit.";
+    wxLogMessage("application about to exit.");
     return wxApp::OnExit();
 }

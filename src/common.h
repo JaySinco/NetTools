@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <iostream>
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <gflags/gflags.h>
 #include <glog/logging.h>
