@@ -1,5 +1,4 @@
 #include <memory>
-#include <list>
 #include "protocol.h"
 
 class NtPacket
@@ -11,5 +10,5 @@ public:
     std::string str() const;
 
 private:
-    std::list<std::shared_ptr<NtProtocol>> stack;
+    std::vector<std::shared_ptr<NtProtocol>> stack;
 };
