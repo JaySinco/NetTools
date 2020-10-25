@@ -1,5 +1,5 @@
 #pragma once
-#include "base.h"
+#include "global.h"
 
 class MainFrame : public wxFrame
 {

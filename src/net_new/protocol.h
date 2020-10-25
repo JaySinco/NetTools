@@ -1,23 +1,22 @@
 #include <vector>
+#include <json.hpp>
 
-typedef unsigned char byte;
+using byte = unsigned char;
+using json = nlohmann::json;
 
 class NtProtocol
 {
 public:
-    // Construct from raw packet bytes starting from `data`, write ending position into `after`
-    NtProtocol(const byte *data, byte *&after);
+    // Construct from raw packet bytes starting from `start`, write ending position into `end`
+    NtProtocol(const byte *start, byte *&end);
 
     // Destructor should be virtual
     virtual ~NtProtocol();
 
-    // Serialize current protocol layer and insert bytes in front of `pkt_data`, which contains
+    // Serialize current protocol layer and insert in front of `bytes`, which contains
     // raw packet bytes serialized from higher layer.
-    virtual void to_bytes(std::vector<byte> &pkt_data) const;
+    virtual void to_bytes(std::vector<byte> &bytes) const;
 
-    // Type of protocol
-    virtual std::string type() const;
-
-    // Description of protocol
-    virtual std::string str() const;
+    // Encode protocol detail as json
+    virtual json to_json() const;
 };

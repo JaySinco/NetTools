@@ -1,4 +1,4 @@
-#include "base.h"
+#include "global.h"
 #include "main-frame.h"
 
 class NtlsApp : public wxApp

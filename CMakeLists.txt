@@ -35,7 +35,7 @@ add_library(fmt STATIC
   )
 
 add_library(net STATIC
-  ${CMAKE_SOURCE_DIR}/src/common.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/common.cpp
   ${CMAKE_SOURCE_DIR}/src/net/spec.cpp
   ${CMAKE_SOURCE_DIR}/src/net/net.cpp
   )
