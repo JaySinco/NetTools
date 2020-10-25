@@ -48,6 +48,13 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
+add_library(net_new STATIC
+  ${CMAKE_SOURCE_DIR}/src/net_new/ethernet.cpp
+  )
+target_link_libraries(net_new
+  fmt
+  )
+
 add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/ntls.cpp

@@ -1,14 +1,16 @@
 #pragma once
+#include <winsock2.h>
 #include <vector>
 #include <json.hpp>
+#include <fmt/core.h>
 
-#define Protocol_Type_Ethernet "Ethernet"
-#define Protocol_Type_IPv4 "IPv4"
+#define Protocol_Type_Unimplemented(n) fmt::format("unimplemented({:#x})", n)
+#define Protocol_Type_Ethernet "ethernet"
+#define Protocol_Type_IPv4 "ipv4"
+#define Protocol_Type_IPv6 "ipv6"
+#define Protocol_Type_ARP "arp"
+#define Protocol_Type_RARP "rarp"
 
-using u_char = unsigned char;
-using u_short = unsigned short;
-using u_int = unsigned int;
-using u_long = unsigned long;
 using json = nlohmann::json;
 
 class protocol
@@ -24,7 +26,9 @@ public:
     // Encode protocol detail as json
     virtual json to_json() const;
 
+    // Self protocol type
     virtual std::string type() const;
 
-    virtual std::string next_type() const;
+    // Successor protocol type that follows
+    virtual std::string succ_type() const;
 };
