@@ -6,6 +6,7 @@ class arp : public protocol
 public:
     arp() = default;
     arp(const u_char *const start, const u_char *&end);
+    arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip);
     virtual ~arp();
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;

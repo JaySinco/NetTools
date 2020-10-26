@@ -35,8 +35,10 @@ add_library(fmt STATIC
   )
 
 add_library(net STATIC
-  ${CMAKE_SOURCE_DIR}/src/net/common.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/spec.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/type.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/ethernet.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/arp.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/packet.cpp
   ${CMAKE_SOURCE_DIR}/src/net/net.cpp
   )
 target_link_libraries(net
@@ -48,19 +50,9 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
-add_library(net_new STATIC
-  ${CMAKE_SOURCE_DIR}/src/protocol/type.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/ethernet.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/arp.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/packet.cpp
-  )
-target_link_libraries(net_new
-  fmt
-  )
-
 add_executable(ntls WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
-  ${CMAKE_SOURCE_DIR}/src/widgets/ntls.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
 target_link_libraries(ntls net)
 target_compile_definitions(ntls PRIVATE _UNICODE)
@@ -74,20 +66,20 @@ add_custom_command(TARGET ntls
   $<TARGET_FILE_DIR:ntls>
   )
 
-add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/net/lsdev.cpp)
-target_link_libraries(lsdev net)
+# add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/net/lsdev.cpp)
+# target_link_libraries(lsdev net)
 
-add_executable(sniff ${CMAKE_SOURCE_DIR}/src/net/sniff.cpp)
+add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
 target_link_libraries(sniff net)
 
-add_executable(arp ${CMAKE_SOURCE_DIR}/src/net/arp.cpp)
-target_link_libraries(arp net)
+# add_executable(arp ${CMAKE_SOURCE_DIR}/src/net/arp.cpp)
+# target_link_libraries(arp net)
 
-add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
-target_link_libraries(ping net)
+# add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
+# target_link_libraries(ping net)
 
-add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/net/traceroute.cpp)
-target_link_libraries(traceroute net)
+# add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/net/traceroute.cpp)
+# target_link_libraries(traceroute net)
 
-add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
-target_link_libraries(dns net)
+# add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
+# target_link_libraries(dns net)

