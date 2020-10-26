@@ -20,6 +20,9 @@ packet::packet(const u_char *const start, const u_char *const end)
             VLOG(1) << "unexpected protocol type after " << stack.back()->type() << ": " << type;
             break;
         }
+        if (pend > end) {
+            throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
+        }
         stack.push_back(prot);
         pstart = pend;
         type = prot->succ_type();
