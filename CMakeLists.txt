@@ -49,7 +49,10 @@ target_link_libraries(net
   )
 
 add_library(net_new STATIC
-  ${CMAKE_SOURCE_DIR}/src/net_new/ethernet.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/type.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/ethernet.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/arp.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/packet.cpp
   )
 target_link_libraries(net_new
   fmt

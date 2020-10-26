@@ -1,15 +1,7 @@
 #pragma once
-#include <winsock2.h>
+#include "type.h"
 #include <vector>
 #include <json.hpp>
-#include <fmt/core.h>
-
-#define Protocol_Type_Unimplemented(n) fmt::format("unimplemented({:#x})", n)
-#define Protocol_Type_Ethernet "ethernet"
-#define Protocol_Type_IPv4 "ipv4"
-#define Protocol_Type_IPv6 "ipv6"
-#define Protocol_Type_ARP "arp"
-#define Protocol_Type_RARP "rarp"
 
 using json = nlohmann::json;
 
