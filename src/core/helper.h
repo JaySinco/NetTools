@@ -6,7 +6,7 @@
     }            \
     catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
 
-class net
+class helper
 {
 public:
     static pcap_t *open_adaptor(const adapter &apt);

@@ -121,8 +121,8 @@ json adapter::to_json() const
 {
     json j;
     j["name"] = name;
-    j["description"] = desc;
-    j["mac"] = mac.to_str();
+    j["desc"] = desc;
+    j["mac"] = mac_.to_str();
     j["ip"] = ip.to_str();
     j["mask"] = mask.to_str();
     j["gateway"] = gateway.to_str();

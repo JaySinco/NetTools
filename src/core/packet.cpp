@@ -1,8 +1,5 @@
 #include "packet.h"
-#include "net.h"
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "helper.h"
 #include "ethernet.h"
 #include "arp.h"
 
@@ -48,8 +45,8 @@ json packet::to_json() const
 
 packet packet::arp(const ip4 &dest)
 {
-    auto &apt = net::get_adapter(dest);
-    return arp(false, false, apt.mac, apt.ip, mac::broadcast, dest);
+    auto &apt = helper::get_adapter(dest);
+    return arp(false, false, apt.mac_, apt.ip, mac::broadcast, dest);
 }
 
 packet packet::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,

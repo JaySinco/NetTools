@@ -1,16 +1,16 @@
 #include "global.h"
 #include "main-frame.h"
 
-class NtlsApp : public wxApp
+class App : public wxApp
 {
 public:
     virtual bool OnInit() override;
     virtual int OnExit() override;
 };
 
-wxIMPLEMENT_APP(NtlsApp);
+wxIMPLEMENT_APP(App);
 
-bool NtlsApp::OnInit()
+bool App::OnInit()
 {
     wxLog *logger = new wxLogStream(&std::cerr);
     wxLog::SetActiveTarget(logger);
@@ -20,7 +20,7 @@ bool NtlsApp::OnInit()
     return true;
 }
 
-int NtlsApp::OnExit()
+int App::OnExit()
 {
     wxLogMessage("application about to exit.");
     return wxApp::OnExit();

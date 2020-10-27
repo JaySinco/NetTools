@@ -1,11 +1,8 @@
-#include "net.h"
+#include "helper.h"
 #include <iphlpapi.h>
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <mutex>
 
-pcap_t *net::open_adaptor(const adapter &apt)
+pcap_t *helper::open_adaptor(const adapter &apt)
 {
     pcap_t *handle;
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -16,7 +13,7 @@ pcap_t *net::open_adaptor(const adapter &apt)
     return handle;
 }
 
-const adapter &net::get_adapter(const ip4 &hint)
+const adapter &helper::get_adapter(const ip4 &hint)
 {
     if (hint != ip4::zeros) {
         auto it = std::find_if(all_adapters().begin(), all_adapters().end(),
@@ -30,7 +27,7 @@ const adapter &net::get_adapter(const ip4 &hint)
     }
 }
 
-const std::vector<adapter> &net::all_adapters()
+const std::vector<adapter> &helper::all_adapters()
 {
     static std::once_flag flag;
     static std::vector<adapter> adapters;
@@ -59,7 +56,7 @@ const std::vector<adapter> &net::all_adapters()
                 if (pinfo->AddressLength != sizeof(mac)) {
                     LOG(WARNING) << "wrong mac length: " << pinfo->AddressLength;
                 } else {
-                    auto c = reinterpret_cast<u_char *>(&apt.mac);
+                    auto c = reinterpret_cast<u_char *>(&apt.mac_);
                     for (unsigned i = 0; i < pinfo->AddressLength; ++i) {
                         c[i] = pinfo->Address[i];
                     }

@@ -1,7 +1,5 @@
 #pragma once
-#include <winsock2.h>
-#include <fmt/core.h>
-#include <json.hpp>
+#include "prec.h"
 
 using json = nlohmann::json;
 
@@ -57,7 +55,7 @@ struct adapter
     ip4 ip;
     ip4 mask;
     ip4 gateway;
-    mac mac;
+    mac mac_;
 
     json to_json() const;
 };

@@ -42,7 +42,7 @@ json ethernet::to_json() const
 {
     json j;
     j["type"] = type();
-    j["successor-type"] = succ_type();
+    j["succ-type"] = succ_type();
     j["source-mac"] = d.source.to_str();
     j["dest-mac"] = d.dest.to_str();
     return j;

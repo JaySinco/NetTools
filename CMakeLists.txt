@@ -34,14 +34,16 @@ add_library(fmt STATIC
   ${CMAKE_SOURCE_DIR}/external/fmt/src/os.cc
   )
 
-add_library(net STATIC
-  ${CMAKE_SOURCE_DIR}/src/net/type.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/ethernet.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/arp.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/packet.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/net.cpp
+add_library(core STATIC
+  ${CMAKE_SOURCE_DIR}/src/core/type.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/ethernet.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/arp.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/helper.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
   )
-target_link_libraries(net
+target_compile_definitions(core PUBLIC _UNICODE)
+target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/core/prec.h)
+target_link_libraries(core
   fmt
   wpcap.lib
   ws2_32.lib
@@ -50,36 +52,11 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
-add_executable(ntls WIN32
+add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
+target_link_libraries(sniff core)
+
+add_executable(net WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
-target_link_libraries(ntls net)
-target_compile_definitions(ntls PRIVATE _UNICODE)
-target_precompile_headers(ntls
-  PRIVATE ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/wx/wxprec.h
-  )
-add_custom_command(TARGET ntls
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-0.9995.exe
-  $<TARGET_FILE_DIR:ntls>
-  )
-
-# add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/net/lsdev.cpp)
-# target_link_libraries(lsdev net)
-
-add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
-target_link_libraries(sniff net)
-
-# add_executable(arp ${CMAKE_SOURCE_DIR}/src/net/arp.cpp)
-# target_link_libraries(arp net)
-
-# add_executable(ping ${CMAKE_SOURCE_DIR}/src/net/ping.cpp)
-# target_link_libraries(ping net)
-
-# add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/net/traceroute.cpp)
-# target_link_libraries(traceroute net)
-
-# add_executable(dns ${CMAKE_SOURCE_DIR}/src/net/dns.cpp)
-# target_link_libraries(dns net)
+target_link_libraries(net core)
