@@ -59,4 +59,6 @@ add_executable(net WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
+target_precompile_headers(net PUBLIC
+  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/wx/wxprec.h)
 target_link_libraries(net core)

@@ -1,5 +1,8 @@
 #pragma once
-#include "core/prec.h"
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
 
 enum
 {
