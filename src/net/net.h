@@ -9,7 +9,7 @@
 class net
 {
 public:
-    static const std::vector<adapter> &all_adapters();
     static pcap_t *open_adaptor(const adapter &apt);
-    static pcap_t *open_adaptor(const ip4 &ip, adapter &apt);
+    static const adapter &get_adapter(const ip4 &hint = ip4::zeros);
+    static const std::vector<adapter> &all_adapters();
 };

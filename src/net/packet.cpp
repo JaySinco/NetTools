@@ -48,8 +48,8 @@ json packet::to_json() const
 
 packet packet::arp(const ip4 &dest)
 {
-    const adapter &apt = net::all_adapters().front();
-    return arp(false, false, apt.mac, apt.ip, mac::placeholder, dest);
+    auto &apt = net::get_adapter(dest);
+    return arp(false, false, apt.mac, apt.ip, mac::broadcast, dest);
 }
 
 packet packet::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,

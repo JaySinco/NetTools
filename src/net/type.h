@@ -22,7 +22,7 @@ struct mac
 
     std::string to_str() const;
 
-    static const mac placeholder;
+    static const mac zeros;
     static const mac broadcast;
 };
 
@@ -46,7 +46,7 @@ struct ip4
 
     static bool from_dotted_dec(const std::string &s, ip4 *ip = nullptr);
     static bool from_domain(const std::string &s, ip4 *ip = nullptr);
-    static const ip4 placeholder;
+    static const ip4 zeros;
     static const ip4 broadcast;
 };
 

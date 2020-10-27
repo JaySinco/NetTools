@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    adapter apt;
-    pcap_t *handle = net::open_adaptor(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::placeholder, apt);
+    auto &apt = net::get_adapter(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
+    pcap_t *handle = net::open_adaptor(apt);
 
     LOG(INFO) << apt.to_json().dump(3);
 

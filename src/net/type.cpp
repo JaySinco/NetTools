@@ -2,7 +2,7 @@
 #include <ws2tcpip.h>
 #include <sstream>
 
-const mac mac::placeholder = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 const mac mac::broadcast = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 bool mac::operator==(const mac &rhs) const
@@ -24,7 +24,7 @@ std::string mac::to_str() const
     return ss.str();
 }
 
-const ip4 ip4::placeholder = {0x0, 0x0, 0x0, 0x0};
+const ip4 ip4::zeros = {0x0, 0x0, 0x0, 0x0};
 const ip4 ip4::broadcast = {0xff, 0xff, 0xff, 0xff};
 
 ip4::ip4(u_char c1, u_char c2, u_char c3, u_char c4) : b1(c1), b2(c2), b3(c3), b4(c4) {}

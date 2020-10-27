@@ -16,18 +16,18 @@ pcap_t *net::open_adaptor(const adapter &apt)
     return handle;
 }
 
-pcap_t *net::open_adaptor(const ip4 &ip, adapter &apt)
+const adapter &net::get_adapter(const ip4 &hint)
 {
-    if (ip != ip4::placeholder) {
+    if (hint != ip4::zeros) {
         auto it = std::find_if(all_adapters().begin(), all_adapters().end(),
-                               [&](const adapter &dev) { return dev.ip.is_local(ip, dev.mask); });
+                               [&](const adapter &apt) { return apt.ip.is_local(hint, apt.mask); });
         if (it == all_adapters().end()) {
-            throw std::runtime_error(fmt::format("no local adapter match {}", ip.to_str()));
+            throw std::runtime_error(fmt::format("no local adapter match {}", hint.to_str()));
         }
-        apt = *it;
+        return *it;
+    } else {
+        return all_adapters().front();
     }
-    apt = all_adapters().front();
-    return open_adaptor(apt);
 }
 
 const std::vector<adapter> &net::all_adapters()
@@ -50,7 +50,7 @@ const std::vector<adapter> &net::all_adapters()
             ip4 ip(pinfo->IpAddressList.IpAddress.String);
             ip4 mask(pinfo->IpAddressList.IpMask.String);
             ip4 gateway(pinfo->GatewayList.IpAddress.String);
-            if (gateway != ip4::placeholder && mask != ip4::placeholder) {
+            if (gateway != ip4::zeros && mask != ip4::zeros) {
                 apt.name = std::string("\\Device\\NPF_") + pinfo->AdapterName;
                 apt.desc = pinfo->Description;
                 apt.ip = ip;
@@ -64,7 +64,6 @@ const std::vector<adapter> &net::all_adapters()
                         c[i] = pinfo->Address[i];
                     }
                 }
-                VLOG(1) << "find suitable adapter: " << apt.to_json().dump(3);
                 adapters.push_back(apt);
             }
             pinfo = pinfo->Next;
