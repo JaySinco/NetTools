@@ -42,7 +42,7 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )
 target_compile_definitions(core PUBLIC _UNICODE)
-target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/core/prec.h)
+target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/core/__prec.h)
 target_link_libraries(core
   fmt
   wpcap.lib
