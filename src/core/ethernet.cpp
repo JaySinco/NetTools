@@ -58,3 +58,5 @@ std::string ethernet::succ_type() const
     }
     return Protocol_Type_Unimplemented(type);
 }
+
+bool ethernet::link_to(const protocol &rhs) const { return false; }

@@ -20,14 +20,14 @@ public:
 private:
     std::vector<std::shared_ptr<protocol>> stack;
 
-    using decoder_type =
-        std::function<std::shared_ptr<protocol>(const u_char *const start, const u_char *&end)>;
-
     template <typename T>
-    static std::shared_ptr<protocol> decoder(const u_char *const start, const u_char *&end)
+    static std::shared_ptr<protocol> decode(const u_char *const start, const u_char *&end)
     {
-        return std::make_shared<T>(pstart, pend);
+        return std::make_shared<T>(start, end);
     }
 
-    static std::map<std::string, decoder_type> decoder_dict;
+    using decoder =
+        std::function<std::shared_ptr<protocol>(const u_char *const start, const u_char *&end)>;
+
+    static std::map<std::string, decoder> decoder_dict;
 };

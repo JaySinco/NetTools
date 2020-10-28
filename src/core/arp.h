@@ -13,6 +13,7 @@ public:
     virtual json to_json() const override;
     virtual std::string type() const override;
     virtual std::string succ_type() const override;
+    virtual bool link_to(const protocol &rhs) const override;
 
 private:
     struct detail

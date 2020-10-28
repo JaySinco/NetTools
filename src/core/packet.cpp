@@ -3,10 +3,10 @@
 #include "ethernet.h"
 #include "arp.h"
 
-std::map<std::string, packet::decoder_type> packet::decoder_dict = {
-    {Protocol_Type_Ethernet, &packet::decoder<ethernet>},
-    {Protocol_Type_ARP, &packet::decoder<::arp>},
-    {Protocol_Type_RARP, &packet::decoder<::arp>},
+std::map<std::string, packet::decoder> packet::decoder_dict = {
+    {Protocol_Type_Ethernet, packet::decode<ethernet>},
+    {Protocol_Type_ARP, packet::decode<::arp>},
+    {Protocol_Type_RARP, packet::decode<::arp>},
 };
 
 packet::packet(const u_char *const start, const u_char *const end)
@@ -58,9 +58,9 @@ packet packet::arp(const ip4 &dest)
 packet packet::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,
                    const ip4 &dip)
 {
-    packet pkt;
-    pkt.stack.push_back(std::make_shared<ethernet>(
-        mac::broadcast, smac, reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
-    pkt.stack.push_back(std::make_shared<::arp>(reverse, reply, smac, sip, dmac, dip));
-    return pkt;
+    packet p;
+    p.stack.push_back(std::make_shared<ethernet>(mac::broadcast, smac,
+                                                 reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
+    p.stack.push_back(std::make_shared<::arp>(reverse, reply, smac, sip, dmac, dip));
+    return p;
 }

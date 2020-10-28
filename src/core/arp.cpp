@@ -56,3 +56,5 @@ std::string arp::type() const
 }
 
 std::string arp::succ_type() const { return Protocol_Type_Void; }
+
+bool arp::link_to(const protocol &rhs) const { return false; }
