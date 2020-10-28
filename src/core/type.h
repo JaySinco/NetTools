@@ -4,7 +4,7 @@
 using json = nlohmann::json;
 
 #define Protocol_Type_Void "void"
-#define Protocol_Type_Unimplemented(n) fmt::format("unimplemented({:#x})", n)
+#define Protocol_Type_Unknow(n) fmt::format("unknow({:#x})", n)
 #define Protocol_Type_Ethernet "ethernet"
 #define Protocol_Type_IPv4 "ipv4"
 #define Protocol_Type_IPv6 "ipv6"
@@ -48,7 +48,7 @@ struct ip4
     static const ip4 broadcast;
 };
 
-struct adapter
+struct adaptor
 {
     std::string name;
     std::string desc;
@@ -58,4 +58,7 @@ struct adapter
     mac mac_;
 
     json to_json() const;
+
+    static const adaptor &fit(const ip4 &hint = ip4::zeros);
+    static const std::vector<adaptor> &all();
 };

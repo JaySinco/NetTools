@@ -24,7 +24,7 @@ ethernet::ethernet(const mac &dest, const mac &source, const std::string &type)
         }
     }
     if (!found) {
-        throw std::runtime_error(fmt::format("unimplemented ethernet type: {}", type));
+        throw std::runtime_error(fmt::format("unknow ethernet type: {}", type));
     }
     d.dest = dest;
     d.source = source;
@@ -56,7 +56,14 @@ std::string ethernet::succ_type() const
     if (type_dict.count(type) != 0) {
         return type_dict[type];
     }
-    return Protocol_Type_Unimplemented(type);
+    return Protocol_Type_Unknow(type);
 }
 
-bool ethernet::link_to(const protocol &rhs) const { return false; }
+bool ethernet::link_to(const protocol &rhs) const
+{
+    if (type() == rhs.type()) {
+        auto p = dynamic_cast<const ethernet &>(rhs);
+        return d.dest == p.d.source;
+    }
+    return false;
+}

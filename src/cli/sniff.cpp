@@ -1,8 +1,5 @@
-#include "core/helper.h"
+#include "core/transport.h"
 #include "core/packet.h"
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 
 DEFINE_string(ip, "", "ipv4 address used to choose adapter, select first if empty");
 DEFINE_string(filter, "", "capture filter applied to adapter");
@@ -15,8 +12,8 @@ int main(int argc, char *argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    auto &apt = helper::get_adapter(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
-    pcap_t *handle = helper::open_adaptor(apt);
+    auto &apt = adaptor::fit(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
+    pcap_t *handle = transport::open_adaptor(apt);
 
     LOG(INFO) << apt.to_json().dump(3);
 

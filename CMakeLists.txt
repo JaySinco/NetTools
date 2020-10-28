@@ -38,8 +38,8 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/type.cpp
   ${CMAKE_SOURCE_DIR}/src/core/ethernet.cpp
   ${CMAKE_SOURCE_DIR}/src/core/arp.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/helper.cpp
   ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )
 target_compile_definitions(core PUBLIC _UNICODE)
 target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/core/prec.h)

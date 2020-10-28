@@ -1,5 +1,4 @@
 #include "packet.h"
-#include "helper.h"
 #include "ethernet.h"
 #include "arp.h"
 
@@ -14,16 +13,12 @@ packet::packet(const u_char *const start, const u_char *const end)
     const u_char *pstart = start;
     std::string type = Protocol_Type_Ethernet;
     while (type != Protocol_Type_Void && pstart < end) {
-        const u_char *pend;
-        std::shared_ptr<protocol> prot;
-        if (type == Protocol_Type_Ethernet) {
-            prot = std::make_shared<ethernet>(pstart, pend);
-        } else if (type == Protocol_Type_ARP || type == Protocol_Type_RARP) {
-            prot = std::make_shared<::arp>(pstart, pend);
-        } else {
-            VLOG(1) << "unexpected protocol type after " << stack.back()->type() << ": " << type;
+        if (decoder_dict.count(type) <= 0) {
+            VLOG(1) << "unimplemented protocol: " << stack.back()->type() << " -> " << type;
             break;
         }
+        const u_char *pend;
+        std::shared_ptr<protocol> prot = decoder_dict.at(type)(pstart, pend);
         if (pend > end) {
             throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
         }
@@ -49,9 +44,22 @@ json packet::to_json() const
     return j;
 }
 
+bool packet::link_to(const packet &rhs) const
+{
+    if (stack.size() != rhs.stack.size()) {
+        return false;
+    }
+    for (int i = 0; i < stack.size(); ++i) {
+        if (!stack.at(i)->link_to(*rhs.stack.at(i))) {
+            return false;
+        }
+    }
+    return true;
+}
+
 packet packet::arp(const ip4 &dest)
 {
-    auto &apt = helper::get_adapter(dest);
+    auto &apt = adaptor::fit(dest);
     return arp(false, false, apt.mac_, apt.ip, mac::broadcast, dest);
 }
 

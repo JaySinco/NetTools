@@ -1,6 +1,8 @@
 #include "type.h"
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
 #include <sstream>
+#include <mutex>
 
 const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 const mac mac::broadcast = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -117,7 +119,7 @@ std::string ip4::to_str() const
     return ss.str();
 }
 
-json adapter::to_json() const
+json adaptor::to_json() const
 {
     json j;
     j["name"] = name;
@@ -127,4 +129,63 @@ json adapter::to_json() const
     j["mask"] = mask.to_str();
     j["gateway"] = gateway.to_str();
     return j;
+}
+
+const adaptor &adaptor::fit(const ip4 &hint)
+{
+    if (hint != ip4::zeros) {
+        auto it = std::find_if(all().begin(), all().end(),
+                               [&](const adaptor &apt) { return apt.ip.is_local(hint, apt.mask); });
+        if (it == all().end()) {
+            throw std::runtime_error(fmt::format("no local adapter match {}", hint.to_str()));
+        }
+        return *it;
+    } else {
+        return all().front();
+    }
+}
+
+const std::vector<adaptor> &adaptor::all()
+{
+    static std::once_flag flag;
+    static std::vector<adaptor> adapters;
+    std::call_once(flag, [&] {
+        u_long buflen = sizeof(IP_ADAPTER_INFO);
+        auto plist = reinterpret_cast<IP_ADAPTER_INFO *>(malloc(sizeof(IP_ADAPTER_INFO)));
+        std::shared_ptr<void> plist_guard(nullptr, [=](void *) { free(plist); });
+        if (GetAdaptersInfo(plist, &buflen) == ERROR_BUFFER_OVERFLOW) {
+            plist = reinterpret_cast<IP_ADAPTER_INFO *>(malloc(buflen));
+            if (GetAdaptersInfo(plist, &buflen) != NO_ERROR) {
+                throw std::runtime_error("failed to get adapters info");
+            }
+        }
+        PIP_ADAPTER_INFO pinfo = plist;
+        while (pinfo) {
+            adaptor apt;
+            ip4 ip(pinfo->IpAddressList.IpAddress.String);
+            ip4 mask(pinfo->IpAddressList.IpMask.String);
+            ip4 gateway(pinfo->GatewayList.IpAddress.String);
+            if (gateway != ip4::zeros && mask != ip4::zeros) {
+                apt.name = std::string("\\Device\\NPF_") + pinfo->AdapterName;
+                apt.desc = pinfo->Description;
+                apt.ip = ip;
+                apt.mask = mask;
+                apt.gateway = gateway;
+                if (pinfo->AddressLength != sizeof(mac)) {
+                    LOG(WARNING) << "wrong mac length: " << pinfo->AddressLength;
+                } else {
+                    auto c = reinterpret_cast<u_char *>(&apt.mac_);
+                    for (unsigned i = 0; i < pinfo->AddressLength; ++i) {
+                        c[i] = pinfo->Address[i];
+                    }
+                }
+                adapters.push_back(apt);
+            }
+            pinfo = pinfo->Next;
+        }
+        if (adapters.size() <= 0) {
+            throw std::runtime_error("failed to find any suitable adapter");
+        }
+    });
+    return adapters;
 }
