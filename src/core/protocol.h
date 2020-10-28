@@ -20,4 +20,7 @@ public:
 
     // Successor protocol type that follows
     virtual std::string succ_type() const = 0;
+
+    // Whether two protocol corresponding to each other
+    virtual bool link_to(const protocol &rhs) const = 0;
 };

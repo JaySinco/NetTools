@@ -3,6 +3,12 @@
 #include "ethernet.h"
 #include "arp.h"
 
+std::map<std::string, packet::decoder_type> packet::decoder_dict = {
+    {Protocol_Type_Ethernet, &packet::decoder<ethernet>},
+    {Protocol_Type_ARP, &packet::decoder<::arp>},
+    {Protocol_Type_RARP, &packet::decoder<::arp>},
+};
+
 packet::packet(const u_char *const start, const u_char *const end)
 {
     const u_char *pstart = start;
