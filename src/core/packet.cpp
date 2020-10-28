@@ -8,7 +8,7 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_RARP, packet::decode<::arp>},
 };
 
-packet::packet(const u_char *const start, const u_char *const end)
+packet::packet(const u_char *const start, const u_char *const end, long recv_sec, long ms)
 {
     const u_char *pstart = start;
     std::string type = Protocol_Type_Ethernet;
@@ -17,7 +17,7 @@ packet::packet(const u_char *const start, const u_char *const end)
             VLOG(1) << "unimplemented protocol: " << layers.back()->type() << " -> " << type;
             break;
         }
-        const u_char *pend;
+        const u_char *pend = end;
         std::shared_ptr<protocol> prot = decoder_dict.at(type)(pstart, pend);
         if (pend > end) {
             throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
@@ -25,6 +25,11 @@ packet::packet(const u_char *const start, const u_char *const end)
         layers.push_back(prot);
         pstart = pend;
         type = prot->succ_type();
+    }
+    if (recv_sec > 0) {
+        time_t local = recv_sec;
+        localtime_s(&recv_tm, &local);
+        recv_ms = ms;
     }
 }
 
@@ -62,13 +67,6 @@ bool packet::link_to(const packet &rhs) const
         }
     }
     return true;
-}
-
-void packet::received_at(long sec, long ms)
-{
-    time_t local = sec;
-    localtime_s(&recv_tm, &local);
-    recv_ms = ms;
 }
 
 packet packet::arp(const ip4 &dest)

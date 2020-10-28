@@ -42,9 +42,7 @@ bool transport::recv(pcap_t *handle, std::function<bool(const packet &p)> callba
         if (res == 0) {
             continue;  // timeout elapsed
         }
-        packet pac(start, start + info->len);
-        pac.received_at(info->ts.tv_sec, info->ts.tv_usec);
-        if (callback(pac)) {
+        if (callback(packet(start, start + info->len, info->ts.tv_sec, info->ts.tv_usec))) {
             return true;
         }
     }

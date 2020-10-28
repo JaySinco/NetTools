@@ -7,11 +7,10 @@ class packet
 {
 public:
     packet() = default;
-    packet(const u_char *const start, const u_char *const end);
+    packet(const u_char *const start, const u_char *const end, long recv_sec = 0, long ms = 0);
     void to_bytes(std::vector<u_char> &bytes) const;
     json to_json() const;
     bool link_to(const packet &rhs) const;
-    void received_at(long sec, long ms);
 
     static packet arp(const ip4 &dest);
     static packet arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,
