@@ -33,17 +33,9 @@ int main(int argc, char *argv[])
     }
 
     LOG(INFO) << "begin to sniff...";
-    int res;
-    pcap_pkthdr *info;
-    const u_char *start;
-    while ((res = pcap_next_ex(handle, &info, &start)) >= 0) {
-        if (res == 0) {
-            continue;  // timeout elapsed
-        }
-        LOG(INFO) << packet(start, start + info->len).to_json().dump(3);
-    }
-    if (res == -1) {
-        throw std::runtime_error(fmt::format("failed to read packets: {}", pcap_geterr(handle)));
-    }
+    transport::wait(handle, [](const packet &p) {
+        LOG(INFO) << p.to_json().dump(3);
+        return false;
+    });
     NT_CATCH
 }
