@@ -11,7 +11,21 @@ pcap_t *transport::open_adaptor(const adaptor &apt)
     return handle;
 }
 
-bool transport::wait(pcap_t *handle, std::function<bool(const packet &p)> callback, int timeout_ms,
+void transport::set_filter(pcap_t *handle, const std::string &filter, const ip4 &mask)
+{
+    bpf_program fcode;
+    if (pcap_compile(handle, &fcode, filter.c_str(), 1, static_cast<u_int>(mask)) < 0) {
+        throw std::runtime_error(
+            fmt::format("failed to compile pcap filter: {}, please refer to "
+                        "https://nmap.org/npcap/guide/wpcap/pcap-filter.html",
+                        filter));
+    }
+    if (pcap_setfilter(handle, &fcode) < 0) {
+        throw std::runtime_error(fmt::format("failed to set pcap filter: {}", filter));
+    }
+}
+
+bool transport::recv(pcap_t *handle, std::function<bool(const packet &p)> callback, int timeout_ms,
                      const std::chrono::system_clock::time_point &start_tm)
 {
     int res;
@@ -28,7 +42,9 @@ bool transport::wait(pcap_t *handle, std::function<bool(const packet &p)> callba
         if (res == 0) {
             continue;  // timeout elapsed
         }
-        if (callback(packet(start, start + info->len))) {
+        packet pac(start, start + info->len);
+        pac.received_at(info->ts.tv_sec, info->ts.tv_usec);
+        if (callback(pac)) {
             return true;
         }
     }
@@ -47,14 +63,14 @@ void transport::send(pcap_t *handle, const packet &pac)
     }
 }
 
-bool transport::send_then_wait(pcap_t *handle, const packet &pac, packet &reply, int timeout_ms)
+bool transport::send_and_recv(pcap_t *handle, const packet &req, packet &reply, int timeout_ms)
 {
     auto start_tm = std::chrono::system_clock::now();
-    send(handle, pac);
-    return wait(
+    send(handle, req);
+    return recv(
         handle,
         [&](const packet &p) {
-            if (pac.link_to(p)) {
+            if (req.link_to(p)) {
                 reply = p;
                 return true;
             }

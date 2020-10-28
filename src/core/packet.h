@@ -12,13 +12,16 @@ public:
     void to_bytes(std::vector<u_char> &bytes) const;
     json to_json() const;
     bool link_to(const packet &rhs) const;
+    void received_at(long sec, long ms);
 
     static packet arp(const ip4 &dest);
     static packet arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,
                       const ip4 &dip);
 
 private:
-    std::vector<std::shared_ptr<protocol>> stack;
+    std::vector<std::shared_ptr<protocol>> layers;
+    tm recv_tm = {0};
+    long recv_ms;
 
     template <typename T>
     static std::shared_ptr<protocol> decode(const u_char *const start, const u_char *&end)

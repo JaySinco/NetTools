@@ -14,26 +14,15 @@ int main(int argc, char *argv[])
 
     auto &apt = adaptor::fit(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
-
     LOG(INFO) << apt.to_json().dump(3);
 
     if (FLAGS_filter.size() > 0) {
         LOG(INFO) << "set filter \"" << FLAGS_filter << "\", mask=" << apt.mask.to_str();
-        bpf_program fcode;
-        if (pcap_compile(handle, &fcode, FLAGS_filter.c_str(), 1, static_cast<u_int>(apt.mask)) <
-            0) {
-            LOG(ERROR) << "failed to compile the packet filter, please refer to "
-                          "https://nmap.org/npcap/guide/wpcap/pcap-filter.html";
-            return -1;
-        }
-        if (pcap_setfilter(handle, &fcode) < 0) {
-            LOG(ERROR) << "failed to set filter";
-            return -1;
-        }
+        transport::set_filter(handle, FLAGS_filter, apt.mask);
     }
 
     LOG(INFO) << "begin to sniff...";
-    transport::wait(handle, [](const packet &p) {
+    transport::recv(handle, [](const packet &p) {
         LOG(INFO) << p.to_json().dump(3);
         return false;
     });
