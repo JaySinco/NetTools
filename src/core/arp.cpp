@@ -34,8 +34,8 @@ json arp::to_json() const
     j["type"] = type();
     j["hardware-type"] = ntohs(d.hw_type);
     j["protocol-type"] = ntohs(d.prot_type);
-    j["hardware-address-len"] = d.hw_len;
-    j["protocol-address-len"] = d.prot_len;
+    j["hardware-addr-len"] = d.hw_len;
+    j["protocol-addr-len"] = d.prot_len;
     u_short op = ntohs(d.op);
     j["operate"] = (op == 1 || op == 3) ? "request"
                                         : (op == 2 || op == 4) ? "reply" : Protocol_Type_Unknow(op);
