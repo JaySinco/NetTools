@@ -2,7 +2,7 @@
 
 arp::arp(const u_char *const start, const u_char *&end)
 {
-    d = convert_detail(true, *reinterpret_cast<const detail *>(start));
+    d = ntoh(*reinterpret_cast<const detail *>(start));
     end = start + sizeof(detail);
 }
 
@@ -23,7 +23,7 @@ arp::~arp() {}
 
 void arp::to_bytes(std::vector<u_char> &bytes) const
 {
-    auto dt = convert_detail(false, d);
+    auto dt = hton(d);
     auto it = reinterpret_cast<const u_char *>(&dt);
     bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
 }
@@ -66,11 +66,13 @@ bool arp::link_to(const protocol &rhs) const
 
 const arp::detail &arp::get_detail() const { return d; }
 
-arp::detail arp::convert_detail(bool ntoh, const detail &d)
+arp::detail arp::hton(const detail &d) { return ntoh(d, true); }
+
+arp::detail arp::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    NET_CVT(dt.hw_type, ntoh, s);
-    NET_CVT(dt.prot_type, ntoh, s);
-    NET_CVT(dt.op, ntoh, s);
+    NET_CVT(dt.hw_type, !reverse, s);
+    NET_CVT(dt.prot_type, !reverse, s);
+    NET_CVT(dt.op, !reverse, s);
     return dt;
 }

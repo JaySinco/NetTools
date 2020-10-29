@@ -29,5 +29,6 @@ private:
     detail d;
 
     static std::map<u_short, std::string> type_dict;
-    static detail convert_detail(bool ntoh, const detail &d);
+    static detail hton(const detail &d);
+    static detail ntoh(const detail &d, bool reverse = false);
 };

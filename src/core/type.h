@@ -11,7 +11,7 @@ using json = nlohmann::json;
 #define Protocol_Type_ARP "arp"
 #define Protocol_Type_RARP "rarp"
 
-#define NET_CVT(field, ntoh, suffix) (field) = ((ntoh ? ntoh##suffix : hton##suffix)(field))
+#define NET_CVT(field, cond, suffix) field = ((cond) ? ntoh##suffix : hton##suffix)(field);
 
 struct mac
 {

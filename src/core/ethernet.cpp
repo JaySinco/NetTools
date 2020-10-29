@@ -9,7 +9,7 @@ std::map<u_short, std::string> ethernet::type_dict = {
 
 ethernet::ethernet(const u_char *const start, const u_char *&end)
 {
-    d = convert_detail(true, *reinterpret_cast<const detail *>(start));
+    d = ntoh(*reinterpret_cast<const detail *>(start));
     end = start + sizeof(detail);
 }
 
@@ -34,7 +34,7 @@ ethernet::~ethernet() {}
 
 void ethernet::to_bytes(std::vector<u_char> &bytes) const
 {
-    auto dt = convert_detail(false, d);
+    auto dt = hton(d);
     auto it = reinterpret_cast<const u_char *>(&dt);
     bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
 }
@@ -70,9 +70,11 @@ bool ethernet::link_to(const protocol &rhs) const
 
 const ethernet::detail &ethernet::get_detail() const { return d; }
 
-ethernet::detail ethernet::convert_detail(bool ntoh, const detail &d)
+ethernet::detail ethernet::hton(const detail &d) { return ntoh(d, true); }
+
+ethernet::detail ethernet::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    NET_CVT(dt.type, ntoh, s);
+    NET_CVT(dt.type, !reverse, s);
     return dt;
 }
