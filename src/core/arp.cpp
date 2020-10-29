@@ -6,7 +6,7 @@ arp::arp(const u_char *const start, const u_char *&end)
     end = start + sizeof(detail);
 }
 
-arp::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip)
+arp::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse)
 {
     u_short op = reverse ? (reply ? 4 : 3) : (reply ? 2 : 1);
     d.hw_type = htons(1);
@@ -60,7 +60,9 @@ bool arp::link_to(const protocol &rhs) const
 {
     if (type() == rhs.type()) {
         auto p = dynamic_cast<const arp &>(rhs);
-        return (d.op == 1 || d.op == 3) && (p.d.op == 2 || p.d.op == 4) && (d.dip == p.d.sip);
+        u_short lhs_op = ntohs(d.op);
+        u_short rhs_op = ntohs(p.d.op);
+        return (lhs_op == 1 || lhs_op == 3) && (rhs_op == 2 || rhs_op == 4) && (d.dip == p.d.sip);
     }
     return false;
 }

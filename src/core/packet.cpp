@@ -14,7 +14,7 @@ packet::packet(const u_char *const start, const u_char *const end, long recv_sec
     std::string type = Protocol_Type_Ethernet;
     while (type != Protocol_Type_Void && pstart < end) {
         if (decoder_dict.count(type) <= 0) {
-            VLOG(1) << "unimplemented protocol: " << layers.back()->type() << " -> " << type;
+            VLOG(3) << "unimplemented protocol: " << layers.back()->type() << " -> " << type;
             break;
         }
         const u_char *pend = end;
@@ -72,15 +72,15 @@ bool packet::link_to(const packet &rhs) const
 packet packet::arp(const ip4 &dest)
 {
     auto &apt = adaptor::fit(dest);
-    return arp(false, false, apt.mac_, apt.ip, mac::broadcast, dest);
+    return arp(apt.mac_, apt.ip, mac::zeros, dest);
 }
 
-packet packet::arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,
-                   const ip4 &dip)
+packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,
+                   bool reverse)
 {
     packet p;
     p.layers.push_back(std::make_shared<ethernet>(
         mac::broadcast, smac, reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
-    p.layers.push_back(std::make_shared<::arp>(reverse, reply, smac, sip, dmac, dip));
+    p.layers.push_back(std::make_shared<::arp>(smac, sip, dmac, dip, reply, reverse));
     return p;
 }

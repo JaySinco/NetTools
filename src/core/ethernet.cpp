@@ -63,7 +63,7 @@ bool ethernet::link_to(const protocol &rhs) const
 {
     if (type() == rhs.type()) {
         auto p = dynamic_cast<const ethernet &>(rhs);
-        return d.dest == p.d.source;
+        return p.d.dest == mac::broadcast || d.source == p.d.dest;
     }
     return false;
 }

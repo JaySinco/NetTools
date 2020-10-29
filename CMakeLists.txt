@@ -58,6 +58,9 @@ target_link_libraries(lsdev core)
 add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
 target_link_libraries(sniff core)
 
+add_executable(arp ${CMAKE_SOURCE_DIR}/src/cli/arp.cpp)
+target_link_libraries(arp core)
+
 add_executable(net WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp

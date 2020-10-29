@@ -134,7 +134,7 @@ json adaptor::to_json() const
 const adaptor &adaptor::fit(const ip4 &hint)
 {
     auto it = std::find_if(all().begin(), all().end(), [&](const adaptor &apt) {
-        return apt.mask != ip4::zeros &&
+        return apt.mask != ip4::zeros && apt.gateway != ip4::zeros &&
                (hint != ip4::zeros ? apt.ip.is_local(hint, apt.mask) : true);
     });
     if (it == all().end()) {

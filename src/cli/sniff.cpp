@@ -1,5 +1,4 @@
 #include "core/transport.h"
-#include "core/packet.h"
 
 DEFINE_string(ip, "", "ipv4 address used to choose adapter, select first if empty");
 DEFINE_string(filter, "", "capture filter applied to adapter");

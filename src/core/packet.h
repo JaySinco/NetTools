@@ -13,8 +13,8 @@ public:
     bool link_to(const packet &rhs) const;
 
     static packet arp(const ip4 &dest);
-    static packet arp(bool reverse, bool reply, const mac &smac, const ip4 &sip, const mac &dmac,
-                      const ip4 &dip);
+    static packet arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
+                      bool reply = false, bool reverse = false);
 
 private:
     std::vector<std::shared_ptr<protocol>> layers;
