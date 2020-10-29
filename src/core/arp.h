@@ -19,8 +19,7 @@ public:
 
     arp() = default;
     arp(const u_char *const start, const u_char *&end);
-    arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply = false,
-        bool reverse = false);
+    arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse);
     virtual ~arp();
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
@@ -33,4 +32,6 @@ public:
 
 private:
     detail d;
+
+    static detail convert_detail(bool ntoh, const detail &d);
 };

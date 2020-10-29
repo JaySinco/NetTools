@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 
     if (FLAGS_filter.size() > 0) {
         LOG(INFO) << "set filter \"" << FLAGS_filter << "\", mask=" << apt.mask.to_str();
-        transport::set_filter(handle, FLAGS_filter, apt.mask);
+        transport::setfilter(handle, FLAGS_filter, apt.mask);
     }
 
     LOG(INFO) << "begin to sniff...";

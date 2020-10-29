@@ -9,7 +9,7 @@ std::map<u_short, std::string> ethernet::type_dict = {
 
 ethernet::ethernet(const u_char *const start, const u_char *&end)
 {
-    d = *reinterpret_cast<const detail *>(start);
+    d = convert_detail(true, *reinterpret_cast<const detail *>(start));
     end = start + sizeof(detail);
 }
 
@@ -19,7 +19,7 @@ ethernet::ethernet(const mac &dest, const mac &source, const std::string &type)
     for (auto it = type_dict.cbegin(); it != type_dict.cend(); ++it) {
         if (it->second == type) {
             found = true;
-            d.type = htons(it->first);
+            d.type = it->first;
             break;
         }
     }
@@ -34,7 +34,8 @@ ethernet::~ethernet() {}
 
 void ethernet::to_bytes(std::vector<u_char> &bytes) const
 {
-    auto it = reinterpret_cast<const u_char *>(&d);
+    auto dt = convert_detail(false, d);
+    auto it = reinterpret_cast<const u_char *>(&dt);
     bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
 }
 
@@ -52,11 +53,10 @@ std::string ethernet::type() const { return Protocol_Type_Ethernet; }
 
 std::string ethernet::succ_type() const
 {
-    u_short type = ntohs(d.type);
-    if (type_dict.count(type) != 0) {
-        return type_dict[type];
+    if (type_dict.count(d.type) != 0) {
+        return type_dict[d.type];
     }
-    return Protocol_Type_Unknow(type);
+    return Protocol_Type_Unknow(d.type);
 }
 
 bool ethernet::link_to(const protocol &rhs) const
@@ -69,3 +69,10 @@ bool ethernet::link_to(const protocol &rhs) const
 }
 
 const ethernet::detail &ethernet::get_detail() const { return d; }
+
+ethernet::detail ethernet::convert_detail(bool ntoh, const detail &d)
+{
+    detail dt = d;
+    NET_CVT(dt.type, ntoh, s);
+    return dt;
+}

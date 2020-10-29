@@ -11,6 +11,8 @@ using json = nlohmann::json;
 #define Protocol_Type_ARP "arp"
 #define Protocol_Type_RARP "rarp"
 
+#define NET_CVT(field, ntoh, suffix) (field) = ((ntoh ? ntoh##suffix : hton##suffix)(field))
+
 struct mac
 {
     u_char b1, b2, b3, b4, b5, b6;
@@ -29,6 +31,7 @@ struct ip4
     u_char b1, b2, b3, b4;
 
     ip4() = default;
+    ip4(const ip4 &) = default;
     ip4(u_char c1, u_char c2, u_char c3, u_char c4);
     explicit ip4(const std::string &s);
     ip4(const in_addr &addr);

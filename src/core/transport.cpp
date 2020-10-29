@@ -14,7 +14,7 @@ pcap_t *transport::open_adaptor(const adaptor &apt)
     return handle;
 }
 
-void transport::set_filter(pcap_t *handle, const std::string &filter, const ip4 &mask)
+void transport::setfilter(pcap_t *handle, const std::string &filter, const ip4 &mask)
 {
     bpf_program fcode;
     if (pcap_compile(handle, &fcode, filter.c_str(), 1, static_cast<u_int>(mask)) < 0) {
@@ -45,7 +45,7 @@ bool transport::recv(pcap_t *handle, std::function<bool(const packet &p)> callba
         if (res == 0) {
             continue;  // timeout elapsed
         }
-        if (callback(packet(start, start + info->len, info->ts.tv_sec, info->ts.tv_usec))) {
+        if (callback(packet(start, start + info->len, info->ts))) {
             return true;
         }
     }
@@ -97,6 +97,12 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
         } else {
             VLOG(3) << "cached mac for " << ip.to_str() << " expired, send arp to update";
         }
+    }
+    adaptor apt = adaptor::fit(ip);
+    if (ip == apt.ip) {
+        mac_ = adaptor::fit(ip).mac_;
+        cached[ip] = std::make_pair(mac_, std::chrono::system_clock::now());
+        return true;
     }
     std::atomic<bool> over = false;
     packet pac = packet::arp(ip);

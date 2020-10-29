@@ -11,7 +11,7 @@ class transport
 {
 public:
     static pcap_t *open_adaptor(const adaptor &apt);
-    static void set_filter(pcap_t *handle, const std::string &filter, const ip4 &mask);
+    static void setfilter(pcap_t *handle, const std::string &filter, const ip4 &mask);
 
     static bool recv(
         pcap_t *handle, std::function<bool(const packet &p)> callback, int timeout_ms = -1,

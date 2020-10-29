@@ -8,7 +8,9 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_RARP, packet::decode<::arp>},
 };
 
-packet::packet(const u_char *const start, const u_char *const end, long recv_sec, long ms)
+packet::packet() { d.time = gettimeofday(); }
+
+packet::packet(const u_char *const start, const u_char *const end, const timeval &tv)
 {
     const u_char *pstart = start;
     std::string type = Protocol_Type_Ethernet;
@@ -26,11 +28,26 @@ packet::packet(const u_char *const start, const u_char *const end, long recv_sec
         pstart = pend;
         type = prot->succ_type();
     }
-    if (recv_sec > 0) {
-        time_t local = recv_sec;
-        localtime_s(&d.recv_tm, &local);
-        d.recv_ms = ms;
-    }
+    d.time = tv;
+}
+
+timeval packet::gettimeofday()
+{
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    tm t = {0};
+    t.tm_year = st.wYear - 1900;
+    t.tm_mon = st.wMonth - 1;
+    t.tm_mday = st.wDay;
+    t.tm_hour = st.wHour;
+    t.tm_min = st.wMinute;
+    t.tm_sec = st.wSecond;
+    t.tm_isdst = -1;
+    time_t clock = mktime(&t);
+    timeval tv;
+    tv.tv_sec = clock;
+    tv.tv_usec = st.wMilliseconds * 1000;
+    return tv;
 }
 
 void packet::to_bytes(std::vector<u_char> &bytes) const
@@ -48,17 +65,22 @@ json packet::to_json() const
     }
     json j;
     j["layers"] = ar;
-    if (d.recv_tm.tm_year != 0) {
-        char timestr[16] = {0};
-        strftime(timestr, sizeof(timestr), "%H:%M:%S", &d.recv_tm);
-        j["time"] = fmt::format("{}.{}", timestr, d.recv_ms);
-    }
+
+    tm local;
+    time_t timestamp = d.time.tv_sec;
+    localtime_s(&local, &timestamp);
+    char timestr[16] = {0};
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
+    j["time"] = fmt::format("{}.{}", timestr, d.time.tv_usec);
     return j;
 }
 
 bool packet::link_to(const packet &rhs) const
 {
     if (d.layers.size() != rhs.d.layers.size()) {
+        return false;
+    }
+    if (d.time.tv_sec > rhs.d.time.tv_sec) {
         return false;
     }
     for (int i = 0; i < d.layers.size(); ++i) {
