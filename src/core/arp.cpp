@@ -66,3 +66,5 @@ bool arp::link_to(const protocol &rhs) const
     }
     return false;
 }
+
+const arp::detail &arp::get_detail() const { return d; }

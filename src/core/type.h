@@ -35,6 +35,7 @@ struct ip4
 
     operator in_addr() const;
     explicit operator u_int() const;
+    bool operator<(const ip4 &rhs) const;
     bool operator==(const ip4 &rhs) const;
     bool operator!=(const ip4 &rhs) const;
     u_int operator&(const ip4 &rhs) const;

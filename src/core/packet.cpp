@@ -14,7 +14,7 @@ packet::packet(const u_char *const start, const u_char *const end, long recv_sec
     std::string type = Protocol_Type_Ethernet;
     while (type != Protocol_Type_Void && pstart < end) {
         if (decoder_dict.count(type) <= 0) {
-            VLOG(3) << "unimplemented protocol: " << layers.back()->type() << " -> " << type;
+            VLOG(3) << "unimplemented protocol: " << d.layers.back()->type() << " -> " << type;
             break;
         }
         const u_char *pend = end;
@@ -22,20 +22,20 @@ packet::packet(const u_char *const start, const u_char *const end, long recv_sec
         if (pend > end) {
             throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
         }
-        layers.push_back(prot);
+        d.layers.push_back(prot);
         pstart = pend;
         type = prot->succ_type();
     }
     if (recv_sec > 0) {
         time_t local = recv_sec;
-        localtime_s(&recv_tm, &local);
-        recv_ms = ms;
+        localtime_s(&d.recv_tm, &local);
+        d.recv_ms = ms;
     }
 }
 
 void packet::to_bytes(std::vector<u_char> &bytes) const
 {
-    for (auto it = layers.crbegin(); it != layers.crend(); ++it) {
+    for (auto it = d.layers.crbegin(); it != d.layers.crend(); ++it) {
         (*it)->to_bytes(bytes);
     }
 }
@@ -43,31 +43,33 @@ void packet::to_bytes(std::vector<u_char> &bytes) const
 json packet::to_json() const
 {
     json ar = json::array();
-    for (auto it = layers.cbegin(); it != layers.cend(); ++it) {
+    for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
         ar.push_back((*it)->to_json());
     }
     json j;
     j["layers"] = ar;
-    if (recv_tm.tm_year != 0) {
+    if (d.recv_tm.tm_year != 0) {
         char timestr[16] = {0};
-        strftime(timestr, sizeof(timestr), "%H:%M:%S", &recv_tm);
-        j["time"] = fmt::format("{}.{}", timestr, recv_ms);
+        strftime(timestr, sizeof(timestr), "%H:%M:%S", &d.recv_tm);
+        j["time"] = fmt::format("{}.{}", timestr, d.recv_ms);
     }
     return j;
 }
 
 bool packet::link_to(const packet &rhs) const
 {
-    if (layers.size() != rhs.layers.size()) {
+    if (d.layers.size() != rhs.d.layers.size()) {
         return false;
     }
-    for (int i = 0; i < layers.size(); ++i) {
-        if (!layers.at(i)->link_to(*rhs.layers.at(i))) {
+    for (int i = 0; i < d.layers.size(); ++i) {
+        if (!d.layers.at(i)->link_to(*rhs.d.layers.at(i))) {
             return false;
         }
     }
     return true;
 }
+
+const packet::detail &packet::get_detail() const { return d; }
 
 packet packet::arp(const ip4 &dest)
 {
@@ -79,8 +81,8 @@ packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &
                    bool reverse)
 {
     packet p;
-    p.layers.push_back(std::make_shared<ethernet>(
+    p.d.layers.push_back(std::make_shared<ethernet>(
         mac::broadcast, smac, reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
-    p.layers.push_back(std::make_shared<::arp>(smac, sip, dmac, dip, reply, reverse));
+    p.d.layers.push_back(std::make_shared<::arp>(smac, sip, dmac, dip, reply, reverse));
     return p;
 }

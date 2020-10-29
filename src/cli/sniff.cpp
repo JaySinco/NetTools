@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
 
     auto &apt = adaptor::fit(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
     LOG(INFO) << apt.to_json().dump(3);
 
     if (FLAGS_filter.size() > 0) {

@@ -1,9 +1,12 @@
 #include "transport.h"
+#include "arp.h"
+#include <atomic>
+#include <thread>
 
 pcap_t *transport::open_adaptor(const adaptor &apt)
 {
     pcap_t *handle;
-    char errbuf[PCAP_ERRBUF_SIZE];
+    char *errbuf = new char[PCAP_ERRBUF_SIZE];
     if (!(handle =
               pcap_open(apt.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf))) {
         throw std::runtime_error(fmt::format("failed to open adapter: {}", apt.name));
@@ -61,10 +64,13 @@ void transport::send(pcap_t *handle, const packet &pac)
     }
 }
 
-bool transport::send_and_recv(pcap_t *handle, const packet &req, packet &reply, int timeout_ms)
+bool transport::request(pcap_t *handle, const packet &req, packet &reply, int timeout_ms,
+                        bool do_send)
 {
     auto start_tm = std::chrono::system_clock::now();
-    send(handle, req);
+    if (do_send) {
+        send(handle, req);
+    }
     return recv(
         handle,
         [&](const packet &p) {
@@ -75,4 +81,39 @@ bool transport::send_and_recv(pcap_t *handle, const packet &req, packet &reply, 
             return false;
         },
         timeout_ms, start_tm);
+}
+
+bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache, int timeout_ms)
+{
+    static std::map<ip4, std::pair<mac, std::chrono::time_point<std::chrono::system_clock>>> cached;
+    auto start_tm = std::chrono::system_clock::now();
+    if (use_cache && cached.count(ip) > 0) {
+        auto passed_sec =
+            std::chrono::duration_cast<std::chrono::seconds>(start_tm - cached[ip].second);
+        if (passed_sec.count() < 30) {
+            VLOG(3) << "use cached mac for " << ip.to_str();
+            mac_ = cached[ip].first;
+            return true;
+        } else {
+            VLOG(3) << "cached mac for " << ip.to_str() << " expired, send arp to update";
+        }
+    }
+    std::atomic<bool> over = false;
+    packet pac = packet::arp(ip);
+    std::thread send_loop([&] {
+        while (!over) {
+            send(handle, pac);
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    });
+    packet reply;
+    bool ret = transport::request(handle, pac, reply, timeout_ms, false);
+    if (ret) {
+        const protocol &prot = *reply.get_detail().layers.back();
+        mac_ = dynamic_cast<const arp &>(prot).get_detail().smac;
+        cached[ip] = std::make_pair(mac_, std::chrono::system_clock::now());
+    }
+    over = true;
+    send_loop.join();
+    return ret;
 }

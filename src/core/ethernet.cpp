@@ -67,3 +67,5 @@ bool ethernet::link_to(const protocol &rhs) const
     }
     return false;
 }
+
+const ethernet::detail &ethernet::get_detail() const { return d; }
