@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
     LOG(INFO) << "begin to sniff...";
     transport::recv(handle, [](const packet &p) {
-        LOG(INFO) << p.to_json().dump(3);
+        LOG(INFO) << p.to_json()["layers"].dump(3);
         return false;
     });
     NT_CATCH

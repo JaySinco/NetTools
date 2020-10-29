@@ -133,16 +133,14 @@ json adaptor::to_json() const
 
 const adaptor &adaptor::fit(const ip4 &hint)
 {
-    if (hint != ip4::zeros) {
-        auto it = std::find_if(all().begin(), all().end(),
-                               [&](const adaptor &apt) { return apt.ip.is_local(hint, apt.mask); });
-        if (it == all().end()) {
-            throw std::runtime_error(fmt::format("no local adapter match {}", hint.to_str()));
-        }
-        return *it;
-    } else {
-        return all().front();
+    auto it = std::find_if(all().begin(), all().end(), [&](const adaptor &apt) {
+        return apt.mask != ip4::zeros &&
+               (hint != ip4::zeros ? apt.ip.is_local(hint, apt.mask) : true);
+    });
+    if (it == all().end()) {
+        throw std::runtime_error(fmt::format("no local adapter match {}", hint.to_str()));
     }
+    return *it;
 }
 
 const std::vector<adaptor> &adaptor::all()
@@ -165,7 +163,7 @@ const std::vector<adaptor> &adaptor::all()
             ip4 ip(pinfo->IpAddressList.IpAddress.String);
             ip4 mask(pinfo->IpAddressList.IpMask.String);
             ip4 gateway(pinfo->GatewayList.IpAddress.String);
-            if (gateway != ip4::zeros && mask != ip4::zeros) {
+            if (ip != ip4::zeros) {
                 apt.name = std::string("\\Device\\NPF_") + pinfo->AdapterName;
                 apt.desc = pinfo->Description;
                 apt.ip = ip;

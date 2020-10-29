@@ -52,6 +52,9 @@ target_link_libraries(core
   iphlpapi.lib
   )
 
+add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/cli/lsdev.cpp)
+target_link_libraries(lsdev core)
+
 add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
 target_link_libraries(sniff core)
 
