@@ -43,7 +43,7 @@ json ipv4::to_json() const
     j["total-size"] = d.tlen;
     j["id"] = d.id;
     j["more-fragment"] = d.flags_fo & 0x2000 ? true : false;
-    j["don't-slice"] = d.flags_fo & 0x4000 ? true : false;
+    j["not-slice"] = d.flags_fo & 0x4000 ? true : false;
     j["fragment-offset"] = (d.flags_fo & 0x1fff) * 8;
     j["ttl"] = static_cast<int>(d.ttl);
     j["source-ip"] = d.sip.to_str();
