@@ -1,24 +1,30 @@
 #pragma once
 #include "protocol.h"
-#include <map>
 
-class ethernet : public protocol
+class icmp : public protocol
 {
 public:
     struct detail
     {
-        mac dmac;      // Destination address
-        mac smac;      // Source address
-        u_short type;  // Ethernet type
+        u_char type;  // Type
+        u_char code;  // Code
+        u_short crc;  // Checksum as a whole
+        union
+        {
+            struct
+            {
+                u_short id;  // Identification
+                u_short sn;  // Serial number
+            } s;
+            u_int i;
+        } u;
     };
 
-    ethernet() = default;
+    icmp() = default;
 
-    ethernet(const u_char *const start, const u_char *&end);
+    icmp(const u_char *const start, const u_char *&end);
 
-    ethernet(const mac &dmac, const mac &smac, const std::string &type);
-
-    virtual ~ethernet();
+    virtual ~icmp();
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
 
@@ -34,8 +40,7 @@ public:
 
 private:
     detail d{0};
-
-    static std::map<u_short, std::string> type_dict;
+    std::vector<u_char> extra;
 
     static detail ntoh(const detail &d, bool reverse = false);
 

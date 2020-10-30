@@ -1,4 +1,5 @@
 #include "protocol.h"
+#include <random>
 
 u_short protocol::calc_checksum(const void *data, size_t tlen)
 {
@@ -16,4 +17,12 @@ u_short protocol::calc_checksum(const void *data, size_t tlen)
         sum = (sum & 0xffff) + (sum >> 16);
     }
     return ((u_short)sum ^ 0xffff);
+}
+
+u_short protocol::rand_ushort()
+{
+    static std::random_device rd;
+    static std::default_random_engine engine(rd());
+    static std::uniform_int_distribution<u_short> dist;
+    return dist(engine);
 }

@@ -13,7 +13,7 @@ ethernet::ethernet(const u_char *const start, const u_char *&end)
     end = start + sizeof(detail);
 }
 
-ethernet::ethernet(const mac &dest, const mac &source, const std::string &type)
+ethernet::ethernet(const mac &dmac, const mac &smac, const std::string &type)
 {
     bool found = false;
     for (auto it = type_dict.cbegin(); it != type_dict.cend(); ++it) {
@@ -26,8 +26,8 @@ ethernet::ethernet(const mac &dest, const mac &source, const std::string &type)
     if (!found) {
         throw std::runtime_error(fmt::format("unknow ethernet type: {}", type));
     }
-    d.dmac = dest;
-    d.smac = source;
+    d.dmac = dmac;
+    d.smac = smac;
 }
 
 ethernet::~ethernet() {}

@@ -37,4 +37,5 @@ public:
 
 protected:
     static u_short calc_checksum(const void *data, size_t tlen);
+    static u_short rand_ushort();
 };

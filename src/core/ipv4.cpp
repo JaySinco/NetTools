@@ -13,6 +13,26 @@ ipv4::ipv4(const u_char *const start, const u_char *&end)
     end = start + 4 * (d.ver_ihl & 0xf);
 }
 
+ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type)
+{
+    bool found = false;
+    for (auto it = type_dict.cbegin(); it != type_dict.cend(); ++it) {
+        if (it->second == type) {
+            found = true;
+            d.type = it->first;
+            break;
+        }
+    }
+    if (!found) {
+        throw std::runtime_error(fmt::format("unknow ipv4 type: {}", type));
+    }
+    d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
+    d.id = rand_ushort();
+    d.ttl = ttl;
+    d.sip = sip;
+    d.dip = dip;
+}
+
 ipv4::~ipv4() {}
 
 void ipv4::to_bytes(std::vector<u_char> &bytes) const
@@ -33,6 +53,7 @@ json ipv4::to_json() const
     j["type"] = type();
     j["succ-type"] = succ_type();
     j["version"] = d.ver_ihl >> 4;
+    j["tos"] = d.tos;
     size_t header_size = 4 * (d.ver_ihl & 0xf);
     j["header-size"] = header_size;
     int checksum = -1;
@@ -56,10 +77,10 @@ std::string ipv4::type() const { return Protocol_Type_IPv4; }
 
 std::string ipv4::succ_type() const
 {
-    if (type_dict.count(d.proto) != 0) {
-        return type_dict[d.proto];
+    if (type_dict.count(d.type) != 0) {
+        return type_dict[d.type];
     }
-    return Protocol_Type_Unknow(d.proto);
+    return Protocol_Type_Unknow(d.type);
 }
 
 bool ipv4::link_to(const protocol &rhs) const

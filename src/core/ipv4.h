@@ -12,7 +12,7 @@ public:
         u_short id;        // Identification
         u_short flags_fo;  // Flags (3 bits) + Fragment offset (13 bits)
         u_char ttl;        // Time to live
-        u_char proto;      // Protocol
+        u_char type;       // IPv4 type
         u_short crc;       // Header checksum
         ip4 sip;           // Source address
         ip4 dip;           // Destination address
@@ -21,6 +21,8 @@ public:
     ipv4() = default;
 
     ipv4(const u_char *const start, const u_char *&end);
+
+    ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type);
 
     virtual ~ipv4();
 
