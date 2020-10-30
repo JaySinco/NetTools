@@ -19,21 +19,29 @@ public:
     };
 
     ipv4() = default;
+
     ipv4(const u_char *const start, const u_char *&end);
+
     virtual ~ipv4();
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
+
     virtual json to_json() const override;
+
     virtual std::string type() const override;
+
     virtual std::string succ_type() const override;
+
     virtual bool link_to(const protocol &rhs) const override;
 
     const detail &get_detail() const;
 
 private:
-    mutable detail d{0};
+    detail d{0};
 
     static std::map<u_char, std::string> type_dict;
-    static detail hton(const detail &d);
+
     static detail ntoh(const detail &d, bool reverse = false);
+
+    static detail hton(const detail &d);
 };

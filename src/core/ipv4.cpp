@@ -17,9 +17,10 @@ ipv4::~ipv4() {}
 
 void ipv4::to_bytes(std::vector<u_char> &bytes) const
 {
-    d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
-    d.tlen = sizeof(detail) + bytes.size();
-    d.crc = calc_checksum(&d, sizeof(detail));
+    auto pt = const_cast<ipv4 *>(this);
+    pt->d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
+    pt->d.tlen = sizeof(detail) + bytes.size();
+    pt->d.crc = calc_checksum(&d, sizeof(detail));
 
     auto dt = hton(d);
     auto it = reinterpret_cast<const u_char *>(&dt);
@@ -72,13 +73,13 @@ bool ipv4::link_to(const protocol &rhs) const
 
 const ipv4::detail &ipv4::get_detail() const { return d; }
 
-ipv4::detail ipv4::hton(const detail &d) { return ntoh(d, true); }
-
 ipv4::detail ipv4::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    NET_CVT(dt.tlen, !reverse, s);
-    NET_CVT(dt.id, !reverse, s);
-    NET_CVT(dt.flags_fo, !reverse, s);
+    ntoh_cvt(dt.tlen, !reverse, s);
+    ntoh_cvt(dt.id, !reverse, s);
+    ntoh_cvt(dt.flags_fo, !reverse, s);
     return dt;
 }
+
+ipv4::detail ipv4::hton(const detail &d) { return ntoh(d, true); }

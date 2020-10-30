@@ -70,11 +70,11 @@ bool ethernet::link_to(const protocol &rhs) const
 
 const ethernet::detail &ethernet::get_detail() const { return d; }
 
-ethernet::detail ethernet::hton(const detail &d) { return ntoh(d, true); }
-
 ethernet::detail ethernet::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    NET_CVT(dt.type, !reverse, s);
+    ntoh_cvt(dt.type, !reverse, s);
     return dt;
 }
+
+ethernet::detail ethernet::hton(const detail &d) { return ntoh(d, true); }

@@ -18,14 +18,21 @@ public:
     };
 
     arp() = default;
+
     arp(const u_char *const start, const u_char *&end);
+
     arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse);
+
     virtual ~arp();
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
+
     virtual json to_json() const override;
+
     virtual std::string type() const override;
+
     virtual std::string succ_type() const override;
+
     virtual bool link_to(const protocol &rhs) const override;
 
     const detail &get_detail() const;
@@ -33,6 +40,7 @@ public:
 private:
     detail d{0};
 
-    static detail hton(const detail &d);
     static detail ntoh(const detail &d, bool reverse = false);
+
+    static detail hton(const detail &d);
 };

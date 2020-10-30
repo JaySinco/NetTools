@@ -11,6 +11,7 @@ class transport
 {
 public:
     static pcap_t *open_adaptor(const adaptor &apt);
+
     static void setfilter(pcap_t *handle, const std::string &filter, const ip4 &mask);
 
     static bool recv(
@@ -18,6 +19,7 @@ public:
         const std::chrono::system_clock::time_point &start_tm = std::chrono::system_clock::now());
 
     static void send(pcap_t *handle, const packet &pac);
+
     static bool request(pcap_t *handle, const packet &req, packet &reply, int timeout_ms = -1,
                         bool do_send = true);
 

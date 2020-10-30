@@ -66,13 +66,13 @@ bool arp::link_to(const protocol &rhs) const
 
 const arp::detail &arp::get_detail() const { return d; }
 
-arp::detail arp::hton(const detail &d) { return ntoh(d, true); }
-
 arp::detail arp::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    NET_CVT(dt.hw_type, !reverse, s);
-    NET_CVT(dt.prot_type, !reverse, s);
-    NET_CVT(dt.op, !reverse, s);
+    ntoh_cvt(dt.hw_type, !reverse, s);
+    ntoh_cvt(dt.prot_type, !reverse, s);
+    ntoh_cvt(dt.op, !reverse, s);
     return dt;
 }
+
+arp::detail arp::hton(const detail &d) { return ntoh(d, true); }
