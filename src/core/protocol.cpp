@@ -2,21 +2,18 @@
 
 u_short protocol::calc_checksum(const void *data, size_t tlen)
 {
-    bool odd = (tlen % 2 != 0);
-    if (odd) {
-        void *buf = new u_char[tlen + 1]{0};
-        std::memcpy(buf, data, tlen);
-        data = buf;
-        tlen += 1;
+    uint32_t sum = 0;
+    auto buf = static_cast<const u_char *>(data);
+    while (tlen > 1) {
+        sum += 0xffff & (*buf << 8 | *(buf + 1));
+        buf += 2;
+        tlen -= 2;
     }
-    u_long checksum = 0;
-    auto check_ptr = reinterpret_cast<const u_short *>(data);
-    for (int i = 0; i < tlen / 2; ++i) {
-        checksum += check_ptr[i];
-        checksum = (checksum >> 16) + (checksum & 0xffff);
+    if (tlen > 0) {
+        sum += 0xffff & (*buf << 8 | 0x00);
     }
-    if (odd) {
-        delete[] data;
+    while (sum >> 16) {
+        sum = (sum & 0xffff) + (sum >> 16);
     }
-    return static_cast<u_short>(~checksum);
+    return ((u_short)sum ^ 0xffff);
 }
