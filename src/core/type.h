@@ -1,17 +1,9 @@
 #pragma once
 #include "__prec.h"
 
-using json = nlohmann::json;
-
-#define Protocol_Type_Void "void"
-#define Protocol_Type_Unknow(n) (fmt::format("unknow({:#x})", n))
-#define Protocol_Type_Ethernet "ethernet"
-#define Protocol_Type_IPv4 "ipv4"
-#define Protocol_Type_IPv6 "ipv6"
-#define Protocol_Type_ARP "arp"
-#define Protocol_Type_RARP "rarp"
-
 #define NET_CVT(field, cond, suffix) field = ((cond) ? ntoh##suffix : hton##suffix)(field);
+
+using json = nlohmann::json;
 
 struct mac
 {

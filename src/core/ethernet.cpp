@@ -26,8 +26,8 @@ ethernet::ethernet(const mac &dest, const mac &source, const std::string &type)
     if (!found) {
         throw std::runtime_error(fmt::format("unknow ethernet type: {}", type));
     }
-    d.dest = dest;
-    d.source = source;
+    d.dmac = dest;
+    d.smac = source;
 }
 
 ethernet::~ethernet() {}
@@ -44,8 +44,8 @@ json ethernet::to_json() const
     json j;
     j["type"] = type();
     j["succ-type"] = succ_type();
-    j["source-mac"] = d.source.to_str();
-    j["dest-mac"] = d.dest.to_str();
+    j["source-mac"] = d.smac.to_str();
+    j["dest-mac"] = d.dmac.to_str();
     return j;
 }
 
@@ -63,7 +63,7 @@ bool ethernet::link_to(const protocol &rhs) const
 {
     if (type() == rhs.type()) {
         auto p = dynamic_cast<const ethernet &>(rhs);
-        return p.d.dest == mac::broadcast || d.source == p.d.dest;
+        return p.d.dmac == mac::broadcast || d.smac == p.d.dmac;
     }
     return false;
 }

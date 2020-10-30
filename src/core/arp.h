@@ -31,7 +31,7 @@ public:
     const detail &get_detail() const;
 
 private:
-    detail d;
+    detail d{0};
 
     static detail hton(const detail &d);
     static detail ntoh(const detail &d, bool reverse = false);

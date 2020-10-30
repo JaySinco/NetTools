@@ -2,6 +2,17 @@
 #include "type.h"
 #include <vector>
 
+#define Protocol_Type_Void "void"
+#define Protocol_Type_Unknow(n) (fmt::format("unknow({:#x})", n))
+#define Protocol_Type_Ethernet "ethernet"
+#define Protocol_Type_IPv4 "ipv4"
+#define Protocol_Type_IPv6 "ipv6"
+#define Protocol_Type_ARP "arp"
+#define Protocol_Type_RARP "rarp"
+#define Protocol_Type_ICMP "icmp"
+#define Protocol_Type_TCP "tcp"
+#define Protocol_Type_UDP "udp"
+
 class protocol
 {
 public:
@@ -23,4 +34,7 @@ public:
 
     // Whether rhs is the response to this
     virtual bool link_to(const protocol &rhs) const = 0;
+
+protected:
+    static u_short calc_checksum(const void *data, size_t tlen);
 };

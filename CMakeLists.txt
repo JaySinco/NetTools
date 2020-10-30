@@ -36,8 +36,10 @@ add_library(fmt STATIC
 
 add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/type.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/protocol.cpp
   ${CMAKE_SOURCE_DIR}/src/core/ethernet.cpp
   ${CMAKE_SOURCE_DIR}/src/core/arp.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/ipv4.cpp
   ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )

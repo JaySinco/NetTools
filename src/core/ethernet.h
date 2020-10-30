@@ -7,8 +7,8 @@ class ethernet : public protocol
 public:
     struct detail
     {
-        mac dest;      // Destination address
-        mac source;    // Source address
+        mac dmac;      // Destination address
+        mac smac;      // Source address
         u_short type;  // Ethernet type
     };
 
@@ -26,7 +26,7 @@ public:
     const detail &get_detail() const;
 
 private:
-    detail d;
+    detail d{0};
 
     static std::map<u_short, std::string> type_dict;
     static detail hton(const detail &d);
