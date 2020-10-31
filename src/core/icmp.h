@@ -40,6 +40,7 @@ public:
 
 private:
     detail d{0};
+
     std::vector<u_char> extra;
 
     static detail ntoh(const detail &d, bool reverse = false);

@@ -4,10 +4,10 @@
 #include "ipv4.h"
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
-    {Protocol_Type_Ethernet, packet::decode<ethernet>},
+    {Protocol_Type_Ethernet, packet::decode<::ethernet>},
     {Protocol_Type_ARP, packet::decode<::arp>},
     {Protocol_Type_RARP, packet::decode<::arp>},
-    {Protocol_Type_IPv4, packet::decode<ipv4>},
+    {Protocol_Type_IPv4, packet::decode<::ipv4>},
 };
 
 packet::packet() { d.time = gettimeofday(); }

@@ -40,7 +40,6 @@ public:
 
 private:
     detail d{0};
-
     static std::map<u_char, std::string> type_dict;
 
     static detail ntoh(const detail &d, bool reverse = false);

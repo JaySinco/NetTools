@@ -9,7 +9,10 @@ std::map<u_char, std::string> ipv4::type_dict = {
 ipv4::ipv4(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
-    assert(d.tlen == (end - start));
+    int input_len = end - start;
+    if (d.tlen != input_len) {
+        LOG(ERROR) << "abnormal ipv4 packet length: tlen=" << d.tlen << ", input=" << input_len;
+    }
     end = start + 4 * (d.ver_ihl & 0xf);
 }
 
@@ -65,7 +68,7 @@ json ipv4::to_json() const
     j["total-size"] = d.tlen;
     j["id"] = d.id;
     j["more-fragment"] = d.flags_fo & 0x2000 ? true : false;
-    j["not-slice"] = d.flags_fo & 0x4000 ? true : false;
+    j["forbid-slice"] = d.flags_fo & 0x4000 ? true : false;
     j["fragment-offset"] = (d.flags_fo & 0x1fff) * 8;
     j["ttl"] = static_cast<int>(d.ttl);
     j["source-ip"] = d.sip.to_str();
