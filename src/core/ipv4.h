@@ -24,7 +24,7 @@ public:
 
     ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type);
 
-    virtual ~ipv4();
+    virtual ~ipv4() = default;
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
 

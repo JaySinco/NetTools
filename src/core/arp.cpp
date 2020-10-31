@@ -3,7 +3,9 @@
 arp::arp(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
-    end = start + sizeof(detail);
+    if (end != start + sizeof(detail)) {
+        LOG(ERROR) << "abnormal arp length: expected=" << sizeof(detail) << ", got=" << end - start;
+    }
 }
 
 arp::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse)
@@ -18,8 +20,6 @@ arp::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool 
     d.dmac = dmac;
     d.dip = dip;
 }
-
-arp::~arp() {}
 
 void arp::to_bytes(std::vector<u_char> &bytes) const
 {

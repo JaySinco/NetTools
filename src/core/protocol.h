@@ -17,7 +17,7 @@ class protocol
 {
 public:
     // Destructor should be virtual
-    virtual ~protocol(){};
+    virtual ~protocol() = default;
 
     // Serialize current protocol layer and insert in front of `bytes`, which contains
     // raw packet bytes serialized from higher layer.

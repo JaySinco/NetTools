@@ -30,8 +30,6 @@ ethernet::ethernet(const mac &dmac, const mac &smac, const std::string &type)
     d.smac = smac;
 }
 
-ethernet::~ethernet() {}
-
 void ethernet::to_bytes(std::vector<u_char> &bytes) const
 {
     auto dt = hton(d);
@@ -43,7 +41,7 @@ json ethernet::to_json() const
 {
     json j;
     j["type"] = type();
-    j["succ-type"] = succ_type();
+    j["ethernet-type"] = succ_type();
     j["source-mac"] = d.smac.to_str();
     j["dest-mac"] = d.dmac.to_str();
     return j;

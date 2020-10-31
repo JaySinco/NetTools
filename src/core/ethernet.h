@@ -18,7 +18,7 @@ public:
 
     ethernet(const mac &dmac, const mac &smac, const std::string &type);
 
-    virtual ~ethernet();
+    virtual ~ethernet() = default;
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
 

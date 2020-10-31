@@ -22,7 +22,7 @@
     "C_Cpp.default.defines":[
         "_UNICODE",
     ],
-    "explorer.autoReveal": false,
+    "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true
 }

@@ -23,7 +23,7 @@ public:
 
     arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse);
 
-    virtual ~arp();
+    virtual ~arp() = default;
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
 

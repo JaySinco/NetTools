@@ -9,9 +9,8 @@ std::map<u_char, std::string> ipv4::type_dict = {
 ipv4::ipv4(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
-    int input_len = end - start;
-    if (d.tlen != input_len) {
-        LOG(ERROR) << "abnormal ipv4 packet length: tlen=" << d.tlen << ", input=" << input_len;
+    if (d.tlen != end - start) {
+        LOG(ERROR) << "abnormal ipv4 length: expected=" << d.tlen << ", got=" << end - start;
     }
     end = start + 4 * (d.ver_ihl & 0xf);
 }
@@ -36,8 +35,6 @@ ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type)
     d.dip = dip;
 }
 
-ipv4::~ipv4() {}
-
 void ipv4::to_bytes(std::vector<u_char> &bytes) const
 {
     auto pt = const_cast<ipv4 *>(this);
@@ -54,7 +51,7 @@ json ipv4::to_json() const
 {
     json j;
     j["type"] = type();
-    j["succ-type"] = succ_type();
+    j["ipv4-type"] = succ_type();
     j["version"] = d.ver_ihl >> 4;
     j["tos"] = d.tos;
     size_t header_size = 4 * (d.ver_ihl & 0xf);

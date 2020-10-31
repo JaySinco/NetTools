@@ -24,7 +24,7 @@ public:
 
     icmp(const u_char *const start, const u_char *&end);
 
-    virtual ~icmp();
+    virtual ~icmp() = default;
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;
 
@@ -38,10 +38,14 @@ public:
 
     const detail &get_detail() const;
 
+    const std::vector<u_char> &get_extra() const;
+
 private:
     detail d{0};
 
     std::vector<u_char> extra;
+
+    static std::map<u_char, std::pair<std::string, std::map<u_char, std::string>>> type_dict;
 
     static detail ntoh(const detail &d, bool reverse = false);
 
