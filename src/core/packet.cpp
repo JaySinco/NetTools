@@ -104,6 +104,8 @@ bool packet::link_to(const packet &rhs) const
 
 const packet::detail &packet::get_detail() const { return d; }
 
+void packet::set_time(const timeval &tv) { d.time = tv; }
+
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,
                    bool reverse)
 {

@@ -59,6 +59,7 @@ void transport::send(pcap_t *handle, const packet &pac)
 {
     std::vector<u_char> bytes;
     pac.to_bytes(bytes);
+    const_cast<packet &>(pac).set_time(packet::gettimeofday());
     if (pcap_sendpacket(handle, bytes.data(), bytes.size()) != 0) {
         throw std::runtime_error(fmt::format("failed to send packet: {}", pcap_geterr(handle)));
     }

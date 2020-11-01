@@ -26,6 +26,8 @@ public:
 
     const detail &get_detail() const;
 
+    void set_time(const timeval &tv);
+
     static timeval gettimeofday();
 
     static packet arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
