@@ -25,4 +25,8 @@ public:
 
     static bool ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache = true,
                        int timeout_ms = 5000);
+
+    static bool ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &reply,
+                     long &cost_ms, int ttl = 128, const std::string &echo = "",
+                     int timeout_ms = 5000);
 };

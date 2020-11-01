@@ -13,7 +13,7 @@ ethernet::ethernet(const u_char *const start, const u_char *&end)
     end = start + sizeof(detail);
 }
 
-ethernet::ethernet(const mac &dmac, const mac &smac, const std::string &type)
+ethernet::ethernet(const mac &smac, const mac &dmac, const std::string &type)
 {
     bool found = false;
     for (auto it = type_dict.cbegin(); it != type_dict.cend(); ++it) {

@@ -40,9 +40,10 @@ void ipv4::to_bytes(std::vector<u_char> &bytes) const
     auto pt = const_cast<ipv4 *>(this);
     pt->d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
     pt->d.tlen = sizeof(detail) + bytes.size();
-    pt->d.crc = calc_checksum(&d, sizeof(detail));
 
     auto dt = hton(d);
+    dt.crc = calc_checksum(&dt, sizeof(detail));
+    pt->d.crc = dt.crc;
     auto it = reinterpret_cast<const u_char *>(&dt);
     bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
 }

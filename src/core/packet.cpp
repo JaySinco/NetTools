@@ -97,18 +97,29 @@ bool packet::link_to(const packet &rhs) const
 
 const packet::detail &packet::get_detail() const { return d; }
 
-packet packet::arp(const ip4 &dest)
-{
-    auto &apt = adaptor::fit(dest);
-    return arp(apt.mac_, apt.ip, mac::zeros, dest);
-}
-
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,
                    bool reverse)
 {
     packet p;
     p.d.layers.push_back(std::make_shared<ethernet>(
-        mac::broadcast, smac, reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
+        smac, mac::broadcast, reverse ? Protocol_Type_RARP : Protocol_Type_ARP));
     p.d.layers.push_back(std::make_shared<::arp>(smac, sip, dmac, dip, reply, reverse));
     return p;
+}
+
+packet packet::ping(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, u_char ttl,
+                    const std::string &echo)
+{
+    packet p;
+    p.d.layers.push_back(std::make_shared<ethernet>(smac, dmac, Protocol_Type_IPv4));
+    p.d.layers.push_back(std::make_shared<ipv4>(sip, dip, ttl, Protocol_Type_ICMP));
+    p.d.layers.push_back(std::make_shared<icmp>(echo));
+    return p;
+}
+
+long operator-(const timeval &tv1, const timeval &tv2)
+{
+    long diff_sec = tv1.tv_sec - tv2.tv_sec;
+    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
+    return (diff_sec * 1000 + diff_ms);
 }

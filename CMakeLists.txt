@@ -64,6 +64,9 @@ target_link_libraries(sniff core)
 add_executable(arp ${CMAKE_SOURCE_DIR}/src/cli/arp.cpp)
 target_link_libraries(arp core)
 
+add_executable(ping ${CMAKE_SOURCE_DIR}/src/cli/ping.cpp)
+target_link_libraries(ping core)
+
 add_executable(net WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp

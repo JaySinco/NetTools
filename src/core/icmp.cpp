@@ -88,12 +88,28 @@ icmp::icmp(const u_char *const start, const u_char *&end)
     extra.insert(extra.cend(), start + sizeof(detail), end);
 }
 
+icmp::icmp(const std::string &echo)
+{
+    d.type = 8;
+    d.code = 0;
+    d.u.s.id = rand_ushort();
+    d.u.s.sn = rand_ushort();
+    extra.insert(extra.cend(), echo.data(), echo.data() + echo.size());
+}
+
 void icmp::to_bytes(std::vector<u_char> &bytes) const
 {
     auto dt = hton(d);
-    auto it = reinterpret_cast<const u_char *>(&dt);
-    bytes.insert(bytes.cbegin(), extra.cbegin(), extra.cend());
-    bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
+    size_t tlen = sizeof(detail) + extra.size();
+    u_char *buf = new u_char[tlen];
+    std::memcpy(buf, &dt, sizeof(detail));
+    std::memcpy(buf + sizeof(detail), extra.data(), extra.size());
+    dt.crc = calc_checksum(buf, tlen);
+    auto pt = const_cast<icmp *>(this);
+    pt->d.crc = dt.crc;
+    std::memcpy(buf, &dt, sizeof(detail));
+    bytes.insert(bytes.cbegin(), buf, buf + tlen);
+    delete[] buf;
 }
 
 json icmp::to_json() const

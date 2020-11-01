@@ -62,13 +62,6 @@ ip4::operator u_int() const
     return *i;
 }
 
-bool ip4::operator<(const ip4 &rhs) const
-{
-    auto i = reinterpret_cast<const u_int *>(this);
-    auto j = reinterpret_cast<const u_int *>(&rhs);
-    return i < j;
-}
-
 bool ip4::operator==(const ip4 &rhs) const
 {
     return b1 == rhs.b1 && b2 == rhs.b2 && b3 == rhs.b3 && b4 == rhs.b4;
@@ -194,3 +187,13 @@ const std::vector<adaptor> &adaptor::all()
     });
     return adapters;
 }
+
+wsa_guard wsa_guard::g;
+
+wsa_guard::wsa_guard()
+{
+    WSADATA ws;
+    WSAStartup(MAKEWORD(2, 2), &ws);
+}
+
+wsa_guard::~wsa_guard() { WSACleanup(); }

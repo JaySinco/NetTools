@@ -16,7 +16,7 @@ public:
 
     ethernet(const u_char *const start, const u_char *&end);
 
-    ethernet(const mac &dmac, const mac &smac, const std::string &type);
+    ethernet(const mac &smac, const mac &dmac, const std::string &type);
 
     virtual ~ethernet() = default;
 
@@ -34,6 +34,7 @@ public:
 
 private:
     detail d{0};
+
     static std::map<u_short, std::string> type_dict;
 
     static detail ntoh(const detail &d, bool reverse = false);

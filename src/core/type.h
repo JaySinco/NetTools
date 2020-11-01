@@ -38,9 +38,7 @@ public:
 
     operator in_addr() const;
 
-    explicit operator u_int() const;
-
-    bool operator<(const ip4 &rhs) const;
+    operator u_int() const;
 
     bool operator==(const ip4 &rhs) const;
 
@@ -76,4 +74,13 @@ public:
     static const adaptor &fit(const ip4 &hint = ip4::zeros);
 
     static const std::vector<adaptor> &all();
+};
+
+struct wsa_guard
+{
+    wsa_guard();
+    ~wsa_guard();
+
+private:
+    static wsa_guard g;
 };

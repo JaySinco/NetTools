@@ -5,3 +5,5 @@
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#undef max
+#undef min

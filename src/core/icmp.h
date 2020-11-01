@@ -24,6 +24,8 @@ public:
 
     icmp(const u_char *const start, const u_char *&end);
 
+    icmp(const std::string &echo);  // Only for ping-ask
+
     virtual ~icmp() = default;
 
     virtual void to_bytes(std::vector<u_char> &bytes) const override;

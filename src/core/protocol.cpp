@@ -4,19 +4,20 @@
 u_short protocol::calc_checksum(const void *data, size_t tlen)
 {
     uint32_t sum = 0;
-    auto buf = static_cast<const u_char *>(data);
+    auto buf = static_cast<const u_short *>(data);
     while (tlen > 1) {
-        sum += 0xffff & (*buf << 8 | *(buf + 1));
-        buf += 2;
+        sum += *buf++;
         tlen -= 2;
     }
     if (tlen > 0) {
-        sum += 0xffff & (*buf << 8 | 0x00);
+        u_short left = 0;
+        std::memcpy(&left, buf, 1);
+        sum += left;
     }
     while (sum >> 16) {
         sum = (sum & 0xffff) + (sum >> 16);
     }
-    return ((u_short)sum ^ 0xffff);
+    return (static_cast<u_short>(sum) ^ 0xffff);
 }
 
 u_short protocol::rand_ushort()

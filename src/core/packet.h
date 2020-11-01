@@ -3,6 +3,8 @@
 #include <map>
 #include "protocol.h"
 
+long operator-(const timeval &tv1, const timeval &tv2);
+
 class packet
 {
 public:
@@ -26,10 +28,11 @@ public:
 
     static timeval gettimeofday();
 
-    static packet arp(const ip4 &dest);
-
     static packet arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
                       bool reply = false, bool reverse = false);
+
+    static packet ping(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
+                       u_char ttl = 128, const std::string &echo = "");
 
 private:
     detail d;
