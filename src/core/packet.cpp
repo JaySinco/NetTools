@@ -12,6 +12,13 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_ICMP, packet::decode<::icmp>},
 };
 
+long operator-(const timeval &tv1, const timeval &tv2)
+{
+    long diff_sec = tv1.tv_sec - tv2.tv_sec;
+    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
+    return (diff_sec * 1000 + diff_ms);
+}
+
 packet::packet() { d.time = gettimeofday(); }
 
 packet::packet(const u_char *const start, const u_char *const end, const timeval &tv)
@@ -115,11 +122,4 @@ packet packet::ping(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 
     p.d.layers.push_back(std::make_shared<ipv4>(sip, dip, ttl, Protocol_Type_ICMP));
     p.d.layers.push_back(std::make_shared<icmp>(echo));
     return p;
-}
-
-long operator-(const timeval &tv1, const timeval &tv2)
-{
-    long diff_sec = tv1.tv_sec - tv2.tv_sec;
-    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
-    return (diff_sec * 1000 + diff_ms);
 }
