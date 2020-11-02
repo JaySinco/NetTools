@@ -1,5 +1,6 @@
 #pragma once
 #include "protocol.h"
+#include "ipv4.h"
 
 class icmp : public protocol
 {
@@ -20,11 +21,18 @@ public:
         } u;
     };
 
+    struct extra_detail
+    {
+        std::string raw;  // Raw data, including ping echo
+        ipv4 eip;         // Error ip header
+        u_char buf[8];    // At least 8-bit behind ip header
+    };
+
     icmp() = default;
 
     icmp(const u_char *const start, const u_char *&end);
 
-    icmp(const std::string &echo);  // Only for ping-ask
+    icmp(const std::string &ping_echo);
 
     virtual ~icmp() = default;
 
@@ -40,12 +48,14 @@ public:
 
     const detail &get_detail() const;
 
-    const std::vector<u_char> &get_extra() const;
+    const extra_detail &get_extra() const;
+
+    std::string icmp_type() const;
 
 private:
     detail d{0};
 
-    std::vector<u_char> extra;
+    extra_detail extra;
 
     static std::map<u_char, std::pair<std::string, std::map<u_char, std::string>>> type_dict;
 

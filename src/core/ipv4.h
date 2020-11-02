@@ -38,6 +38,8 @@ public:
 
     const detail &get_detail() const;
 
+    bool operator==(const ipv4 &rhs) const;
+
 private:
     detail d{0};
 

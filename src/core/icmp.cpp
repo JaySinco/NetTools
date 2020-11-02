@@ -13,7 +13,7 @@ std::map<u_char, std::pair<std::string, std::map<u_char, std::string>>> icmp::ty
              {1, "host unreachable"},
              {2, "protocol unreachable"},
              {3, "port unreachable"},
-             {4, "fragmentation needed but no frag. bit set"},
+             {4, "fragmentation needed but forbid-slice bit set"},
              {5, "source routing failed"},
              {6, "destination network unknown"},
              {7, "destination host unknown"},
@@ -85,25 +85,30 @@ std::map<u_char, std::pair<std::string, std::map<u_char, std::string>>> icmp::ty
 icmp::icmp(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
-    extra.insert(extra.cend(), start + sizeof(detail), end);
+    extra.raw = std::string(start + sizeof(detail), end);
+    if (icmp_type() == "error") {
+        const u_char *pend = end;
+        extra.eip = ipv4(start + sizeof(detail), pend);
+        std::memcpy(&extra.buf, pend, 8);
+    }
 }
 
-icmp::icmp(const std::string &echo)
+icmp::icmp(const std::string &ping_echo)
 {
     d.type = 8;
     d.code = 0;
     d.u.s.id = rand_ushort();
     d.u.s.sn = rand_ushort();
-    extra.insert(extra.cend(), echo.data(), echo.data() + echo.size());
+    extra.raw = ping_echo;
 }
 
 void icmp::to_bytes(std::vector<u_char> &bytes) const
 {
     auto dt = hton(d);
-    size_t tlen = sizeof(detail) + extra.size();
+    size_t tlen = sizeof(detail) + extra.raw.size();
     u_char *buf = new u_char[tlen];
     std::memcpy(buf, &dt, sizeof(detail));
-    std::memcpy(buf + sizeof(detail), extra.data(), extra.size());
+    std::memcpy(buf + sizeof(detail), extra.raw.data(), extra.raw.size());
     dt.crc = calc_checksum(buf, tlen);
     auto pt = const_cast<icmp *>(this);
     pt->d.crc = dt.crc;
@@ -116,8 +121,9 @@ json icmp::to_json() const
 {
     json j;
     j["type"] = type();
+    std::string tp = icmp_type();
+    j["icmp-type"] = tp;
     if (type_dict.count(d.type) > 0) {
-        j["icmp-type"] = type_dict.at(d.type).first;
         auto &code_dict = type_dict.at(d.type).second;
         if (code_dict.count(d.code) > 0) {
             j["desc"] = code_dict.at(d.code);
@@ -125,15 +131,19 @@ json icmp::to_json() const
     }
     j["id"] = d.u.s.id;
     j["serial-no"] = d.u.s.sn;
-    size_t tlen = sizeof(detail) + extra.size();
+    size_t tlen = sizeof(detail) + extra.raw.size();
     u_char *buf = new u_char[tlen];
     auto dt = hton(d);
     std::memcpy(buf, &dt, sizeof(detail));
-    std::memcpy(buf + sizeof(detail), extra.data(), extra.size());
+    std::memcpy(buf + sizeof(detail), extra.raw.data(), extra.raw.size());
     j["checksum"] = calc_checksum(buf, tlen);
     delete[] buf;
-    if (d.type == 0 || d.type == 8) {
-        j["echo"] = std::string(reinterpret_cast<const char *>(extra.data()), extra.size());
+
+    if (tp == "ping-reply" || tp == "ping-ask") {
+        j["echo"] = extra.raw;
+    }
+    if (tp == "error") {
+        j["error-ipv4"] = extra.eip.to_json();
     }
     return j;
 }
@@ -153,7 +163,12 @@ bool icmp::link_to(const protocol &rhs) const
 
 const icmp::detail &icmp::get_detail() const { return d; }
 
-const std::vector<u_char> &icmp::get_extra() const { return extra; }
+const icmp::extra_detail &icmp::get_extra() const { return extra; }
+
+std::string icmp::icmp_type() const
+{
+    return type_dict.count(d.type) > 0 ? type_dict.at(d.type).first : Protocol_Type_Unknow(d.type);
+}
 
 icmp::detail icmp::ntoh(const detail &d, bool reverse)
 {

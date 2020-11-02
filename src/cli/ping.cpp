@@ -41,6 +41,11 @@ int main(int argc, char *argv[])
         packet reply;
         long cost_ms;
         if (transport::ping(handle, apt, target_ip, reply, cost_ms, 128, "greatjaysinco")) {
+            if (reply.is_error()) {
+                VLOG(1) << reply.to_json().dump(3);
+                std::cout << "error" << std::endl;
+                continue;
+            }
             ++recv_cnt;
             min_cost = std::min(min_cost, cost_ms);
             max_cost = std::max(max_cost, cost_ms);

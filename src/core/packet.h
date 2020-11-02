@@ -28,6 +28,8 @@ public:
 
     void set_time(const timeval &tv);
 
+    bool is_error() const;
+
     static timeval gettimeofday();
 
     static packet arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,

@@ -94,6 +94,16 @@ bool packet::link_to(const packet &rhs) const
     if (d.time.tv_sec > rhs.d.time.tv_sec) {
         return false;
     }
+    if (rhs.d.layers.size() > 2 && rhs.d.layers.at(2)->type() == Protocol_Type_ICMP) {
+        auto &ch = dynamic_cast<const icmp &>(*rhs.d.layers.at(2));
+        if (ch.icmp_type() == "error" && d.layers.size() > 1 &&
+            d.layers.at(1)->type() == Protocol_Type_IPv4) {
+            auto &ih = dynamic_cast<const ipv4 &>(*d.layers.at(1));
+            if (ch.get_extra().eip == ih) {
+                return true;
+            }
+        }
+    }
     for (int i = 0; i < d.layers.size(); ++i) {
         if (!d.layers.at(i)->link_to(*rhs.d.layers.at(i))) {
             return false;
@@ -105,6 +115,18 @@ bool packet::link_to(const packet &rhs) const
 const packet::detail &packet::get_detail() const { return d; }
 
 void packet::set_time(const timeval &tv) { d.time = tv; }
+
+bool packet::is_error() const
+{
+    return std::find_if(d.layers.cbegin(), d.layers.cend(),
+                        [](const std::shared_ptr<protocol> &pt) {
+                            if (pt->type() == Protocol_Type_ICMP) {
+                                auto &ch = dynamic_cast<const icmp &>(*pt);
+                                return ch.icmp_type() == "error";
+                            }
+                            return false;
+                        }) != d.layers.cend();
+}
 
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,
                    bool reverse)

@@ -105,3 +105,9 @@ ipv4::detail ipv4::ntoh(const detail &d, bool reverse)
 }
 
 ipv4::detail ipv4::hton(const detail &d) { return ntoh(d, true); }
+
+bool ipv4::operator==(const ipv4 &rhs) const
+{
+    return d.ver_ihl == rhs.d.ver_ihl && d.id == rhs.d.id && d.flags_fo == rhs.d.flags_fo &&
+           d.type == rhs.d.type && d.sip == rhs.d.sip && d.dip == rhs.d.dip;
+}
