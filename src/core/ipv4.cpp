@@ -10,7 +10,7 @@ ipv4::ipv4(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (d.tlen != end - start) {
-        LOG(ERROR) << "abnormal ipv4 length: expected=" << d.tlen << ", got=" << end - start;
+        VLOG(3) << "abnormal ipv4 length: expected=" << d.tlen << ", got=" << end - start;
     }
     end = start + 4 * (d.ver_ihl & 0xf);
 }

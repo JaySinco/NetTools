@@ -4,7 +4,7 @@ arp::arp(const u_char *const start, const u_char *&end)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (end != start + sizeof(detail)) {
-        LOG(ERROR) << "abnormal arp length: expected=" << sizeof(detail) << ", got=" << end - start;
+        VLOG(3) << "abnormal arp length: expected=" << sizeof(detail) << ", got=" << end - start;
     }
 }
 
