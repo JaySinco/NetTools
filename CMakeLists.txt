@@ -41,6 +41,7 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/arp.cpp
   ${CMAKE_SOURCE_DIR}/src/core/ipv4.cpp
   ${CMAKE_SOURCE_DIR}/src/core/icmp.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/udp.cpp
   ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )

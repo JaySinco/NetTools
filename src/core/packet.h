@@ -41,13 +41,15 @@ public:
 private:
     detail d;
 
-    using decoder = std::shared_ptr<protocol> (*)(const u_char *const start, const u_char *&end);
+    using decoder = std::shared_ptr<protocol> (*)(const u_char *const start, const u_char *&end,
+                                                  const protocol *prev);
 
     static std::map<std::string, decoder> decoder_dict;
 
     template <typename T>
-    static std::shared_ptr<protocol> decode(const u_char *const start, const u_char *&end)
+    static std::shared_ptr<protocol> decode(const u_char *const start, const u_char *&end,
+                                            const protocol *prev)
     {
-        return std::make_shared<T>(start, end);
+        return std::make_shared<T>(start, end, prev);
     }
 };

@@ -82,10 +82,11 @@ std::map<u_char, std::pair<std::string, std::map<u_char, std::string>>> icmp::ty
     },
 };
 
-icmp::icmp(const u_char *const start, const u_char *&end)
+icmp::icmp(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
-    extra.raw = std::string(start + sizeof(detail), end);
+    auto ip = dynamic_cast<const ipv4 *>(prev);
+    extra.raw = std::string(start + sizeof(detail), start + ip->payload_size());
     if (icmp_type() == "error") {
         const u_char *pend = end;
         extra.eip = ipv4(start + sizeof(detail), pend);

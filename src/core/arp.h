@@ -19,7 +19,7 @@ public:
 
     arp() = default;
 
-    arp(const u_char *const start, const u_char *&end);
+    arp(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
 
     arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply, bool reverse);
 

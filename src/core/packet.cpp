@@ -3,6 +3,7 @@
 #include "arp.h"
 #include "ipv4.h"
 #include "icmp.h"
+#include "udp.h"
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_Ethernet, packet::decode<::ethernet>},
@@ -10,6 +11,7 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_RARP, packet::decode<::arp>},
     {Protocol_Type_IPv4, packet::decode<::ipv4>},
     {Protocol_Type_ICMP, packet::decode<::icmp>},
+    {Protocol_Type_UDP, packet::decode<::udp>},
 };
 
 long operator-(const timeval &tv1, const timeval &tv2)
@@ -31,7 +33,8 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
             break;
         }
         const u_char *pend = end;
-        std::shared_ptr<protocol> prot = decoder_dict.at(type)(pstart, pend);
+        std::shared_ptr<protocol> prot =
+            decoder_dict.at(type)(pstart, pend, d.layers.size() > 0 ? &*d.layers.back() : nullptr);
         if (pend > end) {
             throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
         }

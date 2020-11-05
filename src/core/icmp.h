@@ -30,7 +30,7 @@ public:
 
     icmp() = default;
 
-    icmp(const u_char *const start, const u_char *&end);
+    icmp(const u_char *const start, const u_char *&end, const protocol *prev);
 
     icmp(const std::string &ping_echo);
 

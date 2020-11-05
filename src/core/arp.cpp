@@ -1,6 +1,6 @@
 #include "arp.h"
 
-arp::arp(const u_char *const start, const u_char *&end)
+arp::arp(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (end != start + sizeof(detail)) {

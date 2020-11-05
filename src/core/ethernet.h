@@ -14,7 +14,7 @@ public:
 
     ethernet() = default;
 
-    ethernet(const u_char *const start, const u_char *&end);
+    ethernet(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
 
     ethernet(const mac &smac, const mac &dmac, const std::string &type);
 

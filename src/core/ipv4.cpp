@@ -6,7 +6,7 @@ std::map<u_char, std::string> ipv4::type_dict = {
     {17, Protocol_Type_UDP},
 };
 
-ipv4::ipv4(const u_char *const start, const u_char *&end)
+ipv4::ipv4(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (d.tlen != end - start) {
@@ -94,6 +94,8 @@ bool ipv4::link_to(const protocol &rhs) const
 }
 
 const ipv4::detail &ipv4::get_detail() const { return d; }
+
+u_short ipv4::payload_size() const { return d.tlen - 4 * (d.ver_ihl & 0xf); }
 
 ipv4::detail ipv4::ntoh(const detail &d, bool reverse)
 {

@@ -20,7 +20,7 @@ public:
 
     ipv4() = default;
 
-    ipv4(const u_char *const start, const u_char *&end);
+    ipv4(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
 
     ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type);
 
@@ -39,6 +39,8 @@ public:
     const detail &get_detail() const;
 
     bool operator==(const ipv4 &rhs) const;
+
+    u_short payload_size() const;
 
 private:
     detail d{0};

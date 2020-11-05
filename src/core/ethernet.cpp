@@ -7,7 +7,7 @@ std::map<u_short, std::string> ethernet::type_dict = {
     {0x8035, Protocol_Type_RARP},
 };
 
-ethernet::ethernet(const u_char *const start, const u_char *&end)
+ethernet::ethernet(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     end = start + sizeof(detail);
