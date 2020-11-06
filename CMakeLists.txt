@@ -86,6 +86,7 @@ add_custom_command(TARGET net
     ${CMAKE_SOURCE_DIR}/scripts/slave.bat
     ${CMAKE_SOURCE_DIR}/scripts/server.bat
     ${CMAKE_SOURCE_DIR}/scripts/client.bat
+    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe
     ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.ini

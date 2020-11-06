@@ -84,3 +84,14 @@ struct wsa_guard
 private:
     static wsa_guard g;
 };
+
+std::string ws2s(const std::wstring &wstr);
+
+std::wstring s2ws(const std::string &str);
+
+std::wstring get_curdir();
+
+std::string string_join(const std::vector<std::string> &svec, const std::string &delimit);
+
+std::vector<std::string> string_split(const std::string &str, const std::string &delimit = "\n",
+                                      bool ignore_empty = true);
