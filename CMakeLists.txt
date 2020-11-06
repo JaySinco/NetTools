@@ -84,6 +84,8 @@ add_custom_command(TARGET net
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_SOURCE_DIR}/scripts/autorun.bat
     ${CMAKE_SOURCE_DIR}/scripts/slave.bat
+    ${CMAKE_SOURCE_DIR}/scripts/server.bat
+    ${CMAKE_SOURCE_DIR}/scripts/client.bat
     ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.ini
