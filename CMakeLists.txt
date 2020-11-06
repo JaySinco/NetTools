@@ -78,3 +78,17 @@ add_executable(net WIN32
 target_precompile_headers(net PUBLIC
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/wx/wxprec.h)
 target_link_libraries(net core)
+
+add_custom_command(TARGET net
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/scripts/autorun.bat
+    ${CMAKE_SOURCE_DIR}/scripts/slave.bat
+    ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
+    ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
+    ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.ini
+    ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
+    ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.ini
+    ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
+  $<TARGET_FILE_DIR:net>
+  )
