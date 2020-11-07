@@ -23,12 +23,12 @@ public:
 
     struct res_detail
     {
-        std::string domain;    // Domain
-        u_short type;          // Query type
-        u_short cls;           // Query class
-        u_int ttl;             // Time to live
-        u_short data_len;      // Resource data length
-        std::string res_data;  // Resource data
+        std::string domain;  // Domain
+        u_short type;        // Query type
+        u_short cls;         // Query class
+        u_int ttl;           // Time to live
+        u_short dlen;        // Resource data length
+        std::string data;    // Resource data
     };
 
     struct extra_detail
@@ -42,6 +42,8 @@ public:
     dns() = default;
 
     dns(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
+
+    dns(const std::string &query_domain);
 
     virtual ~dns() = default;
 

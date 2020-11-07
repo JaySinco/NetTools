@@ -23,14 +23,13 @@ dns::dns(const u_char *const start, const u_char *&end, const protocol *prev)
             it += sizeof(u_short);
             rr.ttl = ntohl(*reinterpret_cast<const u_int *>(it));
             it += sizeof(u_int);
-            rr.data_len = ntohs(*reinterpret_cast<const u_short *>(it));
+            rr.dlen = ntohs(*reinterpret_cast<const u_short *>(it));
             it += sizeof(u_short);
             if (rr.type == 5) {  // CNAME
-                std::string alias = decode_domain(start, end, it);
-                rr.res_data.insert(rr.res_data.cend(), alias.cbegin(), alias.cend());
+                rr.data = decode_domain(start, end, it);
             } else {
-                rr.res_data = std::string(it, it + rr.data_len);
-                it += rr.data_len;
+                rr.data = std::string(it, it + rr.dlen);
+                it += rr.dlen;
             }
             vec.push_back(rr);
         }
@@ -40,9 +39,61 @@ dns::dns(const u_char *const start, const u_char *&end, const protocol *prev)
     parse_res(extra.extra, d.ern);
 }
 
+dns::dns(const std::string &query_domain)
+{
+    d.id = rand_ushort();
+    d.flags |= 0 << 15;          // qr
+    d.flags |= (0 & 0xf) << 11;  // opcode
+    d.flags |= 0 << 10;          // authoritative answer
+    d.flags |= 1 << 9;           // truncated
+    d.flags |= 1 << 8;           // recursion desired
+    d.flags |= 0 << 7;           // recursion available
+    d.flags |= (0 & 0xf);        // rcode
+    d.qrn = 1;
+    query_detail qr;
+    qr.domain = query_domain;
+    qr.type = 1;  // A
+    qr.cls = 1;   // internet address
+    extra.query.push_back(qr);
+}
+
 void dns::to_bytes(std::vector<u_char> &bytes) const
 {
-    throw std::runtime_error("unimplemented method");
+    auto dt = hton(d);
+    auto it = reinterpret_cast<const u_char *>(&dt);
+    bytes.insert(bytes.cbegin(), it, it + sizeof(detail));
+    for (const auto &qr : extra.query) {
+        std::string name = encode_domain(qr.domain);
+        bytes.insert(bytes.end(), name.cbegin(), name.cend());
+        u_short type = htons(qr.type);
+        auto pt = reinterpret_cast<u_char *>(&type);
+        bytes.insert(bytes.end(), pt, pt + sizeof(u_short));
+        u_short cls = htons(qr.cls);
+        auto pc = reinterpret_cast<u_char *>(&cls);
+        bytes.insert(bytes.end(), pc, pc + sizeof(u_short));
+    }
+    auto encode_res = [&](const std::vector<res_detail> &rd) {
+        for (const auto &rr : rd) {
+            std::string name = encode_domain(rr.domain);
+            bytes.insert(bytes.end(), name.cbegin(), name.cend());
+            u_short type = htons(rr.type);
+            auto pt = reinterpret_cast<u_char *>(&type);
+            bytes.insert(bytes.end(), pt, pt + sizeof(u_short));
+            u_short cls = htons(rr.cls);
+            auto pc = reinterpret_cast<u_char *>(&cls);
+            bytes.insert(bytes.end(), pc, pc + sizeof(u_short));
+            u_int ttl = htonl(rr.ttl);
+            auto pl = reinterpret_cast<u_char *>(&ttl);
+            bytes.insert(bytes.end(), pl, pl + sizeof(u_int));
+            u_short dlen = htons(rr.dlen);
+            auto pd = reinterpret_cast<u_char *>(&dlen);
+            bytes.insert(bytes.end(), pd, pd + sizeof(u_short));
+            bytes.insert(bytes.end(), rr.data.data(), rr.data.data() + rr.data.size());
+        }
+    };
+    encode_res(extra.reply);
+    encode_res(extra.auth);
+    encode_res(extra.extra);
 }
 
 json dns::to_json() const
@@ -50,6 +101,49 @@ json dns::to_json() const
     json j;
     j["type"] = type();
     j["id"] = d.id;
+    j["qr"] = d.flags & 0x8000 ? "reply" : "query";
+    j["opcode"] = (d.flags >> 11) & 0xf;
+    j["authoritative-answer"] = d.flags & 0x400 ? true : false;
+    j["truncated"] = d.flags & 0x200 ? true : false;
+    j["recursion-desired"] = d.flags & 0x100 ? true : false;
+    j["recursion-available"] = d.flags & 0x80 ? true : false;
+    j["rcode"] = d.flags & 0xf;
+    j["query-count"] = d.qrn;
+    j["reply-count"] = d.rrn;
+    j["author-count"] = d.arn;
+    j["extra-count"] = d.ern;
+    if (d.qrn > 0) {
+        json query;
+        for (const auto &qr : extra.query) {
+            json r;
+            r["domain"] = qr.domain;
+            r["query-type"] = qr.type;
+            r["query-class"] = qr.cls;
+            query.push_back(r);
+        }
+        j["query"] = query;
+    }
+    auto jsonify_res = [](const std::vector<res_detail> &rd) -> json {
+        json res;
+        for (const auto &rr : rd) {
+            json r;
+            r["domain"] = rr.domain;
+            r["query-type"] = rr.type;
+            r["query-class"] = rr.cls;
+            r["ttl"] = rr.ttl;
+            r["data-size"] = rr.dlen;
+            if (rr.type == 1) {  // A
+                r["data"] = reinterpret_cast<const ip4 *>(rr.data.data())->to_str();
+            } else if (rr.type == 5) {  // CNAME
+                r["data"] = rr.data;
+            }
+            res.push_back(r);
+        }
+        return res;
+    };
+    if (d.rrn > 0) j["reply"] = jsonify_res(extra.reply);
+    if (d.arn > 0) j["author"] = jsonify_res(extra.auth);
+    if (d.ern > 0) j["extra"] = jsonify_res(extra.extra);
     return j;
 }
 
