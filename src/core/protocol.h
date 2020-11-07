@@ -12,6 +12,7 @@
 #define Protocol_Type_ICMP "icmp"
 #define Protocol_Type_TCP "tcp"
 #define Protocol_Type_UDP "udp"
+#define Protocol_Type_DNS "dns"
 
 class protocol
 {

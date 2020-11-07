@@ -38,7 +38,13 @@ json udp::to_json() const
 
 std::string udp::type() const { return Protocol_Type_UDP; }
 
-std::string udp::succ_type() const { return Protocol_Type_Void; }
+std::string udp::succ_type() const
+{
+    if (d.sport == 53 || d.dport == 53) {
+        return Protocol_Type_DNS;
+    }
+    return Protocol_Type_Void;
+}
 
 bool udp::link_to(const protocol &rhs) const
 {
