@@ -145,15 +145,16 @@ bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &
 bool transport::query_dns(const ip4 &server, const std::string &domain, dns &reply, int timeout_ms)
 {
     SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    std::shared_ptr<void *> socket_guard(nullptr, [=](void *) {
-        if (closesocket(s) == SOCKET_ERROR) {
-            LOG(ERROR) << "failed to close socket!";
-        };
-    });
     if (s == INVALID_SOCKET) {
         LOG(ERROR) << "failed to create udp socket";
         return false;
     }
+    std::shared_ptr<void *> socket_guard(nullptr, [=](void *) {
+        VLOG(3) << "socket closed";
+        if (closesocket(s) == SOCKET_ERROR) {
+            LOG(ERROR) << "failed to close socket!";
+        };
+    });
     sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(53);
