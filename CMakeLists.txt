@@ -86,16 +86,16 @@ target_link_libraries(net core)
 add_custom_command(TARGET net
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/scripts/autorun.bat
-    ${CMAKE_SOURCE_DIR}/scripts/slave.bat
-    ${CMAKE_SOURCE_DIR}/scripts/server.bat
-    ${CMAKE_SOURCE_DIR}/scripts/client.bat
+    ${CMAKE_SOURCE_DIR}/resources/autorun.bat
+    ${CMAKE_SOURCE_DIR}/resources/slave.bat
+    ${CMAKE_SOURCE_DIR}/resources/server.bat
+    ${CMAKE_SOURCE_DIR}/resources/client.bat
+    ${CMAKE_SOURCE_DIR}/resources/frps.ini
+    ${CMAKE_SOURCE_DIR}/resources/frpc.ini
     ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe
     ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.ini
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.ini
     ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
   $<TARGET_FILE_DIR:net>
   )
