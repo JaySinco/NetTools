@@ -146,7 +146,7 @@ packet packet::ping(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 
 {
     packet p;
     p.d.layers.push_back(std::make_shared<ethernet>(smac, dmac, Protocol_Type_IPv4));
-    p.d.layers.push_back(std::make_shared<ipv4>(sip, dip, ttl, Protocol_Type_ICMP));
+    p.d.layers.push_back(std::make_shared<ipv4>(sip, dip, ttl, Protocol_Type_ICMP, false));
     p.d.layers.push_back(std::make_shared<icmp>(echo));
     return p;
 }

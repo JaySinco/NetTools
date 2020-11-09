@@ -87,9 +87,9 @@ add_custom_command(TARGET net
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_SOURCE_DIR}/resources/autorun.bat
-    ${CMAKE_SOURCE_DIR}/resources/slave.bat
-    ${CMAKE_SOURCE_DIR}/resources/server.bat
-    ${CMAKE_SOURCE_DIR}/resources/client.bat
+    ${CMAKE_SOURCE_DIR}/resources/vpn_slave.bat
+    ${CMAKE_SOURCE_DIR}/resources/vpn_server.bat
+    ${CMAKE_SOURCE_DIR}/resources/vpn_client.bat
     ${CMAKE_SOURCE_DIR}/resources/frps.ini
     ${CMAKE_SOURCE_DIR}/resources/frpc.ini
     ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe

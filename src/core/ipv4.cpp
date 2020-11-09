@@ -15,7 +15,7 @@ ipv4::ipv4(const u_char *const start, const u_char *&end, const protocol *prev)
     end = start + 4 * (d.ver_ihl & 0xf);
 }
 
-ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type)
+ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type, bool forbid_slice)
 {
     bool found = false;
     for (auto it = type_dict.cbegin(); it != type_dict.cend(); ++it) {
@@ -30,6 +30,7 @@ ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type)
     }
     d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
     d.id = rand_ushort();
+    d.flags_fo = forbid_slice ? 0x4000 : 0;
     d.ttl = ttl;
     d.sip = sip;
     d.dip = dip;

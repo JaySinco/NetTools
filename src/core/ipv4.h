@@ -22,7 +22,7 @@ public:
 
     ipv4(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
 
-    ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type);
+    ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type, bool forbid_slice);
 
     virtual ~ipv4() = default;
 

@@ -101,7 +101,7 @@ json dns::to_json() const
     json j;
     j["type"] = type();
     j["id"] = d.id;
-    j["qr"] = d.flags & 0x8000 ? "reply" : "query";
+    j["dns-type"] = d.flags & 0x8000 ? "reply" : "query";
     j["opcode"] = (d.flags >> 11) & 0xf;
     j["authoritative-answer"] = d.flags & 0x400 ? true : false;
     j["truncated"] = d.flags & 0x200 ? true : false;

@@ -141,3 +141,47 @@ bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &
     }
     return ok;
 }
+
+bool transport::query_dns(const ip4 &server, const std::string &domain, dns &reply, int timeout_ms)
+{
+    SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    std::shared_ptr<void *> socket_guard(nullptr, [=](void *) {
+        if (closesocket(s) == SOCKET_ERROR) {
+            LOG(ERROR) << "failed to close socket!";
+        };
+    });
+    if (s == INVALID_SOCKET) {
+        LOG(ERROR) << "failed to create udp socket";
+        return false;
+    }
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(53);
+    addr.sin_addr = static_cast<in_addr>(server);
+    dns query(domain);
+    std::vector<u_char> packet;
+    query.to_bytes(packet);
+    if (sendto(s, reinterpret_cast<const char *>(packet.data()), static_cast<int>(packet.size()), 0,
+               reinterpret_cast<sockaddr *>(&addr), sizeof(sockaddr_in)) == SOCKET_ERROR) {
+        LOG(ERROR) << "failed to send dns data: " << WSAGetLastError();
+        return false;
+    }
+    DWORD timeout = timeout_ms;
+    if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&timeout),
+                   sizeof(DWORD)) == SOCKET_ERROR) {
+        LOG(ERROR) << "failed to set socket receive timeout: " << WSAGetLastError();
+        return false;
+    }
+    char buf[1024] = {0};
+    sockaddr_in from;
+    int from_len = sizeof(sockaddr_in);
+    int recv_len = recvfrom(s, buf, sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &from_len);
+    if (recv_len == SOCKET_ERROR) {
+        LOG(ERROR) << "failed to receive dns data: " << WSAGetLastError();
+        return false;
+    }
+    const u_char *start = reinterpret_cast<u_char *>(buf);
+    const u_char *end = start + recv_len;
+    reply = dns(start, end);
+    return true;
+}
