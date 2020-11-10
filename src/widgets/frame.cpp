@@ -1,4 +1,4 @@
-#include "main-frame.h"
+#include "frame.h"
 
 MainFrame::MainFrame() : wxFrame(NULL, wxID_ANY, "Hello World")
 {
@@ -28,4 +28,4 @@ void MainFrame::OnAbout(wxCommandEvent &event)
                  wxOK | wxICON_INFORMATION);
 }
 
-void MainFrame::OnHello(wxCommandEvent &event) { wxLogMessage("Hello world from wxWidgets!"); }
+void MainFrame::OnHello(wxCommandEvent &event) { LOG(INFO) << "Hello world from wxWidgets!"; }

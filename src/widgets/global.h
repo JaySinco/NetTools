@@ -3,6 +3,9 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
+#define GLOG_NO_ABBREVIATED_SEVERITIES
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 
 enum
 {

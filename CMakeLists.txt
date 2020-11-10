@@ -79,7 +79,7 @@ add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns core)
 
 add_executable(net WIN32
-  ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
 target_precompile_headers(net PUBLIC
