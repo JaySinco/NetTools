@@ -1,5 +1,6 @@
 #include "transport.h"
 #include "arp.h"
+#include "icmp.h"
 #include <atomic>
 #include <thread>
 
@@ -126,7 +127,8 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
 }
 
 bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &reply,
-                     long &cost_ms, int ttl, const std::string &echo, int timeout_ms)
+                     long &cost_ms, int ttl, const std::string &echo, bool forbid_slice,
+                     int timeout_ms)
 {
     mac dmac;
     ip4 dip = apt.ip.is_local(ip, apt.mask) ? ip : apt.gateway;
@@ -134,7 +136,7 @@ bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &
         VLOG(1) << "can't resolve mac address of " << dip.to_str();
         return false;
     }
-    packet req = packet::ping(apt.mac_, apt.ip, dmac, ip, ttl, echo);
+    packet req = packet::ping(apt.mac_, apt.ip, dmac, ip, ttl, echo, forbid_slice);
     bool ok = transport::request(handle, req, reply, timeout_ms);
     if (ok) {
         cost_ms = reply.get_detail().time - req.get_detail().time;
@@ -185,4 +187,42 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
     const u_char *end = start + recv_len;
     reply = dns(start, end);
     return true;
+}
+
+int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound)
+{
+    const int offset = sizeof(ipv4::detail) + sizeof(icmp::detail);
+    int low = 0;
+    int high = high_bound - offset;
+    packet reply;
+    long cost_ms;
+    if (ping(handle, apt, ip, reply, cost_ms, 128, std::string(high, '*'), true)) {
+        if (!reply.is_error()) {
+            throw std::runtime_error(
+                fmt::format("even highest-bound={} can't generate ICMP error", high_bound));
+        }
+    } else {
+        throw std::runtime_error("failed to call ping routine");
+    }
+    while (low < high - 1) {
+        int vtest = (high + low) / 2;
+        int ret = ping(handle, apt, ip, reply, cost_ms, 128, std::string(vtest, '*'), true);
+        if (!ret) {
+            throw std::runtime_error("failed to call ping routine");
+        }
+        if (!reply.is_error()) {
+            VLOG(1) << fmt::format("- {:5d}", vtest + offset);
+            low = vtest;
+        } else {
+            auto &p = dynamic_cast<const icmp &>(*reply.get_detail().layers.back());
+            if (p.get_detail().type == 3 && p.get_detail().code == 4) {
+                VLOG(1) << fmt::format("+ {:5d}", vtest + offset);
+                high = vtest;
+            } else {
+                throw std::runtime_error(
+                    fmt::format("get unexpected ICMP error: {}", p.to_json().dump(3)));
+            }
+        }
+    }
+    return low + offset;
 }

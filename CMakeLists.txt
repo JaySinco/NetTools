@@ -69,6 +69,9 @@ target_link_libraries(arp core)
 add_executable(ping ${CMAKE_SOURCE_DIR}/src/cli/ping.cpp)
 target_link_libraries(ping core)
 
+add_executable(mtu ${CMAKE_SOURCE_DIR}/src/cli/mtu.cpp)
+target_link_libraries(mtu core)
+
 add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/cli/traceroute.cpp)
 target_link_libraries(traceroute core)
 

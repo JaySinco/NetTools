@@ -29,10 +29,10 @@ public:
 
     static bool ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &reply,
                      long &cost_ms, int ttl = 128, const std::string &echo = "",
-                     int timeout_ms = 5000);
+                     bool forbid_slice = false, int timeout_ms = 5000);
 
     static bool query_dns(const ip4 &server, const std::string &domain, dns &reply,
                           int timeout_ms = 5000);
 
-    static int calc_mtu(pcap_t *handle, const ip4 &ip);
+    static int calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound = 1500);
 };

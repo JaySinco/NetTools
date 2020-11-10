@@ -36,7 +36,7 @@ public:
                       bool reply = false, bool reverse = false);
 
     static packet ping(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
-                       u_char ttl = 128, const std::string &echo = "");
+                       u_char ttl = 128, const std::string &echo = "", bool forbid_slice = false);
 
 private:
     detail d;
