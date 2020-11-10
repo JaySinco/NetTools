@@ -4,10 +4,21 @@
 class MainFrame : public wxFrame
 {
 public:
-    MainFrame();
+    MainFrame(const wxPoint &pos, const wxSize &size);
+
+protected:
+    wxStaticText *m_staticText1;
+    wxChoice *m_choice1;
+    wxGrid *m_grid2;
+    wxStatusBar *m_statusBar1;
+    wxMenuBar *m_menubar1;
+    wxMenu *m_menu1;
+    wxMenu *m_menu2;
 
 private:
-    void OnHello(wxCommandEvent &event);
-    void OnExit(wxCommandEvent &event);
-    void OnAbout(wxCommandEvent &event);
+    void on_hello(wxCommandEvent &event);
+    void on_exit(wxCommandEvent &event);
+    void on_about(wxCommandEvent &event);
+
+    void set_ui();
 };
