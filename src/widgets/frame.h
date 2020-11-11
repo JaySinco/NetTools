@@ -7,16 +7,16 @@ public:
     MainFrame(const wxPoint &pos, const wxSize &size);
 
 protected:
-    wxChoice *m_choice1;
-    wxTextCtrl *m_textCtrl1;
-    wxButton *m_button2;
-    wxButton *m_button1;
+    wxChoice *m_adaptor;
+    wxTextCtrl *m_filter;
+    wxButton *m_start;
+    wxButton *m_stop;
+    wxButton *m_clear;
     wxGrid *m_grid2;
     wxPropertyGrid *m_propertyGrid1;
-    wxStatusBar *m_statusBar1;
-    wxMenuBar *m_menubar1;
-    wxMenu *m_menu1;
-    wxMenu *m_menu2;
+    wxMenuBar *m_menu;
+    wxMenu *m_tools;
+    wxMenu *m_help;
 
 private:
     void on_quit(wxCommandEvent &event);

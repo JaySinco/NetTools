@@ -32,6 +32,7 @@ int main(int argc, char *argv[])
     std::cout << "\nRoute traced to " << ip_desc.str() << "\n" << std::endl;
     auto &apt = adaptor::fit(ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
     int ttl = 0;
     constexpr int epoch_cnt = 3;
     while (true) {

@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     std::cout << "\nPing " << ip_desc.str() << ":" << std::endl;
     auto &apt = adaptor::fit(ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
     constexpr int total_cnt = 4;
     int recv_cnt = 0;
     long sum_cost = 0;
