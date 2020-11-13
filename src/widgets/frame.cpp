@@ -9,6 +9,7 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
         m_adaptor->AppendString(apt.ip.to_str());
     }
     m_adaptor->SetSelection(0);
+    m_stop->Disable();
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -28,12 +29,25 @@ void MainFrame::on_about(wxCommandEvent &event)
     wxAboutBox(info, this);
 }
 
-void MainFrame::on_sniff_start(wxCommandEvent &event) { LOG(INFO) << "sniff start!"; }
+void MainFrame::on_sniff_start(wxCommandEvent &event)
+{
+    m_start->Disable();
+    m_stop->Enable();
+}
 
-void MainFrame::on_sniff_stop(wxCommandEvent &event) { LOG(INFO) << "sniff end!"; }
+void MainFrame::on_sniff_stop(wxCommandEvent &event)
+{
+    m_stop->Disable();
+    m_start->Enable();
+}
+
+void MainFrame::on_sniff_clear(wxCommandEvent &event) {}
 
 void MainFrame::set_ui()
 {
+    this->SetFont(wxFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
+                         wxT("Arial")));
+
     wxBoxSizer *bSizer1;
     bSizer1 = new wxBoxSizer(wxVERTICAL);
 
@@ -50,10 +64,6 @@ void MainFrame::set_ui()
     m_adaptor =
         new wxChoice(this, ID_ADAPTORCHOICE, wxDefaultPosition, wxDefaultSize, m_adaptorChoices, 0);
     m_adaptor->SetSelection(0);
-    m_adaptor->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT,
-                              wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
-                              wxT("Arial Rounded MT Bold")));
-
     bSizer7->Add(m_adaptor, 1, wxALL | wxEXPAND | wxFIXED_MINSIZE, 3);
 
     bSizer7->Add(0, 0, 4, wxEXPAND, 5);
@@ -68,21 +78,12 @@ void MainFrame::set_ui()
     bSizer8->Add(m_filter, 5, wxALL | wxEXPAND, 3);
 
     m_start = new wxButton(this, ID_SNIFFSTART, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0);
-    m_start->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                            wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
-
     bSizer8->Add(m_start, 1, wxALL | wxEXPAND, 3);
 
     m_stop = new wxButton(this, ID_SNIFFSTOP, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0);
-    m_stop->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                           wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
-
     bSizer8->Add(m_stop, 1, wxALL | wxEXPAND, 3);
 
     m_clear = new wxButton(this, ID_SNIFFCLEAR, wxT("Clear"), wxDefaultPosition, wxDefaultSize, 0);
-    m_clear->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                            wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
-
     bSizer8->Add(m_clear, 1, wxALL | wxEXPAND, 3);
 
     bSizer6->Add(bSizer8, 1, wxEXPAND, 5);
@@ -97,40 +98,40 @@ void MainFrame::set_ui()
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_grid2 = new wxGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
+    m_grid = new wxGrid(this, ID_SNIFFGRID, wxDefaultPosition, wxDefaultSize, 0);
 
     // Grid
-    m_grid2->CreateGrid(5, 5);
-    m_grid2->EnableEditing(true);
-    m_grid2->EnableGridLines(true);
-    m_grid2->EnableDragGridSize(false);
-    m_grid2->SetMargins(0, 0);
+    m_grid->CreateGrid(5, 5);
+    m_grid->EnableEditing(true);
+    m_grid->EnableGridLines(true);
+    m_grid->EnableDragGridSize(false);
+    m_grid->SetMargins(0, 0);
 
     // Columns
-    m_grid2->EnableDragColMove(false);
-    m_grid2->EnableDragColSize(true);
-    m_grid2->SetColLabelSize(30);
-    m_grid2->SetColLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
+    m_grid->EnableDragColMove(false);
+    m_grid->EnableDragColSize(true);
+    m_grid->SetColLabelSize(30);
+    m_grid->SetColLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
 
     // Rows
-    m_grid2->EnableDragRowSize(true);
-    m_grid2->SetRowLabelSize(80);
-    m_grid2->SetRowLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
+    m_grid->EnableDragRowSize(true);
+    m_grid->SetRowLabelSize(80);
+    m_grid->SetRowLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
 
     // Label Appearance
 
     // Cell Defaults
-    m_grid2->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
-    bSizer4->Add(m_grid2, 5, wxALL | wxEXPAND, 3);
+    m_grid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
+    bSizer4->Add(m_grid, 5, wxALL | wxEXPAND, 3);
 
     bSizer3->Add(bSizer4, 5, wxEXPAND, 5);
 
     wxBoxSizer *bSizer5;
     bSizer5 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_propertyGrid1 =
-        new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE);
-    bSizer5->Add(m_propertyGrid1, 3, wxBOTTOM | wxEXPAND | wxRIGHT | wxTOP, 3);
+    m_prop = new wxPropertyGrid(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxDefaultSize,
+                                wxPG_DEFAULT_STYLE);
+    bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxRIGHT | wxTOP, 3);
 
     bSizer3->Add(bSizer5, 3, wxEXPAND, 5);
 

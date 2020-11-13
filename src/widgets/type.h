@@ -1,14 +1,8 @@
 #pragma once
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
+#include "prec.h"
 #include <wx/grid.h>
 #include "wx/aboutdlg.h"
 #include <wx/propgrid/propgrid.h>
-#endif
-#define GLOG_NO_ABBREVIATED_SEVERITIES
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 
 enum
 {
@@ -17,6 +11,8 @@ enum
     ID_SNIFFSTART,
     ID_SNIFFSTOP,
     ID_SNIFFCLEAR,
+    ID_SNIFFGRID,
+    ID_SNIFFPROPGRID,
     ID_ADAPTORCHOICE,
     ID_FILTERINPUT,
 };

@@ -1,4 +1,3 @@
-#include "global.h"
 #include "frame.h"
 
 class App : public wxApp

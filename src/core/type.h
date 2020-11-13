@@ -1,5 +1,5 @@
 #pragma once
-#include "__prec.h"
+#include "prec.h"
 
 #define ntoh_cvt(field, reverse, suffix) field = ((reverse) ? ntoh##suffix : hton##suffix)(field);
 

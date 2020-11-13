@@ -47,7 +47,7 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )
 target_compile_definitions(core PUBLIC _UNICODE)
-target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/core/__prec.h)
+target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/prec.h)
 target_link_libraries(core
   fmt
   wpcap.lib
@@ -78,15 +78,13 @@ target_link_libraries(traceroute core)
 add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns core)
 
-add_executable(net WIN32
+add_executable(gui WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
-target_precompile_headers(net PUBLIC
-  ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/wx/wxprec.h)
-target_link_libraries(net core)
+target_link_libraries(gui core)
 
-add_custom_command(TARGET net
+add_custom_command(TARGET gui
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_SOURCE_DIR}/resources/autorun.bat
@@ -100,5 +98,5 @@ add_custom_command(TARGET net
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
     ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
     ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
-  $<TARGET_FILE_DIR:net>
+  $<TARGET_FILE_DIR:gui>
   )
