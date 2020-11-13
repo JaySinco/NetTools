@@ -45,8 +45,8 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event) {}
 
 void MainFrame::set_ui()
 {
-    this->SetFont(wxFont(11, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
-                         wxT("Arial")));
+    this->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
+                         wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
 
     wxBoxSizer *bSizer1;
     bSizer1 = new wxBoxSizer(wxVERTICAL);
