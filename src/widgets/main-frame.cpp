@@ -8,7 +8,6 @@ enum LIST_IDX
     FIELD_SOURCE_MAC,
     FIELD_DEST_MAC,
     FIELD_TYPE,
-    FIELD_SUCC_TYPE,
 };
 
 MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
@@ -24,7 +23,6 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     m_list->AppendColumn("source-mac");
     m_list->AppendColumn("dest-mac");
     m_list->AppendColumn("type");
-    m_list->AppendColumn("succ-type");
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -123,8 +121,13 @@ void MainFrame::sniff_recv(std::vector<packet> data)
                 m_list->SetItem(idx, FIELD_SOURCE_MAC, eh.get_detail().smac.to_str());
                 m_list->SetItem(idx, FIELD_DEST_MAC, eh.get_detail().dmac.to_str());
             }
-            m_list->SetItem(idx, FIELD_TYPE, layers.back()->type());
-            m_list->SetItem(idx, FIELD_SUCC_TYPE, layers.back()->succ_type());
+            std::string type = layers.back()->succ_type();
+            if (type == Protocol_Type_Void) {
+                type = layers.back()->type();
+            } else if (type.find("unknow") != std::string::npos) {
+                type = fmt::format("{}:{}", layers.back()->type(), type);
+            }
+            m_list->SetItem(idx, FIELD_TYPE, type);
         }
         pac_list.push_back(std::move(pac));
     }
