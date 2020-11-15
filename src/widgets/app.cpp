@@ -1,4 +1,4 @@
-#include "frame.h"
+#include "main-frame.h"
 
 class App : public wxApp
 {

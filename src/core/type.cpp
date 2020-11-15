@@ -20,9 +20,9 @@ std::string mac::to_str() const
 {
     auto c = reinterpret_cast<const u_char *>(this);
     std::ostringstream ss;
-    ss << std::hex << int(c[0]);
+    ss << fmt::format("{:02x}", c[0]);
     for (int i = 1; i < 6; ++i) {
-        ss << "-" << int(c[i]);
+        ss << fmt::format("-{:02x}", c[i]);
     }
     return ss.str();
 }

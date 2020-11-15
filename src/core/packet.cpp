@@ -14,6 +14,16 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_UDP, packet::decode<::udp>},
 };
 
+std::string tv2s(const timeval &tv)
+{
+    tm local;
+    time_t timestamp = tv.tv_sec;
+    localtime_s(&local, &timestamp);
+    char timestr[16] = {0};
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
+    return fmt::format("{}.{:06d}", timestr, tv.tv_usec);
+}
+
 long operator-(const timeval &tv1, const timeval &tv2)
 {
     long diff_sec = tv1.tv_sec - tv2.tv_sec;
@@ -79,13 +89,7 @@ json packet::to_json() const
     }
     json j;
     j["layers"] = ar;
-
-    tm local;
-    time_t timestamp = d.time.tv_sec;
-    localtime_s(&local, &timestamp);
-    char timestr[16] = {0};
-    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
-    j["time"] = fmt::format("{}.{}", timestr, d.time.tv_usec);
+    j["time"] = tv2s(d.time);
     return j;
 }
 

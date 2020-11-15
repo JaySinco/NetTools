@@ -1,5 +1,7 @@
 #pragma once
 #include "type.h"
+#include "core/transport.h"
+#include <atomic>
 
 class MainFrame : public wxFrame
 {
@@ -12,7 +14,7 @@ protected:
     wxButton *m_start;
     wxButton *m_stop;
     wxButton *m_clear;
-    wxGrid *m_grid;
+    wxListCtrl *m_list;
     wxPropertyGrid *m_prop;
     wxMenuBar *m_menu;
     wxMenu *m_tools;
@@ -24,6 +26,12 @@ private:
     void on_sniff_start(wxCommandEvent &event);
     void on_sniff_stop(wxCommandEvent &event);
     void on_sniff_clear(wxCommandEvent &event);
+    void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
+    void sniff_recv(std::vector<packet> data);
+    void sniff_stopped();
+    void notify_error(const std::string &msg);
+    void setup_ui();
 
-    void set_ui();
+    std::vector<packet> pac_list;
+    std::atomic<bool> sniff_should_stop;
 };

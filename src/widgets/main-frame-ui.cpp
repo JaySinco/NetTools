@@ -1,49 +1,6 @@
-#include "core/transport.h"
-#include "frame.h"
+#include "main-frame.h"
 
-MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
-    : wxFrame(NULL, wxID_ANY, "NetTools", pos, size)
-{
-    set_ui();
-    for (const auto &apt : adaptor::all()) {
-        m_adaptor->AppendString(apt.ip.to_str());
-    }
-    m_adaptor->SetSelection(0);
-    m_stop->Disable();
-
-    Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
-    Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
-    Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this, ID_SNIFFSTART);
-    Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this, ID_SNIFFSTOP);
-}
-
-void MainFrame::on_quit(wxCommandEvent &event) { Close(true); }
-
-void MainFrame::on_about(wxCommandEvent &event)
-{
-    wxAboutDialogInfo info;
-    info.SetName("NetTools");
-    info.SetDescription("Network Toolset Program");
-    info.AddDeveloper("Mr.Robot");
-    info.SetWebSite("https://github.com/JaySinco/NetTools");
-    wxAboutBox(info, this);
-}
-
-void MainFrame::on_sniff_start(wxCommandEvent &event)
-{
-    m_start->Disable();
-    m_stop->Enable();
-}
-
-void MainFrame::on_sniff_stop(wxCommandEvent &event)
-{
-    m_stop->Disable();
-    m_start->Enable();
-}
-
-void MainFrame::on_sniff_clear(wxCommandEvent &event) {}
-
-void MainFrame::set_ui()
+void MainFrame::setup_ui()
 {
     this->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
                          wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
@@ -98,31 +55,9 @@ void MainFrame::set_ui()
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_grid = new wxGrid(this, ID_SNIFFGRID, wxDefaultPosition, wxDefaultSize, 0);
-
-    // Grid
-    m_grid->CreateGrid(5, 5);
-    m_grid->EnableEditing(true);
-    m_grid->EnableGridLines(true);
-    m_grid->EnableDragGridSize(false);
-    m_grid->SetMargins(0, 0);
-
-    // Columns
-    m_grid->EnableDragColMove(false);
-    m_grid->EnableDragColSize(true);
-    m_grid->SetColLabelSize(30);
-    m_grid->SetColLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
-
-    // Rows
-    m_grid->EnableDragRowSize(true);
-    m_grid->SetRowLabelSize(80);
-    m_grid->SetRowLabelAlignment(wxALIGN_CENTER, wxALIGN_CENTER);
-
-    // Label Appearance
-
-    // Cell Defaults
-    m_grid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
-    bSizer4->Add(m_grid, 5, wxALL | wxEXPAND, 3);
+    m_list = new wxListCtrl(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
+                            wxLC_ICON | wxLC_REPORT);
+    bSizer4->Add(m_list, 1, wxALL | wxEXPAND, 3);
 
     bSizer3->Add(bSizer4, 5, wxEXPAND, 5);
 
