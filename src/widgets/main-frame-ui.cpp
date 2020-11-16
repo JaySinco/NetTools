@@ -2,8 +2,8 @@
 
 void MainFrame::setup_ui()
 {
-    this->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                         wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
+    this->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
+                         wxT("Arial")));
 
     wxBoxSizer *bSizer1;
     bSizer1 = new wxBoxSizer(wxVERTICAL);
@@ -21,7 +21,7 @@ void MainFrame::setup_ui()
     m_adaptor =
         new wxChoice(this, ID_ADAPTORCHOICE, wxDefaultPosition, wxDefaultSize, m_adaptorChoices, 0);
     m_adaptor->SetSelection(0);
-    bSizer7->Add(m_adaptor, 1, wxALL | wxEXPAND | wxFIXED_MINSIZE, 3);
+    bSizer7->Add(m_adaptor, 1, wxEXPAND | wxFIXED_MINSIZE | wxLEFT | wxRIGHT | wxTOP, 3);
 
     bSizer7->Add(0, 0, 4, wxEXPAND, 5);
 
@@ -50,14 +50,17 @@ void MainFrame::setup_ui()
     bSizer1->Add(bSizer2, 1, wxEXPAND, 5);
 
     wxBoxSizer *bSizer3;
-    bSizer3 = new wxBoxSizer(wxHORIZONTAL);
+    bSizer3 = new wxBoxSizer(wxVERTICAL);
 
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
     m_list = new wxListCtrl(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
                             wxLC_ICON | wxLC_REPORT);
-    bSizer4->Add(m_list, 1, wxALL | wxEXPAND, 3);
+    m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
+                           wxT("Consolas")));
+
+    bSizer4->Add(m_list, 1, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
 
     bSizer3->Add(bSizer4, 5, wxEXPAND, 5);
 
@@ -66,9 +69,9 @@ void MainFrame::setup_ui()
 
     m_prop = new wxPropertyGrid(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxDefaultSize,
                                 wxPG_DEFAULT_STYLE);
-    bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxRIGHT | wxTOP, 3);
+    bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
 
-    bSizer3->Add(bSizer5, 3, wxEXPAND, 5);
+    bSizer3->Add(bSizer5, 4, wxEXPAND, 5);
 
     bSizer1->Add(bSizer3, 8, wxEXPAND, 5);
 

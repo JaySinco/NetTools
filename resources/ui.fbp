@@ -38,7 +38,7 @@
             <property name="event_handler">impl_virtual</property>
             <property name="extra_style"></property>
             <property name="fg"></property>
-            <property name="font">Arial,90,90,-1,70,0</property>
+            <property name="font">Arial,90,90,10,70,0</property>
             <property name="hidden">0</property>
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
@@ -88,7 +88,7 @@
                                         <property name="permission">none</property>
                                         <object class="sizeritem" expanded="1">
                                             <property name="border">3</property>
-                                            <property name="flag">wxALL|wxEXPAND|wxFIXED_MINSIZE</property>
+                                            <property name="flag">wxEXPAND|wxFIXED_MINSIZE|wxLEFT|wxRIGHT|wxTOP</property>
                                             <property name="proportion">1</property>
                                             <object class="wxChoice" expanded="1">
                                                 <property name="BottomDockable">1</property>
@@ -464,7 +464,7 @@
                     <object class="wxBoxSizer" expanded="1">
                         <property name="minimum_size"></property>
                         <property name="name">bSizer3</property>
-                        <property name="orient">wxHORIZONTAL</property>
+                        <property name="orient">wxVERTICAL</property>
                         <property name="permission">none</property>
                         <object class="sizeritem" expanded="1">
                             <property name="border">5</property>
@@ -477,7 +477,7 @@
                                 <property name="permission">none</property>
                                 <object class="sizeritem" expanded="1">
                                     <property name="border">3</property>
-                                    <property name="flag">wxALL|wxEXPAND</property>
+                                    <property name="flag">wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</property>
                                     <property name="proportion">1</property>
                                     <object class="wxListCtrl" expanded="1">
                                         <property name="BottomDockable">1</property>
@@ -503,7 +503,7 @@
                                         <property name="enabled">1</property>
                                         <property name="fg"></property>
                                         <property name="floatable">1</property>
-                                        <property name="font"></property>
+                                        <property name="font">Consolas,90,90,10,70,0</property>
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">ID_SNIFFLIST</property>
@@ -542,7 +542,7 @@
                         <object class="sizeritem" expanded="1">
                             <property name="border">5</property>
                             <property name="flag">wxEXPAND</property>
-                            <property name="proportion">3</property>
+                            <property name="proportion">4</property>
                             <object class="wxBoxSizer" expanded="1">
                                 <property name="minimum_size"></property>
                                 <property name="name">bSizer5</property>
@@ -550,7 +550,7 @@
                                 <property name="permission">none</property>
                                 <object class="sizeritem" expanded="1">
                                     <property name="border">3</property>
-                                    <property name="flag">wxBOTTOM|wxEXPAND|wxRIGHT|wxTOP</property>
+                                    <property name="flag">wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</property>
                                     <property name="proportion">3</property>
                                     <object class="wxPropertyGrid" expanded="1">
                                         <property name="BottomDockable">1</property>

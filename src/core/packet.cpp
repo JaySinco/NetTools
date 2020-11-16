@@ -21,7 +21,7 @@ std::string tv2s(const timeval &tv)
     localtime_s(&local, &timestamp);
     char timestr[16] = {0};
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
-    return fmt::format("{}.{:06d}", timestr, tv.tv_usec);
+    return fmt::format("{}.{:03d}", timestr, tv.tv_usec / 1000);
 }
 
 long operator-(const timeval &tv1, const timeval &tv2)

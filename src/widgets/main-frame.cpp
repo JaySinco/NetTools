@@ -1,5 +1,7 @@
 #include "main-frame.h"
 #include "core/ethernet.h"
+#include "core/ipv4.h"
+#include "core/udp.h"
 #include <thread>
 
 enum LIST_IDX
@@ -7,6 +9,10 @@ enum LIST_IDX
     FIELD_TIME,
     FIELD_SOURCE_MAC,
     FIELD_DEST_MAC,
+    FIELD_SOURCE_IP,
+    FIELD_DEST_IP,
+    FIELD_SOURCE_PORT,
+    FIELD_DEST_PORT,
     FIELD_TYPE,
 };
 
@@ -19,10 +25,14 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     }
     m_adaptor->SetSelection(0);
     m_stop->Disable();
-    m_list->AppendColumn("time");
-    m_list->AppendColumn("source-mac");
-    m_list->AppendColumn("dest-mac");
-    m_list->AppendColumn("type");
+    m_list->AppendColumn("time", wxLIST_FORMAT_LEFT, 100);
+    m_list->AppendColumn("smac", wxLIST_FORMAT_LEFT, 135);
+    m_list->AppendColumn("dmac", wxLIST_FORMAT_LEFT, 135);
+    m_list->AppendColumn("sip", wxLIST_FORMAT_LEFT, 115);
+    m_list->AppendColumn("dip", wxLIST_FORMAT_LEFT, 115);
+    m_list->AppendColumn("sport", wxLIST_FORMAT_LEFT, 50);
+    m_list->AppendColumn("dport", wxLIST_FORMAT_LEFT, 50);
+    m_list->AppendColumn("type", wxLIST_FORMAT_LEFT, 50);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -121,16 +131,25 @@ void MainFrame::sniff_recv(std::vector<packet> data)
                 m_list->SetItem(idx, FIELD_SOURCE_MAC, eh.get_detail().smac.to_str());
                 m_list->SetItem(idx, FIELD_DEST_MAC, eh.get_detail().dmac.to_str());
             }
+            if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
+                const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
+                m_list->SetItem(idx, FIELD_SOURCE_IP, ih.get_detail().sip.to_str());
+                m_list->SetItem(idx, FIELD_DEST_IP, ih.get_detail().dip.to_str());
+            }
+            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
+                const auto &uh = dynamic_cast<const udp &>(*layers[2]);
+                m_list->SetItem(idx, FIELD_SOURCE_PORT, std::to_string(uh.get_detail().sport));
+                m_list->SetItem(idx, FIELD_DEST_PORT, std::to_string(uh.get_detail().dport));
+            }
             std::string type = layers.back()->succ_type();
-            if (type == Protocol_Type_Void) {
+            if (type == Protocol_Type_Void || type.find("unknow(") != std::string::npos) {
                 type = layers.back()->type();
-            } else if (type.find("unknow") != std::string::npos) {
-                type = fmt::format("{}:{}", layers.back()->type(), type);
             }
             m_list->SetItem(idx, FIELD_TYPE, type);
         }
         pac_list.push_back(std::move(pac));
     }
+    m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
 }
 
 void MainFrame::sniff_stopped()
