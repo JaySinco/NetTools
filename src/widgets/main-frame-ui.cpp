@@ -71,7 +71,7 @@ void MainFrame::setup_ui()
                                 wxPG_DEFAULT_STYLE);
     bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
 
-    bSizer3->Add(bSizer5, 4, wxEXPAND, 5);
+    bSizer3->Add(bSizer5, 5, wxEXPAND, 5);
 
     bSizer1->Add(bSizer3, 8, wxEXPAND, 5);
 

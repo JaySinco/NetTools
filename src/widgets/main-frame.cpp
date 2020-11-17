@@ -20,25 +20,32 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     : wxFrame(NULL, wxID_ANY, "NetTools", pos, size)
 {
     setup_ui();
+    auto &apt_def = adaptor::fit();
+    int apt_idx = 0;
     for (const auto &apt : adaptor::all()) {
+        if (apt_def.name != apt.name) {
+            ++apt_idx;
+        }
         m_adaptor->AppendString(apt.ip.to_str());
     }
-    m_adaptor->SetSelection(0);
+    m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
-    m_list->AppendColumn("time", wxLIST_FORMAT_LEFT, 100);
-    m_list->AppendColumn("smac", wxLIST_FORMAT_LEFT, 135);
-    m_list->AppendColumn("dmac", wxLIST_FORMAT_LEFT, 135);
-    m_list->AppendColumn("sip", wxLIST_FORMAT_LEFT, 115);
-    m_list->AppendColumn("dip", wxLIST_FORMAT_LEFT, 115);
-    m_list->AppendColumn("sport", wxLIST_FORMAT_LEFT, 50);
-    m_list->AppendColumn("dport", wxLIST_FORMAT_LEFT, 50);
-    m_list->AppendColumn("type", wxLIST_FORMAT_LEFT, 50);
+    m_list->AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
+    m_list->AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
+    m_list->AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
+    m_list->AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
+    m_list->AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
+    m_list->AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
+    m_list->AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
+    m_list->AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
+    m_prop->SetSplitterPosition(180);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
     Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this, ID_SNIFFSTART);
     Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this, ID_SNIFFSTOP);
     Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this, ID_SNIFFCLEAR);
+    m_list->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::on_packet_selected, this);
 }
 
 void MainFrame::on_quit(wxCommandEvent &event) { Close(true); }
@@ -68,7 +75,23 @@ void MainFrame::on_sniff_stop(wxCommandEvent &event) { sniff_should_stop = true;
 void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
+    m_prop->Clear();
     pac_list.clear();
+}
+
+void MainFrame::on_packet_selected(wxListEvent &event)
+{
+    m_prop->Clear();
+    int idx = event.m_itemIndex;
+    json layers = pac_list.at(idx).to_json()["layers"];
+    for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
+        std::string type = (*it)["type"].get<std::string>();
+        m_prop->Append(new wxPropertyCategory(type, wxPG_LABEL));
+        for (auto vit = it->begin(); vit != it->end(); ++vit) {
+            show_json_prop(nullptr, vit.key(), vit.value());
+        }
+    }
+    m_prop->Refresh();
 }
 
 void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms)
@@ -156,6 +179,51 @@ void MainFrame::sniff_stopped()
 {
     m_stop->Disable();
     m_start->Enable();
+}
+
+void MainFrame::show_json_prop(wxPGProperty *parent, const std::string &name, const json &j)
+{
+    if (j.is_array()) {
+        auto p = m_prop->Append(new wxStringProperty(name, wxPG_LABEL, "<composed>"));
+        int index = 0;
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            show_json_prop(p, std::to_string(index), *it);
+            ++index;
+        }
+    } else if (j.is_object()) {
+        auto p = m_prop->Append(new wxStringProperty(name, wxPG_LABEL, "<composed>"));
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            show_json_prop(p, it.key(), it.value());
+        }
+    } else if (j.is_string()) {
+        auto p = new wxStringProperty(name, wxPG_LABEL, j.get<std::string>());
+        if (parent != nullptr) {
+            m_prop->AppendIn(parent, p);
+        } else {
+            m_prop->Append(p);
+        }
+    } else if (j.is_number()) {
+        auto p = new wxIntProperty(name, wxPG_LABEL, j.get<long>());
+        if (parent != nullptr) {
+            m_prop->AppendIn(parent, p);
+        } else {
+            m_prop->Append(p);
+        }
+    } else if (j.is_boolean()) {
+        auto p = new wxBoolProperty(name, wxPG_LABEL, j.get<bool>());
+        if (parent != nullptr) {
+            m_prop->AppendIn(parent, p);
+        } else {
+            m_prop->Append(p);
+        }
+    } else {
+        auto p = new wxStringProperty(name, wxPG_LABEL, j.dump());
+        if (parent != nullptr) {
+            m_prop->AppendIn(parent, p);
+        } else {
+            m_prop->Append(p);
+        }
+    }
 }
 
 void MainFrame::notify_error(const std::string &msg)
