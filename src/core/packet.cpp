@@ -4,6 +4,7 @@
 #include "ipv4.h"
 #include "icmp.h"
 #include "udp.h"
+#include "dns.h"
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_Ethernet, packet::decode<::ethernet>},
@@ -12,6 +13,7 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_IPv4, packet::decode<::ipv4>},
     {Protocol_Type_ICMP, packet::decode<::icmp>},
     {Protocol_Type_UDP, packet::decode<::udp>},
+    {Protocol_Type_DNS, packet::decode<::dns>},
 };
 
 std::string tv2s(const timeval &tv)

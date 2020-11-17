@@ -13,6 +13,8 @@
 #define Protocol_Type_TCP "tcp"
 #define Protocol_Type_UDP "udp"
 #define Protocol_Type_DNS "dns"
+#define Protocol_Type_HTTP "http"
+#define Protocol_Type_SSH "ssh"
 
 class protocol
 {
@@ -40,4 +42,10 @@ protected:
     static u_short calc_checksum(const void *data, size_t tlen);
 
     static u_short rand_ushort();
+
+    static std::string guess_protocol_by_port(u_short port,
+                                              const std::string &type = Protocol_Type_TCP);
+
+private:
+    static std::map<std::string, std::map<u_short, std::string>> port_dict;
 };

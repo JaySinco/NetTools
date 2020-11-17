@@ -14,7 +14,7 @@ public:
 
     struct extra_detail
     {
-        std::string raw;  // Raw data
+        u_short crc;  // Computed checksum
     };
 
     struct pseudo_header
@@ -50,8 +50,6 @@ private:
     detail d{0};
 
     extra_detail extra;
-
-    pseudo_header ph;
 
     static detail ntoh(const detail &d, bool reverse = false);
 
