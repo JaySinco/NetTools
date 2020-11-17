@@ -3,7 +3,7 @@
 
 #define ntoh_cvt(field, reverse, suffix) field = ((reverse) ? ntoh##suffix : hton##suffix)(field);
 
-using json = nlohmann::json;
+using json = nlohmann::ordered_json;
 
 struct mac
 {

@@ -165,7 +165,7 @@ void MainFrame::sniff_recv(std::vector<packet> data)
                 m_list->SetItem(idx, FIELD_DEST_PORT, std::to_string(uh.get_detail().dport));
             }
             std::string type = layers.back()->succ_type();
-            if (type == Protocol_Type_Void || type.find("unknow(") != std::string::npos) {
+            if (!protocol::is_specific(type)) {
                 type = layers.back()->type();
             }
             m_list->SetItem(idx, FIELD_TYPE, type);
@@ -184,14 +184,26 @@ void MainFrame::sniff_stopped()
 void MainFrame::show_json_prop(wxPGProperty *parent, const std::string &name, const json &j)
 {
     if (j.is_array()) {
-        auto p = m_prop->Append(new wxStringProperty(name, wxPG_LABEL, "<composed>"));
+        wxPGProperty *p = nullptr;
+        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
+        if (parent != nullptr) {
+            p = m_prop->AppendIn(parent, sp);
+        } else {
+            p = m_prop->Append(sp);
+        }
         int index = 0;
         for (auto it = j.begin(); it != j.end(); ++it) {
             show_json_prop(p, std::to_string(index), *it);
             ++index;
         }
     } else if (j.is_object()) {
-        auto p = m_prop->Append(new wxStringProperty(name, wxPG_LABEL, "<composed>"));
+        wxPGProperty *p = nullptr;
+        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
+        if (parent != nullptr) {
+            p = m_prop->AppendIn(parent, sp);
+        } else {
+            p = m_prop->Append(sp);
+        }
         for (auto it = j.begin(); it != j.end(); ++it) {
             show_json_prop(p, it.key(), it.value());
         }

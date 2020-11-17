@@ -15,6 +15,8 @@
 #define Protocol_Type_DNS "dns"
 #define Protocol_Type_HTTP "http"
 #define Protocol_Type_SSH "ssh"
+#define Protocol_Type_TELNET "telnet"
+#define Protocol_Type_RDP "rdp"
 
 class protocol
 {
@@ -37,6 +39,9 @@ public:
 
     // Whether rhs is the response to this
     virtual bool link_to(const protocol &rhs) const = 0;
+
+    // Whether protocol type is specific
+    static bool is_specific(const std::string &type);
 
 protected:
     static u_short calc_checksum(const void *data, size_t tlen);

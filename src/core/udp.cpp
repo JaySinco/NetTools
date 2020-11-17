@@ -45,7 +45,7 @@ std::string udp::type() const { return Protocol_Type_UDP; }
 std::string udp::succ_type() const
 {
     std::string dtype = guess_protocol_by_port(d.dport, Protocol_Type_UDP);
-    if (dtype != Protocol_Type_Void) {
+    if (is_specific(dtype)) {
         return dtype;
     }
     return guess_protocol_by_port(d.sport, Protocol_Type_UDP);

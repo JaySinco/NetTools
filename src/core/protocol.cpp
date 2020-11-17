@@ -3,9 +3,21 @@
 
 std::map<std::string, std::map<u_short, std::string>> protocol::port_dict = {
     {Protocol_Type_UDP,
-     {{22, Protocol_Type_SSH}, {53, Protocol_Type_DNS}, {80, Protocol_Type_HTTP}}},
+     {{22, Protocol_Type_SSH},
+      {23, Protocol_Type_TELNET},
+      {53, Protocol_Type_DNS},
+      {80, Protocol_Type_HTTP}}},
     {Protocol_Type_TCP,
-     {{22, Protocol_Type_SSH}, {53, Protocol_Type_DNS}, {80, Protocol_Type_HTTP}}}};
+     {{22, Protocol_Type_SSH},
+      {23, Protocol_Type_TELNET},
+      {53, Protocol_Type_DNS},
+      {80, Protocol_Type_HTTP},
+      {3389, Protocol_Type_RDP}}}};
+
+bool protocol::is_specific(const std::string &type)
+{
+    return type != Protocol_Type_Void && type.find("unknow(") == std::string::npos;
+}
 
 u_short protocol::calc_checksum(const void *data, size_t tlen)
 {
@@ -42,5 +54,5 @@ std::string protocol::guess_protocol_by_port(u_short port, const std::string &ty
             return type_dict.at(port);
         }
     }
-    return Protocol_Type_Void;
+    return Protocol_Type_Unknow(0);
 }
