@@ -3,6 +3,7 @@
 #include <wx/listctrl.h>
 #include <wx/aboutdlg.h>
 #include <wx/propgrid/propgrid.h>
+#include "core/type.h"
 
 enum
 {
@@ -16,3 +17,6 @@ enum
     ID_ADAPTORCHOICE,
     ID_FILTERINPUT,
 };
+
+wxColour hashed_color(ip4 a, ip4 b);
+wxColour hashed_color(const std::string &data);

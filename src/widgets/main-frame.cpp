@@ -46,6 +46,7 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this, ID_SNIFFSTOP);
     Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this, ID_SNIFFCLEAR);
     m_list->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::on_packet_selected, this);
+    m_list->Bind(wxEVT_LIST_COL_CLICK, &MainFrame::on_list_col_clicked, this);
 }
 
 void MainFrame::on_quit(wxCommandEvent &event) { Close(true); }
@@ -93,6 +94,8 @@ void MainFrame::on_packet_selected(wxListEvent &event)
     }
     m_prop->Refresh();
 }
+
+void MainFrame::on_list_col_clicked(wxListEvent &event) {}
 
 void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms)
 {
@@ -158,8 +161,13 @@ void MainFrame::sniff_recv(std::vector<packet> data)
             }
             if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
                 const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
-                m_list->SetItem(idx, FIELD_SOURCE_IP, ih.get_detail().sip.to_str());
-                m_list->SetItem(idx, FIELD_DEST_IP, ih.get_detail().dip.to_str());
+                const ip4 &sip = ih.get_detail().sip;
+                const ip4 &dip = ih.get_detail().dip;
+                m_list->SetItem(idx, FIELD_SOURCE_IP, sip.to_str());
+                m_list->SetItem(idx, FIELD_DEST_IP, dip.to_str());
+                m_list->SetItemTextColour(idx, hashed_color(sip, dip));
+            } else {
+                m_list->SetItemTextColour(idx, wxColour(211, 211, 211));
             }
             if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
                 const auto &uh = dynamic_cast<const udp &>(*layers[2]);

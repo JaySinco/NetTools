@@ -27,6 +27,7 @@ private:
     void on_sniff_stop(wxCommandEvent &event);
     void on_sniff_clear(wxCommandEvent &event);
     void on_packet_selected(wxListEvent &event);
+    void on_list_col_clicked(wxListEvent &event);
     void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
