@@ -97,7 +97,7 @@ void MainFrame::on_packet_selected(wxListEvent &event)
 void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms)
 {
     try {
-        pcap_t *handle = transport::open_adaptor(apt);
+        pcap_t *handle = transport::open_adaptor(apt, update_freq_ms);
         std::shared_ptr<void> handle_guard(nullptr, [&](void *) {
             pcap_close(handle);
             this->GetEventHandler()->CallAfter(std::bind(&MainFrame::sniff_stopped, this));
@@ -117,19 +117,21 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
             if (sniff_should_stop) {
                 break;
             }
+            auto now = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_tm);
+            if (duration.count() >= update_freq_ms) {
+                if (data.size() > 0) {
+                    this->GetEventHandler()->CallAfter(
+                        std::bind(&MainFrame::sniff_recv, this, std::move(data)));
+                    data.clear();
+                }
+                start_tm = now;
+            }
             if (res == 0) {
                 continue;  // timeout elapsed
             }
             packet pac(start, start + info->len, info->ts);
             data.push_back(pac);
-            auto now = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_tm);
-            if (duration.count() >= update_freq_ms) {
-                this->GetEventHandler()->CallAfter(
-                    std::bind(&MainFrame::sniff_recv, this, std::move(data)));
-                data.clear();
-                start_tm = now;
-            }
         }
         if (res == -1) {
             throw std::runtime_error(

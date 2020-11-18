@@ -11,7 +11,7 @@
 class transport
 {
 public:
-    static pcap_t *open_adaptor(const adaptor &apt);
+    static pcap_t *open_adaptor(const adaptor &apt, int read_timeout = 1000);
 
     static void setfilter(pcap_t *handle, const std::string &filter, const ip4 &mask);
 
