@@ -80,6 +80,7 @@ target_link_libraries(dns core)
 
 add_executable(gui WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/type.cpp
+  ${CMAKE_SOURCE_DIR}/src/widgets/packet-list.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame-ui.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp

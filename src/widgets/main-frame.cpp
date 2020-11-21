@@ -1,7 +1,4 @@
 #include "main-frame.h"
-#include "core/ethernet.h"
-#include "core/ipv4.h"
-#include "core/udp.h"
 #include <thread>
 
 enum LIST_IDX
@@ -30,6 +27,7 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     }
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
+    m_list->SetPacPtr(&pac_list);
     m_list->AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
     m_list->AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
     m_list->AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
@@ -38,7 +36,9 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     m_list->AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
     m_list->AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
     m_list->AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
+    m_list->SetItemCount(0);
     m_prop->SetSplitterPosition(180);
+    column_sort.resize(PacketList::__FIELD_SIZE__, false);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -76,6 +76,7 @@ void MainFrame::on_sniff_stop(wxCommandEvent &event) { sniff_should_stop = true;
 void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
+    m_list->CleanBuf();
     m_prop->Clear();
     pac_list.clear();
 }
@@ -95,7 +96,20 @@ void MainFrame::on_packet_selected(wxListEvent &event)
     m_prop->Refresh();
 }
 
-void MainFrame::on_list_col_clicked(wxListEvent &event) {}
+void MainFrame::on_list_col_clicked(wxListEvent &event)
+{
+    if (!m_start->IsEnabled()) {
+        return;
+    }
+    bool reverse = column_sort.at(event.m_col);
+    column_sort.at(event.m_col) = !reverse;
+    std::stable_sort(pac_list.begin(), pac_list.end(), [&](const packet &a, const packet &b) {
+        auto sa = PacketList::stringfy_field(a, event.m_col);
+        auto sb = PacketList::stringfy_field(b, event.m_col);
+        return reverse ? sb < sa : sa < sb;
+    });
+    m_list->Refresh();
+}
 
 void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms)
 {
@@ -147,42 +161,12 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
 
 void MainFrame::sniff_recv(std::vector<packet> data)
 {
-    for (packet &pac : data) {
-        long idx = pac_list.size();
-        wxListItem item;
-        m_list->InsertItem(idx, item);
-        m_list->SetItem(idx, FIELD_TIME, tv2s(pac.get_detail().time));
-        const auto &layers = pac.get_detail().layers;
-        if (layers.size() > 0) {
-            if (layers.front()->type() == Protocol_Type_Ethernet) {
-                const auto &eh = dynamic_cast<const ethernet &>(*layers.front());
-                m_list->SetItem(idx, FIELD_SOURCE_MAC, eh.get_detail().smac.to_str());
-                m_list->SetItem(idx, FIELD_DEST_MAC, eh.get_detail().dmac.to_str());
-            }
-            if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
-                const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
-                const ip4 &sip = ih.get_detail().sip;
-                const ip4 &dip = ih.get_detail().dip;
-                m_list->SetItem(idx, FIELD_SOURCE_IP, sip.to_str());
-                m_list->SetItem(idx, FIELD_DEST_IP, dip.to_str());
-                m_list->SetItemTextColour(idx, hashed_color(sip, dip));
-            } else {
-                m_list->SetItemTextColour(idx, wxColour(211, 211, 211));
-            }
-            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
-                const auto &uh = dynamic_cast<const udp &>(*layers[2]);
-                m_list->SetItem(idx, FIELD_SOURCE_PORT, std::to_string(uh.get_detail().sport));
-                m_list->SetItem(idx, FIELD_DEST_PORT, std::to_string(uh.get_detail().dport));
-            }
-            std::string type = layers.back()->succ_type();
-            if (!protocol::is_specific(type)) {
-                type = layers.back()->type();
-            }
-            m_list->SetItem(idx, FIELD_TYPE, type);
-        }
-        pac_list.push_back(std::move(pac));
-    }
+    typedef std::vector<packet>::iterator iter_t;
+    pac_list.insert(pac_list.end(), std::move_iterator<iter_t>(data.begin()),
+                    std::move_iterator<iter_t>(data.end()));
+    m_list->SetItemCount(pac_list.size());
     m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
+    m_list->Refresh();
 }
 
 void MainFrame::sniff_stopped()

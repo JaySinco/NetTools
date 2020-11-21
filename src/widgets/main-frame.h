@@ -1,5 +1,6 @@
 #pragma once
 #include "type.h"
+#include "packet-list.h"
 #include "core/transport.h"
 #include <atomic>
 
@@ -14,7 +15,7 @@ protected:
     wxButton *m_start;
     wxButton *m_stop;
     wxButton *m_clear;
-    wxListCtrl *m_list;
+    PacketList *m_list;
     wxPropertyGrid *m_prop;
     wxMenuBar *m_menu;
     wxMenu *m_tools;
@@ -36,5 +37,6 @@ private:
     void setup_ui();
 
     std::vector<packet> pac_list;
+    std::vector<bool> column_sort;
     std::atomic<bool> sniff_should_stop;
 };

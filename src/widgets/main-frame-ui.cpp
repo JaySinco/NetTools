@@ -55,8 +55,8 @@ void MainFrame::setup_ui()
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_list = new wxListCtrl(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
-                            wxLC_ICON | wxLC_REPORT);
+    m_list = new PacketList(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
+                            wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
     m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                            wxT("Consolas")));
 
