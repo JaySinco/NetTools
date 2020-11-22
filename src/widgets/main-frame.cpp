@@ -1,22 +1,11 @@
 #include "main-frame.h"
 #include <thread>
 
-enum LIST_IDX
-{
-    FIELD_TIME,
-    FIELD_SOURCE_MAC,
-    FIELD_DEST_MAC,
-    FIELD_SOURCE_IP,
-    FIELD_DEST_IP,
-    FIELD_SOURCE_PORT,
-    FIELD_DEST_PORT,
-    FIELD_TYPE,
-};
-
 MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     : wxFrame(NULL, wxID_ANY, "NetTools", pos, size)
 {
     setup_ui();
+
     auto &apt_def = adaptor::fit();
     int apt_idx = 0;
     for (const auto &apt : adaptor::all()) {
