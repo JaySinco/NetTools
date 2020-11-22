@@ -27,18 +27,9 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     }
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
-    m_list->SetPacPtr(&pac_list);
-    m_list->AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
-    m_list->AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
-    m_list->AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
-    m_list->AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
-    m_list->AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
-    m_list->AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
-    m_list->AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
-    m_list->AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
-    m_list->SetItemCount(0);
+    m_list->SetDataPtr(&pac_list);
     m_prop->SetSplitterPosition(180);
-    column_sort.resize(PacketList::__FIELD_SIZE__, false);
+    column_sort.resize(SniffList::__FIELD_SIZE__, false);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -83,17 +74,7 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
 
 void MainFrame::on_packet_selected(wxListEvent &event)
 {
-    m_prop->Clear();
-    int idx = event.m_itemIndex;
-    json layers = pac_list.at(idx).to_json()["layers"];
-    for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
-        std::string type = (*it)["type"].get<std::string>();
-        m_prop->Append(new wxPropertyCategory(type, wxPG_LABEL));
-        for (auto vit = it->begin(); vit != it->end(); ++vit) {
-            show_json_prop(nullptr, vit.key(), vit.value());
-        }
-    }
-    m_prop->Refresh();
+    m_prop->show_packet(pac_list.at(event.m_itemIndex));
 }
 
 void MainFrame::on_list_col_clicked(wxListEvent &event)
@@ -104,8 +85,8 @@ void MainFrame::on_list_col_clicked(wxListEvent &event)
     bool reverse = column_sort.at(event.m_col);
     column_sort.at(event.m_col) = !reverse;
     std::stable_sort(pac_list.begin(), pac_list.end(), [&](const packet &a, const packet &b) {
-        auto sa = PacketList::stringfy_field(a, event.m_col);
-        auto sb = PacketList::stringfy_field(b, event.m_col);
+        auto sa = SniffList::stringfy_field(a, event.m_col);
+        auto sb = SniffList::stringfy_field(b, event.m_col);
         return reverse ? sb < sa : sa < sb;
     });
     m_list->Refresh();
@@ -117,7 +98,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
         pcap_t *handle = transport::open_adaptor(apt, update_freq_ms);
         std::shared_ptr<void> handle_guard(nullptr, [&](void *) {
             pcap_close(handle);
-            this->GetEventHandler()->CallAfter(std::bind(&MainFrame::sniff_stopped, this));
+            GetEventHandler()->CallAfter(std::bind(&MainFrame::sniff_stopped, this));
             LOG(INFO) << "sniff stopped";
         });
         if (filter.size() > 0) {
@@ -138,7 +119,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_tm);
             if (duration.count() >= update_freq_ms) {
                 if (data.size() > 0) {
-                    this->GetEventHandler()->CallAfter(
+                    GetEventHandler()->CallAfter(
                         std::bind(&MainFrame::sniff_recv, this, std::move(data)));
                     data.clear();
                 }
@@ -155,7 +136,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
                 fmt::format("failed to read packets: {}", pcap_geterr(handle)));
         }
     } catch (const std::exception &e) {
-        this->GetEventHandler()->CallAfter(std::bind(&MainFrame::notify_error, this, e.what()));
+        GetEventHandler()->CallAfter(std::bind(&MainFrame::notify_error, this, e.what()));
     }
 }
 
@@ -173,63 +154,6 @@ void MainFrame::sniff_stopped()
 {
     m_stop->Disable();
     m_start->Enable();
-}
-
-void MainFrame::show_json_prop(wxPGProperty *parent, const std::string &name, const json &j)
-{
-    if (j.is_array()) {
-        wxPGProperty *p = nullptr;
-        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
-        if (parent != nullptr) {
-            p = m_prop->AppendIn(parent, sp);
-        } else {
-            p = m_prop->Append(sp);
-        }
-        int index = 0;
-        for (auto it = j.begin(); it != j.end(); ++it) {
-            show_json_prop(p, std::to_string(index), *it);
-            ++index;
-        }
-    } else if (j.is_object()) {
-        wxPGProperty *p = nullptr;
-        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
-        if (parent != nullptr) {
-            p = m_prop->AppendIn(parent, sp);
-        } else {
-            p = m_prop->Append(sp);
-        }
-        for (auto it = j.begin(); it != j.end(); ++it) {
-            show_json_prop(p, it.key(), it.value());
-        }
-    } else if (j.is_string()) {
-        auto p = new wxStringProperty(name, wxPG_LABEL, j.get<std::string>());
-        if (parent != nullptr) {
-            m_prop->AppendIn(parent, p);
-        } else {
-            m_prop->Append(p);
-        }
-    } else if (j.is_number()) {
-        auto p = new wxIntProperty(name, wxPG_LABEL, j.get<long>());
-        if (parent != nullptr) {
-            m_prop->AppendIn(parent, p);
-        } else {
-            m_prop->Append(p);
-        }
-    } else if (j.is_boolean()) {
-        auto p = new wxBoolProperty(name, wxPG_LABEL, j.get<bool>());
-        if (parent != nullptr) {
-            m_prop->AppendIn(parent, p);
-        } else {
-            m_prop->Append(p);
-        }
-    } else {
-        auto p = new wxStringProperty(name, wxPG_LABEL, j.dump());
-        if (parent != nullptr) {
-            m_prop->AppendIn(parent, p);
-        } else {
-            m_prop->Append(p);
-        }
-    }
 }
 
 void MainFrame::notify_error(const std::string &msg)

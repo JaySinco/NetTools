@@ -55,8 +55,8 @@ void MainFrame::setup_ui()
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_list = new PacketList(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
-                            wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
+    m_list = new SniffList(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
+                           wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
     m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                            wxT("Consolas")));
 
@@ -67,8 +67,8 @@ void MainFrame::setup_ui()
     wxBoxSizer *bSizer5;
     bSizer5 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_prop = new wxPropertyGrid(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxDefaultSize,
-                                wxPG_DEFAULT_STYLE);
+    m_prop = new PacketProp(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxDefaultSize,
+                            wxPG_DEFAULT_STYLE);
     bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
 
     bSizer3->Add(bSizer5, 5, wxEXPAND, 5);

@@ -1,23 +1,32 @@
-#include "packet-list.h"
+#include "sniff-list.h"
 #include "core/ethernet.h"
 #include "core/ipv4.h"
 #include "core/udp.h"
 
-PacketList::PacketList(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size,
-                       long style, const wxValidator &validator, const wxString &name)
+SniffList::SniffList(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size,
+                     long style, const wxValidator &validator, const wxString &name)
     : wxListCtrl(parent, id, pos, size, style, validator, name)
 {
+    AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
+    AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
+    AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
+    AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
+    AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
+    AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
+    AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
+    AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
+    SetItemCount(0);
 }
 
-wxString PacketList::OnGetItemText(long item, long column) const
+wxString SniffList::OnGetItemText(long item, long column) const
 {
-    return stringfy_field(pac_list_ptr->at(item), column);
+    return stringfy_field(data_ptr->at(item), column);
 }
 
-wxListItemAttr *PacketList::OnGetItemAttr(long item) const
+wxListItemAttr *SniffList::OnGetItemAttr(long item) const
 {
     wxListItemAttr attr;
-    const auto &layers = pac_list_ptr->at(item).get_detail().layers;
+    const auto &layers = data_ptr->at(item).get_detail().layers;
     if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
         const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
         const ip4 &sip = ih.get_detail().sip;
@@ -34,11 +43,11 @@ wxListItemAttr *PacketList::OnGetItemAttr(long item) const
     return const_cast<wxListItemAttr *>(&attr_list.back());
 }
 
-void PacketList::SetPacPtr(const std::vector<packet> *ptr) { pac_list_ptr = ptr; }
+void SniffList::SetDataPtr(const std::vector<packet> *ptr) { data_ptr = ptr; }
 
-void PacketList::CleanBuf() { attr_list.clear(); }
+void SniffList::CleanBuf() { attr_list.clear(); }
 
-std::string PacketList::stringfy_field(const packet &pac, long column)
+std::string SniffList::stringfy_field(const packet &pac, long column)
 {
     const auto &layers = pac.get_detail().layers;
     switch (column) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "type.h"
-#include "packet-list.h"
+#include "packet-prop.h"
+#include "sniff-list.h"
 #include "core/transport.h"
 #include <atomic>
 
@@ -15,11 +16,11 @@ protected:
     wxButton *m_start;
     wxButton *m_stop;
     wxButton *m_clear;
-    PacketList *m_list;
-    wxPropertyGrid *m_prop;
     wxMenuBar *m_menu;
     wxMenu *m_tools;
     wxMenu *m_help;
+    SniffList *m_list;
+    PacketProp *m_prop;
 
 private:
     void on_quit(wxCommandEvent &event);
@@ -32,7 +33,6 @@ private:
     void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
-    void show_json_prop(wxPGProperty *parent, const std::string &name, const json &j);
     void notify_error(const std::string &msg);
     void setup_ui();
 
