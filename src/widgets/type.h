@@ -9,6 +9,7 @@ enum
 {
     ID_QUIT = wxID_HIGHEST + 1,
     ID_ABOUT,
+    ID_STATUSBAR,
     ID_SNIFFSTART,
     ID_SNIFFSTOP,
     ID_SNIFFCLEAR,

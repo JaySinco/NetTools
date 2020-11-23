@@ -18,6 +18,9 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     m_stop->Disable();
     m_list->SetDataPtr(&pac_list);
     m_prop->SetSplitterPosition(180);
+    int status_width[] = {-9, -1};
+    m_status->SetFieldsCount(2, status_width);
+    update_status_total(0);
     column_sort.resize(SniffList::__FIELD_SIZE__, false);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
@@ -59,6 +62,7 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
     m_list->CleanBuf();
     m_prop->Clear();
     pac_list.clear();
+    update_status_total(0);
 }
 
 void MainFrame::on_packet_selected(wxListEvent &event)
@@ -137,6 +141,7 @@ void MainFrame::sniff_recv(std::vector<packet> data)
     m_list->SetItemCount(pac_list.size());
     m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
     m_list->Refresh();
+    update_status_total(pac_list.size());
 }
 
 void MainFrame::sniff_stopped()
@@ -149,4 +154,9 @@ void MainFrame::notify_error(const std::string &msg)
 {
     wxMessageDialog diag(this, msg, "Error", wxOK | wxICON_ERROR);
     diag.ShowModal();
+}
+
+void MainFrame::update_status_total(size_t n)
+{
+    m_status->SetStatusText(fmt::format("Total:{:8d}", n), 1);
 }

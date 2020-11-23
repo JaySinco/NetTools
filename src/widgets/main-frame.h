@@ -11,14 +11,15 @@ public:
     MainFrame(const wxPoint &pos, const wxSize &size);
 
 protected:
+    wxStatusBar *m_status;
+    wxMenuBar *m_menu;
+    wxMenu *m_tools;
+    wxMenu *m_help;
     wxChoice *m_adaptor;
     wxTextCtrl *m_filter;
     wxButton *m_start;
     wxButton *m_stop;
     wxButton *m_clear;
-    wxMenuBar *m_menu;
-    wxMenu *m_tools;
-    wxMenu *m_help;
     SniffList *m_list;
     PacketProp *m_prop;
 
@@ -34,6 +35,7 @@ private:
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
     void notify_error(const std::string &msg);
+    void update_status_total(size_t n);
     void setup_ui();
 
     std::vector<packet> pac_list;

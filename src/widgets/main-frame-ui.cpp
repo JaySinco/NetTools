@@ -95,5 +95,7 @@ void MainFrame::setup_ui()
 
     this->SetMenuBar(m_menu);
 
+    m_status = this->CreateStatusBar(1, wxSTB_SIZEGRIP, ID_STATUSBAR);
+
     this->Centre(wxBOTH);
 }
