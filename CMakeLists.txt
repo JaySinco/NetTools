@@ -1,5 +1,44 @@
 cmake_minimum_required(VERSION 3.16)
 
+macro(configure_msvc_runtime)
+  if(MSVC)
+    # Default to statically-linked runtime.
+    if("${MSVC_RUNTIME}" STREQUAL "")
+      set(MSVC_RUNTIME "static")
+    endif()
+    # Set compiler options.
+    set(variables
+      CMAKE_C_FLAGS_DEBUG
+      CMAKE_C_FLAGS_MINSIZEREL
+      CMAKE_C_FLAGS_RELEASE
+      CMAKE_C_FLAGS_RELWITHDEBINFO
+      CMAKE_CXX_FLAGS_DEBUG
+      CMAKE_CXX_FLAGS_MINSIZEREL
+      CMAKE_CXX_FLAGS_RELEASE
+      CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    )
+    if(${MSVC_RUNTIME} STREQUAL "static")
+      message(STATUS
+        "MSVC -> forcing use of statically-linked runtime."
+      )
+      foreach(variable ${variables})
+        if(${variable} MATCHES "/MD")
+          string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+        endif()
+      endforeach()
+    else()
+      message(STATUS
+        "MSVC -> forcing use of dynamically-linked runtime."
+      )
+      foreach(variable ${variables})
+        if(${variable} MATCHES "/MT")
+          string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
+        endif()
+      endforeach()
+    endif()
+  endif()
+endmacro()
+
 project(NetTools)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
@@ -16,6 +55,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/json/include/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
+  ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
   )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -25,6 +65,7 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/glog/lib/
   ${CMAKE_SOURCE_DIR}/external/npcap/lib/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
+  ${CMAKE_SOURCE_DIR}/external/boost/lib/
   )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -50,10 +91,11 @@ target_compile_definitions(core PUBLIC _UNICODE)
 target_precompile_headers(core PUBLIC ${CMAKE_SOURCE_DIR}/src/prec.h)
 target_link_libraries(core
   fmt
+  gflags_static.lib
+  glog.lib
+  shlwapi.lib
   wpcap.lib
   ws2_32.lib
-  glog.lib
-  gflags.lib
   iphlpapi.lib
   )
 
@@ -104,3 +146,6 @@ add_custom_command(TARGET gui
     ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
   $<TARGET_FILE_DIR:gui>
   )
+
+add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
+target_link_libraries(test core)

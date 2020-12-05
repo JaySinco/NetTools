@@ -16,7 +16,8 @@
         "${workspaceFolder}/external/fmt/include/",
         "${workspaceFolder}/external/json/include/",
         "${workspaceFolder}/external/wxWidgets/include/",
-        "${workspaceFolder}/external/wxWidgets/include/msvc/"
+        "${workspaceFolder}/external/wxWidgets/include/msvc/",
+        "${workspaceFolder}/external/boost/include/boost-1_74/"
     ],
     "C_Cpp.autoAddFileAssociations": false,
     "C_Cpp.default.defines":[

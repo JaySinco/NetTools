@@ -57,15 +57,12 @@
 #define GLOG_MSVC_POP_WARNING()
 #endif
 
-//ADHOC(yqfang): windows 下 glog 要苟住，强行设置静态或者动态
-#define GLOG_STATIC
-
 // Annoying stuff for windows -- makes sure clients can import these functions
 #ifndef GOOGLE_GLOG_DLL_DECL
-# ifdef GLOG_STATIC
-#   define GOOGLE_GLOG_DLL_DECL
-# else
+# if defined(_WIN32) && !defined(__CYGWIN__)
 #   define GOOGLE_GLOG_DLL_DECL  __declspec(dllimport)
+# else
+#   define GOOGLE_GLOG_DLL_DECL
 # endif
 #endif
 
