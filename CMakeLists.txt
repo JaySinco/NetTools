@@ -147,5 +147,5 @@ add_custom_command(TARGET gui
   $<TARGET_FILE_DIR:gui>
   )
 
-add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
-target_link_libraries(test core)
+add_executable(parser ${CMAKE_SOURCE_DIR}/src/cli/parser.cpp)
+target_link_libraries(parser core)
