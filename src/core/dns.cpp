@@ -170,7 +170,7 @@ std::string dns::encode_domain(const std::string &domain)
     auto svec = string_split(domain, ".");
     for (const auto &s : svec) {
         if (s.size() > 63) {
-            throw std::runtime_error(fmt::format("segment of domain exceed 63: {}", s));
+            throw std::runtime_error("segment of domain exceed 63: {}"_format(s));
         }
         bytes.push_back(static_cast<u_char>(s.size()));
         bytes.insert(bytes.end(), s.cbegin(), s.cend());

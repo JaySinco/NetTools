@@ -20,9 +20,9 @@ std::string mac::to_str() const
 {
     auto c = reinterpret_cast<const u_char *>(this);
     std::ostringstream ss;
-    ss << fmt::format("{:02x}", c[0]);
+    ss << "{:02x}"_format(c[0]);
     for (int i = 1; i < 6; ++i) {
-        ss << fmt::format("-{:02x}", c[i]);
+        ss << "-{:02x}"_format(c[i]);
     }
     return ss.str();
 }
@@ -35,7 +35,7 @@ ip4::ip4(u_char c1, u_char c2, u_char c3, u_char c4) : b1(c1), b2(c2), b3(c3), b
 ip4::ip4(const std::string &s)
 {
     if (!from_dotted_dec(s, this)) {
-        throw std::runtime_error(fmt::format("invalid ip4: {}", s));
+        throw std::runtime_error("invalid ip4: {}"_format(s));
     }
 }
 
@@ -139,7 +139,7 @@ const adaptor &adaptor::fit(const ip4 &hint)
                (hint != ip4::zeros ? apt.ip.is_local(hint, apt.mask) : true);
     });
     if (it == all().end()) {
-        throw std::runtime_error(fmt::format("no local adapter match {}", hint.to_str()));
+        throw std::runtime_error("no local adapter match {}"_format(hint.to_str()));
     }
     return *it;
 }

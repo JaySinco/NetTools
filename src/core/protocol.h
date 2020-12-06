@@ -3,7 +3,7 @@
 #include <vector>
 
 #define Protocol_Type_Void "void"
-#define Protocol_Type_Unknow(n) (fmt::format("unknow({:#x})", n))
+#define Protocol_Type_Unknow(n) ("unknow({:#x})"_format(n))
 #define Protocol_Type_Ethernet "ethernet"
 #define Protocol_Type_IPv4 "ipv4"
 #define Protocol_Type_IPv6 "ipv6"

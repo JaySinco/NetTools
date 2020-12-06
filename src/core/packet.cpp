@@ -23,7 +23,7 @@ std::string tv2s(const timeval &tv)
     localtime_s(&local, &timestamp);
     char timestr[16] = {0};
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
-    return fmt::format("{}.{:03d}", timestr, tv.tv_usec / 1000);
+    return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
 }
 
 long operator-(const timeval &tv1, const timeval &tv2)
@@ -48,7 +48,7 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
         std::shared_ptr<protocol> prot =
             decoder_dict.at(type)(pstart, pend, d.layers.size() > 0 ? &*d.layers.back() : nullptr);
         if (pend > end) {
-            throw std::runtime_error(fmt::format("exceed data boundary after {}", type));
+            throw std::runtime_error("exceed data boundary after {}"_format(type));
         }
         d.layers.push_back(prot);
         pstart = pend;

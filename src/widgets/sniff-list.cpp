@@ -97,7 +97,7 @@ std::string SniffList::stringfy_field(const packet &pac, long column)
             return type;
         }
         default:
-            throw std::runtime_error(fmt::format("invalid column {}", column));
+            throw std::runtime_error("invalid column {}"_format(column));
     }
     return "";
 }

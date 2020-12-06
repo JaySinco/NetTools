@@ -125,8 +125,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
             data.push_back(pac);
         }
         if (res == -1) {
-            throw std::runtime_error(
-                fmt::format("failed to read packets: {}", pcap_geterr(handle)));
+            throw std::runtime_error("failed to read packets: {}"_format(pcap_geterr(handle)));
         }
     } catch (const std::exception &e) {
         GetEventHandler()->CallAfter(std::bind(&MainFrame::notify_error, this, e.what()));
@@ -158,5 +157,5 @@ void MainFrame::notify_error(const std::string &msg)
 
 void MainFrame::update_status_total(size_t n)
 {
-    m_status->SetStatusText(fmt::format("Total:{:8d}", n), 1);
+    m_status->SetStatusText("Total:{:8d}"_format(n), 1);
 }

@@ -13,3 +13,5 @@
 #include <glog/logging.h>
 #undef max
 #undef min
+
+using namespace fmt::literals;

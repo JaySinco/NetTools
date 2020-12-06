@@ -24,7 +24,7 @@ ethernet::ethernet(const mac &smac, const mac &dmac, const std::string &type)
         }
     }
     if (!found) {
-        throw std::runtime_error(fmt::format("unknow ethernet type: {}", type));
+        throw std::runtime_error("unknow ethernet type: {}"_format(type));
     }
     d.dmac = dmac;
     d.smac = smac;

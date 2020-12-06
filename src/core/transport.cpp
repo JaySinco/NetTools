@@ -10,7 +10,7 @@ pcap_t *transport::open_adaptor(const adaptor &apt, int timeout_ms)
     char *errbuf = new char[PCAP_ERRBUF_SIZE];
     if (!(handle = pcap_open(apt.name.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, timeout_ms, NULL,
                              errbuf))) {
-        throw std::runtime_error(fmt::format("failed to open adapter: {}", apt.name));
+        throw std::runtime_error("failed to open adapter: {}"_format(apt.name));
     }
     return handle;
 }
@@ -20,12 +20,11 @@ void transport::setfilter(pcap_t *handle, const std::string &filter, const ip4 &
     bpf_program fcode;
     if (pcap_compile(handle, &fcode, filter.c_str(), 1, static_cast<u_int>(mask)) < 0) {
         throw std::runtime_error(
-            fmt::format("failed to compile pcap filter: {}, please refer to "
-                        "https://nmap.org/npcap/guide/wpcap/pcap-filter.html",
-                        filter));
+            "failed to compile pcap filter: {}, please refer to "
+            "https://nmap.org/npcap/guide/wpcap/pcap-filter.html"_format(filter));
     }
     if (pcap_setfilter(handle, &fcode) < 0) {
-        throw std::runtime_error(fmt::format("failed to set pcap filter: {}", filter));
+        throw std::runtime_error("failed to set pcap filter: {}"_format(filter));
     }
 }
 
@@ -51,7 +50,7 @@ bool transport::recv(pcap_t *handle, std::function<bool(const packet &p)> callba
         }
     }
     if (res == -1) {
-        throw std::runtime_error(fmt::format("failed to read packets: {}", pcap_geterr(handle)));
+        throw std::runtime_error("failed to read packets: {}"_format(pcap_geterr(handle)));
     }
     throw std::runtime_error("stop reading packets due to unexpected error");
 }
@@ -62,7 +61,7 @@ void transport::send(pcap_t *handle, const packet &pac)
     pac.to_bytes(bytes);
     const_cast<packet &>(pac).set_time(packet::gettimeofday());
     if (pcap_sendpacket(handle, bytes.data(), bytes.size()) != 0) {
-        throw std::runtime_error(fmt::format("failed to send packet: {}", pcap_geterr(handle)));
+        throw std::runtime_error("failed to send packet: {}"_format(pcap_geterr(handle)));
     }
 }
 
@@ -199,7 +198,7 @@ int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int h
     if (ping(handle, apt, ip, reply, cost_ms, 128, std::string(high, '*'), true)) {
         if (!reply.is_error()) {
             throw std::runtime_error(
-                fmt::format("even highest-bound={} can't generate ICMP error", high_bound));
+                "even highest-bound={} can't generate ICMP error"_format(high_bound));
         }
     } else {
         throw std::runtime_error("failed to call ping routine");
@@ -211,16 +210,16 @@ int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int h
             throw std::runtime_error("failed to call ping routine");
         }
         if (!reply.is_error()) {
-            VLOG(1) << fmt::format("- {:5d}", vtest + offset);
+            VLOG(1) << "- {:5d}"_format(vtest + offset);
             low = vtest;
         } else {
             auto &p = dynamic_cast<const icmp &>(*reply.get_detail().layers.back());
             if (p.get_detail().type == 3 && p.get_detail().code == 4) {
-                VLOG(1) << fmt::format("+ {:5d}", vtest + offset);
+                VLOG(1) << "+ {:5d}"_format(vtest + offset);
                 high = vtest;
             } else {
                 throw std::runtime_error(
-                    fmt::format("get unexpected ICMP error: {}", p.to_json().dump(3)));
+                    "get unexpected ICMP error: {}"_format(p.to_json().dump(3)));
             }
         }
     }
