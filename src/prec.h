@@ -4,7 +4,8 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
-#include <fmt/core.h>
+#include <fmt/ranges.h>
+#include <fmt/format.h>
 #include <json.hpp>
 #include <gflags/gflags.h>
 #define GOOGLE_GLOG_DLL_DECL
