@@ -1,8 +1,8 @@
 #include "prec.h"
-#include <boost/fusion/include/std_pair.hpp>
-#include <boost/spirit/include/qi.hpp>
+#include <boost/fusion/include/std_tuple.hpp>
+#include <boost/spirit/home/x3.hpp>
 
-namespace qi = boost::spirit::qi;
+namespace x3 = boost::spirit::x3;
 
 int main(int argc, char *argv[])
 {
@@ -11,9 +11,13 @@ int main(int argc, char *argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    std::string s = "(3.45, 123)";
-    std::pair<double, double> p;
+    std::string s = "3.45, 123";
+    std::tuple<double, double> p;
     auto it = s.begin();
-    qi::phrase_parse(it, s.end(), '(' >> qi::double_ >> ',' >> qi::double_ >> ')', qi::space, p);
-    LOG(INFO) << p.first << "," << p.second;
+    x3::phrase_parse(it, s.end(),
+                     //  Begin grammar
+                     x3::double_ >> ',' >> x3::double_,
+                     //  End grammar
+                     x3::space, p);
+    LOG(INFO) << std::get<0>(p) << " " << std::get<1>(p);
 }
