@@ -5,6 +5,8 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     : wxFrame(NULL, wxID_ANY, "NetTools", pos, size)
 {
     setup_ui();
+    wxRect rect = this->GetScreenRect();
+    m_prop_win = new PropFrame(this);
 
     auto &apt_def = adaptor::fit();
     int apt_idx = 0;
@@ -17,7 +19,6 @@ MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
     m_list->SetDataPtr(&pac_list);
-    m_prop->SetSplitterPosition(180);
     int status_width[] = {-9, -1};
     m_status->SetFieldsCount(2, status_width);
     update_status_total(0);
@@ -60,14 +61,22 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
     m_list->CleanBuf();
-    m_prop->Clear();
+    m_prop_win->m_prop->Clear();
+    m_prop_win->Show(false);
     pac_list.clear();
     update_status_total(0);
 }
 
 void MainFrame::on_packet_selected(wxListEvent &event)
 {
-    m_prop->show_packet(pac_list.at(event.m_itemIndex));
+    if (!m_prop_win->IsShown()) {
+        wxRect rect = this->GetScreenRect();
+        rect.x += rect.width;
+        rect.width = 430;
+        m_prop_win->SetSize(rect);
+        m_prop_win->Show(true);
+    }
+    m_prop_win->m_prop->show_packet(pac_list.at(event.m_itemIndex));
 }
 
 void MainFrame::on_list_col_clicked(wxListEvent &event)

@@ -1,14 +1,14 @@
 #pragma once
 #include "type.h"
-#include "packet-prop.h"
-#include "sniff-list.h"
 #include "core/transport.h"
+#include "sniff-list.h"
+#include "prop-frame.h"
 #include <atomic>
 
 class MainFrame : public wxFrame
 {
 public:
-    MainFrame(const wxPoint &pos, const wxSize &size);
+    MainFrame(const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
 
 protected:
     wxStatusBar *m_status;
@@ -21,7 +21,7 @@ protected:
     wxButton *m_stop;
     wxButton *m_clear;
     SniffList *m_list;
-    PacketProp *m_prop;
+    PropFrame *m_prop_win;
 
 private:
     void on_quit(wxCommandEvent &event);

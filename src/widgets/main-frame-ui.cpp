@@ -67,10 +67,6 @@ void MainFrame::setup_ui()
     wxBoxSizer *bSizer5;
     bSizer5 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_prop = new PacketProp(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxDefaultSize,
-                            wxPG_DEFAULT_STYLE);
-    bSizer5->Add(m_prop, 3, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
-
     bSizer3->Add(bSizer5, 5, wxEXPAND, 5);
 
     bSizer1->Add(bSizer3, 8, wxEXPAND, 5);
