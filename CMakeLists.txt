@@ -85,6 +85,7 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/udp.cpp
   ${CMAKE_SOURCE_DIR}/src/core/dns.cpp
   ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
+  ${CMAKE_SOURCE_DIR}/src/core/validator.cpp
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )
 target_compile_definitions(core PUBLIC _UNICODE)
@@ -149,5 +150,5 @@ add_custom_command(TARGET gui
   $<TARGET_FILE_DIR:gui>
   )
 
-add_executable(parser ${CMAKE_SOURCE_DIR}/src/cli/parser.cpp)
-target_link_libraries(parser core)
+add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
+target_link_libraries(test core)

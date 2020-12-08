@@ -2,6 +2,7 @@
     "files.exclude": {
         "bin": true,
         "dest": true,
+        "external": true,
     },
     "files.watcherExclude": {
         "bin": true,

@@ -62,7 +62,9 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
     m_list->DeleteAllItems();
     m_list->CleanBuf();
     m_prop_win->m_prop->Clear();
-    m_prop_win->Show(false);
+    if (m_prop_win->IsShown()) {
+        m_prop_win->Show(false);
+    }
     pac_list.clear();
     update_status_total(0);
 }

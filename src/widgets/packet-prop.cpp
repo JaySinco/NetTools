@@ -1,11 +1,5 @@
 #include "packet-prop.h"
 
-PacketProp::PacketProp(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size,
-                       long style, const wxString &name)
-    : wxPropertyGrid(parent, id, pos, size, style, name)
-{
-}
-
 void PacketProp::show_packet(const packet &pac)
 {
     Clear();
