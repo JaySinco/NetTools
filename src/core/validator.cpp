@@ -118,46 +118,59 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////
-//  parser definition
+//  ast & parser definition
 ///////////////////////////////////////////////////////////////////////////
 
 namespace ast
 {
-struct expression_value;
+struct or_expr_value;
 
-using select_attr_value = std::vector<std::string>;
-using conditon_value = std::pair<select_attr_value, boost::optional<std::string>>;
-using group_value = x3::forward_ast<expression_value>;
-using factor_value = boost::variant<conditon_value, group_value>;
-using term_value = std::vector<factor_value>;
+using selector_expr_value = std::vector<std::string>;
 
-struct expression_value : std::vector<term_value>
+struct match_expr_value
+{
+    selector_expr_value v_sel;
+    boost::optional<std::string> v_opt;
+};
+
+using group_expr_value = x3::forward_ast<or_expr_value>;
+using unit_expr_value = boost::variant<match_expr_value, group_expr_value>;
+using and_expr_value = std::vector<unit_expr_value>;
+
+struct or_expr_value : std::vector<and_expr_value>
 {
 };
 
+using entry_value = or_expr_value;
+
 }  // namespace ast
+
+BOOST_FUSION_ADAPT_STRUCT(ast::match_expr_value, v_sel, v_opt);
 
 namespace parser
 {
-const x3::rule<class value_class, std::string> value = "value";
-const x3::rule<class select_attr_class, ast::select_attr_value> select_attr = "select_attr";
-const x3::rule<class conditon_class, ast::conditon_value> conditon = "conditon";
-const x3::rule<class group_class, ast::group_value> group = "group";
-const x3::rule<class factor_class, ast::factor_value> factor = "factor";
-const x3::rule<class term_class, ast::term_value> term = "term";
-const x3::rule<class expression_class, ast::expression_value> expression = "expression";
+const x3::rule<class value_expr_class, std::string> value_expr = "value_expr";
+const x3::rule<class selector_expr_class, ast::selector_expr_value> selector_expr = "selector_expr";
+const x3::rule<class match_expr_class, ast::match_expr_value> match_expr = "match_expr";
+const x3::rule<class group_expr_class, ast::group_expr_value> group_expr = "group_expr";
+const x3::rule<class unit_expr_class, ast::unit_expr_value> unit_expr = "unit_expr";
+const x3::rule<class and_expr_class, ast::and_expr_value> and_expr = "and_expr";
+const x3::rule<class or_expr_class, ast::or_expr_value> or_expr = "or_expr";
 
 const auto number = +x3::char_("0-9");
 const auto quoted_string = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
-const auto value_def = number | quoted_string;
-const auto select_attr_def = +x3::char_("0-9a-zA-Z") % '.';
-const auto conditon_def = select_attr >> -('=' >> value);
-const auto group_def = '(' >> expression >> ')';
-const auto factor_def = conditon | group;
-const auto term_def = factor % '&';
-const auto expression_def = term % '|';
+const auto value_expr_def = number | quoted_string;
+const auto selector_expr_def = +x3::char_("0-9a-zA-Z") % '.';
+const auto match_expr_def = selector_expr >> -('=' >> value_expr);
+const auto group_expr_def = '(' >> or_expr >> ')';
+const auto unit_expr_def = match_expr | group_expr;
+const auto and_expr_def = unit_expr % '&';
+const auto or_expr_def = and_expr % '|';
 
-BOOST_SPIRIT_DEFINE(value, select_attr, conditon, group, factor, term, expression);
+BOOST_SPIRIT_DEFINE(value_expr, selector_expr, match_expr, group_expr, unit_expr, and_expr,
+                    or_expr);
+
+const auto &entry = or_expr;
 
 }  // namespace parser
 
@@ -175,9 +188,9 @@ bool validator::test(const packet &pac) const
 p_validator validator::from_str(const std::string &code)
 {
     p_validator pv;
-    ast::expression_value ast;
+    ast::entry_value ast;
     auto it = code.begin();
-    bool ok = x3::phrase_parse(it, code.end(), parser::expression, x3::space, ast);
+    bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
     if (!ok || it != code.end()) {
         throw std::runtime_error(fmt::format("failed to parse: unexpect token near '{}'", *it));
     }

@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     FLAGS_minloglevel = 0;
 
     validator::from_str(R"(
-        ipv4.id.0="123" & udp.port = 12
+        (ipv4.id.0="123" & udp.port = 12) | arp
     )");
     NT_CATCH
 }
