@@ -15,3 +15,4 @@
 #undef min
 
 using namespace fmt::literals;
+using json = nlohmann::ordered_json;

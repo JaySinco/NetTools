@@ -1,12 +1,12 @@
 #pragma once
-#include "packet.h"
+#include "prec.h"
 
 class validator
 {
 public:
-    virtual bool operator()(const json &j) const = 0;
+    virtual bool test(const json &j) const = 0;
 
-    bool test(const packet &pac) const;
+    // virtual json to_json() const = 0;
 
     static std::shared_ptr<validator> from_str(const std::string &code);
 };

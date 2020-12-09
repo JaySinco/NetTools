@@ -86,7 +86,7 @@ add_library(core STATIC
   ${CMAKE_SOURCE_DIR}/src/core/udp.cpp
   ${CMAKE_SOURCE_DIR}/src/core/dns.cpp
   ${CMAKE_SOURCE_DIR}/src/core/packet.cpp
-  ${CMAKE_SOURCE_DIR}/src/core/validator.cpp
+  # ${CMAKE_SOURCE_DIR}/src/core/validator.cpp
   ${CMAKE_SOURCE_DIR}/src/core/transport.cpp
   )
 target_compile_definitions(core PUBLIC _UNICODE)
