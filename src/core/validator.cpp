@@ -130,8 +130,8 @@ const x3::rule<class expression, p_validator> expression = "expression";
 const auto number = +x3::char_("0-9");
 const auto quoted_string = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
 const auto value_def = number | quoted_string;
-const auto selector_def = '.' >> x3::char_("0-9a-zA-Z");
-const auto conditon_def = +selector >> -('=' >> value);
+const auto selector_def = x3::char_("0-9a-zA-Z") % '.';
+const auto conditon_def = selector >> -('=' >> value);
 const auto group_def = '(' >> expression >> ')';
 const auto factor_def = conditon | group;
 const auto term_def = factor % '&';
@@ -140,6 +140,17 @@ const auto expression_def = term % '|';
 BOOST_SPIRIT_DEFINE(value, selector, conditon, group, factor, term, expression);
 
 }  // namespace parser
+
+bool validator::test(const packet &pac) const
+{
+    json j;
+    auto layers = pac.get_detail().layers;
+    for (auto it = layers.cbegin(); it != layers.cend(); ++it) {
+        auto type = (*it)->type();
+        j[type] = (*it)->to_json();
+    }
+    return test(j);
+}
 
 p_validator validator::from_str(const std::string &code)
 {
