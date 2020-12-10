@@ -10,8 +10,6 @@
 
 namespace x3 = boost::spirit::x3;
 
-using p_validator = std::shared_ptr<validator>;
-
 class selector : public validator
 {
 public:
@@ -154,7 +152,52 @@ p_validator to_validator(const and_expr_value &v);
 p_validator to_validator(const unit_expr_value &v);
 p_validator to_validator(const group_expr_value &v);
 p_validator to_validator(const match_expr_value &v);
-p_selector to_selector(const selector_expr_value &v);
+
+p_validator to_validator(const or_expr_value &v)
+{
+    p_validator combine = to_validator(v.at(0));
+    for (int i = 0; i < v.size(); ++i) {
+        combine = std::make_shared<or_validator>(combine, to_validator(v.at(i)));
+    }
+    return combine;
+}
+
+p_validator to_validator(const and_expr_value &v)
+{
+    p_validator combine = to_validator(v.at(0));
+    for (int i = 0; i < v.size(); ++i) {
+        combine = std::make_shared<and_validator>(combine, to_validator(v.at(i)));
+    }
+    return combine;
+}
+
+class unit_expr_visitor : public boost::static_visitor<p_validator>
+{
+public:
+    p_validator operator()(const match_expr_value &v) const { return to_validator(v); }
+
+    p_validator operator()(const group_expr_value &v) const { return to_validator(v); }
+};
+
+p_validator to_validator(const unit_expr_value &v)
+{
+    return boost::apply_visitor(unit_expr_visitor{}, v);
+}
+
+p_validator to_validator(const group_expr_value &v)
+{
+    return to_validator(static_cast<or_expr_value>(v));
+}
+
+p_validator to_validator(const match_expr_value &v)
+{
+    p_selector pv_sel = std::make_shared<selector>(v.v_sel);
+    if (v.v_opt) {
+        p_validator pv_opt = std::make_shared<value_validator>(*v.v_opt);
+        return std::make_shared<select_validator>(pv_sel, pv_opt);
+    }
+    return pv_sel;
+}
 
 }  // namespace ast
 
@@ -202,7 +245,7 @@ p_validator validator::from_str(const std::string &code)
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
     if (!ok || it != code.end()) {
-        throw std::runtime_error(fmt::format("failed to parse: unexpect token near '{}'", *it));
+        throw std::runtime_error("failed to parse validator: unexpect token near '{}'"_format(*it));
     }
     return ast::to_validator(ast);
 }

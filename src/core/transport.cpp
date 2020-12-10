@@ -110,7 +110,7 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
     std::thread send_loop([&] {
         while (!over) {
             send(handle, req);
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(500ms);
         }
     });
     packet reply;

@@ -1,6 +1,7 @@
 #pragma once
 #include "type.h"
 #include "core/transport.h"
+#include "core/validator.h"
 #include "sniff-list.h"
 #include "prop-frame.h"
 #include <atomic>
@@ -31,6 +32,7 @@ private:
     void on_sniff_clear(wxCommandEvent &event);
     void on_packet_selected(wxListEvent &event);
     void on_list_col_clicked(wxListEvent &event);
+    void on_filter_changed(wxFocusEvent &event);
     void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
@@ -38,6 +40,7 @@ private:
     void update_status_total(size_t n);
     void setup_ui();
 
+    p_validator validator_;
     std::vector<packet> pac_list;
     std::vector<bool> column_sort;
     std::atomic<bool> sniff_should_stop;

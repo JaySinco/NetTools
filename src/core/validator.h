@@ -1,6 +1,9 @@
 #pragma once
 #include "transport.h"
 
+class validator;
+using p_validator = std::shared_ptr<validator>;
+
 class validator
 {
 public:
@@ -8,5 +11,5 @@ public:
 
     bool test(const packet &pac) const;
 
-    static std::shared_ptr<validator> from_str(const std::string &code);
+    static p_validator from_str(const std::string &code);
 };

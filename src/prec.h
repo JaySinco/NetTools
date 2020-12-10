@@ -4,6 +4,7 @@
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
+#include <chrono>
 #include <fmt/ranges.h>
 #include <fmt/format.h>
 #include <json.hpp>
@@ -15,4 +16,5 @@
 #undef min
 
 using namespace fmt::literals;
+using namespace std::chrono_literals;
 using json = nlohmann::ordered_json;
