@@ -1,45 +1,61 @@
 cmake_minimum_required(VERSION 3.16)
 
-macro(configure_msvc_runtime)
-  if(MSVC)
-    # Default to statically-linked runtime.
-    if("${MSVC_RUNTIME}" STREQUAL "")
-      set(MSVC_RUNTIME "static")
-    endif()
-    # Set compiler options.
-    set(variables
-      CMAKE_C_FLAGS_DEBUG
-      CMAKE_C_FLAGS_MINSIZEREL
-      CMAKE_C_FLAGS_RELEASE
-      CMAKE_C_FLAGS_RELWITHDEBINFO
-      CMAKE_CXX_FLAGS_DEBUG
-      CMAKE_CXX_FLAGS_MINSIZEREL
-      CMAKE_CXX_FLAGS_RELEASE
-      CMAKE_CXX_FLAGS_RELWITHDEBINFO
-    )
-    if(${MSVC_RUNTIME} STREQUAL "static")
-      message(STATUS
-        "MSVC -> forcing use of statically-linked runtime."
-      )
-      foreach(variable ${variables})
-        if(${variable} MATCHES "/MD")
-          string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
-        endif()
-      endforeach()
-    else()
-      message(STATUS
-        "MSVC -> forcing use of dynamically-linked runtime."
-      )
-      foreach(variable ${variables})
-        if(${variable} MATCHES "/MT")
-          string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
-        endif()
-      endforeach()
-    endif()
-  endif()
-endmacro()
+# macro(configure_msvc_runtime)
+#   if(MSVC)
+#     # Default to statically-linked runtime.
+#     if("${MSVC_RUNTIME}" STREQUAL "")
+#       set(MSVC_RUNTIME "static")
+#     endif()
+#     # Set compiler options.
+#     set(variables
+#       CMAKE_C_FLAGS_DEBUG
+#       CMAKE_C_FLAGS_MINSIZEREL
+#       CMAKE_C_FLAGS_RELEASE
+#       CMAKE_C_FLAGS_RELWITHDEBINFO
+#       CMAKE_CXX_FLAGS_DEBUG
+#       CMAKE_CXX_FLAGS_MINSIZEREL
+#       CMAKE_CXX_FLAGS_RELEASE
+#       CMAKE_CXX_FLAGS_RELWITHDEBINFO
+#     )
+#     if(${MSVC_RUNTIME} STREQUAL "static")
+#       message(STATUS
+#         "MSVC -> forcing use of statically-linked runtime."
+#       )
+#       foreach(variable ${variables})
+#         if(${variable} MATCHES "/MD")
+#           string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
+#         endif()
+#       endforeach()
+#     else()
+#       message(STATUS
+#         "MSVC -> forcing use of dynamically-linked runtime."
+#       )
+#       foreach(variable ${variables})
+#         if(${variable} MATCHES "/MT")
+#           string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
+#         endif()
+#       endforeach()
+#     endif()
+#   endif()
+# endmacro()
 
 project(NetTools)
+
+# add_custom_target(vpn_bundle ALL
+#   COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#     ${CMAKE_SOURCE_DIR}/resources/autorun.bat
+#     ${CMAKE_SOURCE_DIR}/resources/vpn_slave.bat
+#     ${CMAKE_SOURCE_DIR}/resources/vpn_server.bat
+#     ${CMAKE_SOURCE_DIR}/resources/vpn_client.bat
+#     ${CMAKE_SOURCE_DIR}/resources/frps.ini
+#     ${CMAKE_SOURCE_DIR}/resources/frpc.ini
+#     ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe
+#     ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
+#     ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
+#     ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
+#     ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
+#   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+#   )
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
@@ -133,23 +149,6 @@ add_executable(gui WIN32
   ${CMAKE_SOURCE_DIR}/src/widgets/app.cpp
   )
 target_link_libraries(gui core)
-
-add_custom_command(TARGET gui
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/resources/autorun.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_slave.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_server.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_client.bat
-    ${CMAKE_SOURCE_DIR}/resources/frps.ini
-    ${CMAKE_SOURCE_DIR}/resources/frpc.ini
-    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe
-    ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
-    ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
-  $<TARGET_FILE_DIR:gui>
-  )
 
 add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
 target_link_libraries(test core)

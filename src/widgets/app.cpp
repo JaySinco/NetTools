@@ -24,6 +24,6 @@ bool App::OnInit()
 
 int App::OnExit()
 {
-    LOG(INFO) << "application about to exit.";
+    VLOG(1) << "application about to exit.";
     return wxApp::OnExit();
 }

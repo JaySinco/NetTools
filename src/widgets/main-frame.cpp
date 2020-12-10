@@ -124,13 +124,12 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
     std::shared_ptr<void> handle_guard(nullptr, [&](void *) {
         pcap_close(handle);
         GetEventHandler()->CallAfter(std::bind(&MainFrame::sniff_stopped, this));
-        LOG(INFO) << "sniff stopped";
+        VLOG(1) << "sniff stopped";
     });
     if (filter.size() > 0) {
-        LOG(INFO) << "set filter \"" << filter << "\", mask=" << apt.mask.to_str();
         transport::setfilter(handle, filter, apt.mask);
     }
-    LOG(INFO) << "begin to sniff...";
+    VLOG(1) << "begin to sniff...";
     int res;
     pcap_pkthdr *info;
     const u_char *start;

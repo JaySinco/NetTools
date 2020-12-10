@@ -211,10 +211,10 @@ const x3::rule<class unit_expr_class, ast::unit_expr_value> unit_expr = "unit_ex
 const x3::rule<class and_expr_class, ast::and_expr_value> and_expr = "and_expr";
 const x3::rule<class or_expr_class, ast::or_expr_value> or_expr = "or_expr";
 
-const auto number = +x3::char_("0-9");
+const auto plain = +x3::char_("0-9a-zA-Z");
 const auto quoted_string = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
-const auto value_expr_def = number | quoted_string;
-const auto selector_expr_def = +x3::char_("0-9a-zA-Z") % '.';
+const auto value_expr_def = plain | quoted_string;
+const auto selector_expr_def = +x3::char_("-0-9a-zA-Z") % '.';
 const auto match_expr_def = selector_expr >> -('=' >> value_expr);
 const auto group_expr_def = '(' >> or_expr >> ')';
 const auto unit_expr_def = match_expr | group_expr;
