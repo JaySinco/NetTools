@@ -3,11 +3,13 @@
 current_dir=`readlink -f .`
 
 cd boost_1_74_0
+
 if [ ! -f "b2" ]; then
     ./bootstrap.bat
 fi
-./b2 --with-system --with-thread --with-filesystem --with-chrono \
-    --with-program_options --with-test --with-timer --with-atomic \
+
+./b2 --with-system --with-thread --with-filesystem --with-chrono --with-date_time --with-regex \
+    --with-serialization --with-program_options --with-test --with-timer --with-atomic \
     --build-dir="${current_dir}/build/" \
     --prefix="${current_dir}/../" \
     toolset=msvc variant=release \
