@@ -147,6 +147,17 @@ using entry_value = or_expr_value;
 
 BOOST_FUSION_ADAPT_STRUCT(ast::match_expr_value, v_sel, v_opt);
 
+namespace ast
+{
+p_validator to_validator(const or_expr_value &v);
+p_validator to_validator(const and_expr_value &v);
+p_validator to_validator(const unit_expr_value &v);
+p_validator to_validator(const group_expr_value &v);
+p_validator to_validator(const match_expr_value &v);
+p_selector to_selector(const selector_expr_value &v);
+
+}  // namespace ast
+
 namespace parser
 {
 const x3::rule<class value_expr_class, std::string> value_expr = "value_expr";
@@ -187,12 +198,11 @@ bool validator::test(const packet &pac) const
 
 p_validator validator::from_str(const std::string &code)
 {
-    p_validator pv;
     ast::entry_value ast;
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
     if (!ok || it != code.end()) {
         throw std::runtime_error(fmt::format("failed to parse: unexpect token near '{}'", *it));
     }
-    return pv;
+    return ast::to_validator(ast);
 }

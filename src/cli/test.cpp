@@ -9,8 +9,6 @@ int main(int argc, char *argv[])
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    validator::from_str(R"(
-        (ipv4.id.0="123" & udp.port = 12) | arp
-    )");
+    LOG(INFO) << "test";
     NT_CATCH
 }
