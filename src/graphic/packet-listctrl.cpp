@@ -39,6 +39,7 @@ void PacketListCtrl::init(const std::vector<packet> *ptr)
     AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
+    AppendColumn("owner", wxLIST_FORMAT_LEFT, 100);
     SetItemCount(0);
 }
 
@@ -93,6 +94,8 @@ std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
             }
             return type;
         }
+        case FIELD_OWNER:
+            return pac.get_detail().owner;
         default:
             throw std::runtime_error("invalid column {}"_format(column));
     }

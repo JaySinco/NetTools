@@ -11,6 +11,13 @@ PATH="${MSVC_PATH};${PATH}"
 WXBUILDER="/c/Program Files (x86)/wxFormBuilder/wxFormBuilder.exe"
 FMT="${CURRENT_DIR}/external/clang-format/bin/clang-format.exe"
 CLOC="${CURRENT_DIR}/external/cloc/bin/cloc.exe"
+UI_PROJ="${CURRENT_DIR}/resources/ui.fbp"
+UI_PROJ_TM=`stat -c %Y ${UI_PROJ}`
+UI_CODE_TM=`stat -c %Y ${CURRENT_DIR}/src/graphic/ui.cpp`
+
+if [ $UI_CODE_TM -le $UI_PROJ_TM ]; then
+    "${WXBUILDER}" -g "${UI_PROJ}"
+fi
 
 if [ ! $1 ]; then
     TARGET_ARG="default"
@@ -19,8 +26,6 @@ else
     TARGET_ARG="$1"
 fi
 
-"${WXBUILDER}" -g "${CURRENT_DIR}/resources/ui.fbp" \
-&& \
 find "${CURRENT_DIR}/src" -type f -exec ${FMT} -i {} \; \
 && \
 mkdir -p dest/ bin/ \

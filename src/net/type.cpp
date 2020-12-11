@@ -4,6 +4,7 @@
 #include <sstream>
 #include <codecvt>
 #include <mutex>
+#include <boost/filesystem.hpp>
 
 const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 const mac mac::broadcast = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -144,6 +145,12 @@ const adaptor &adaptor::fit(const ip4 &hint)
     return *it;
 }
 
+bool adaptor::is_native(const ip4 &ip)
+{
+    return std::find_if(all().begin(), all().end(),
+                        [&](const adaptor &apt) { return ip == apt.ip; }) != all().end();
+}
+
 const std::vector<adaptor> &adaptor::all()
 {
     static std::once_flag flag;
@@ -151,7 +158,7 @@ const std::vector<adaptor> &adaptor::all()
     std::call_once(flag, [&] {
         u_long buflen = sizeof(IP_ADAPTER_INFO);
         auto plist = reinterpret_cast<IP_ADAPTER_INFO *>(malloc(sizeof(IP_ADAPTER_INFO)));
-        std::shared_ptr<void> plist_guard(nullptr, [=](void *) { free(plist); });
+        std::shared_ptr<void> plist_guard(nullptr, [&](void *) { free(plist); });
         if (GetAdaptersInfo(plist, &buflen) == ERROR_BUFFER_OVERFLOW) {
             plist = reinterpret_cast<IP_ADAPTER_INFO *>(malloc(buflen));
             if (GetAdaptersInfo(plist, &buflen) != NO_ERROR) {
@@ -248,4 +255,77 @@ std::vector<std::string> string_split(const std::string &str, const std::string 
     if (!last_one.empty() || !ignore_empty) svec.push_back(last_one);
 
     return svec;
+}
+
+std::string pid_to_image(u_int pid)
+{
+    std::string s_default = "pid({})"_format(pid);
+    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (handle == NULL) return s_default;
+    char buf[1024];
+    DWORD size = sizeof(buf);
+    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) return s_default;
+    boost::filesystem::path fp(std::string(buf, size));
+    return fp.filename().string();
+}
+
+port_pid_table port_pid_table::tcp()
+{
+    VLOG(2) << "get tcp port-pid table";
+    ULONG size = sizeof(MIB_TCPTABLE);
+    PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
+    std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
+    DWORD ret = 0;
+    if ((ret = GetTcpTable2(ptable, &size, FALSE)) == ERROR_INSUFFICIENT_BUFFER) {
+        free(ptable);
+        ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
+        if (ptable == nullptr) {
+            throw std::runtime_error("failed to allocate memory, size={}"_format(size));
+        }
+    }
+    ret = GetTcpTable2(ptable, &size, FALSE);
+    if (ret != NO_ERROR) {
+        throw std::runtime_error("failed to get tcp port-pid table, ret={}"_format(ret));
+    }
+    port_pid_table tb;
+    for (int i = 0; i < ptable->dwNumEntries; ++i) {
+        in_addr addr;
+        addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
+        ip4 ip(addr);
+        u_short port = ntohs(ptable->table[i].dwLocalPort);
+        u_int pid = ptable->table[i].dwOwningPid;
+        tb.mapping[std::make_pair(ip, port)] = pid;
+    }
+    return tb;
+}
+
+port_pid_table port_pid_table::udp()
+{
+    VLOG(2) << "get udp port-pid table";
+    ULONG size = sizeof(MIB_UDPTABLE_OWNER_PID);
+    PMIB_UDPTABLE_OWNER_PID ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
+    std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
+    DWORD ret = 0;
+    if ((ret = GetExtendedUdpTable(ptable, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0)) ==
+        ERROR_INSUFFICIENT_BUFFER) {
+        free(ptable);
+        ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
+        if (ptable == nullptr) {
+            throw std::runtime_error("failed to allocate memory, size={}"_format(size));
+        }
+    }
+    ret = GetExtendedUdpTable(ptable, &size, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+    if (ret != NO_ERROR) {
+        throw std::runtime_error("failed to get udp port-pid table, ret={}"_format(ret));
+    }
+    port_pid_table tb;
+    for (int i = 0; i < ptable->dwNumEntries; ++i) {
+        in_addr addr;
+        addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
+        ip4 ip(addr);
+        u_short port = ntohs(ptable->table[i].dwLocalPort);
+        u_int pid = ptable->table[i].dwOwningPid;
+        tb.mapping[std::make_pair(ip, port)] = pid;
+    }
+    return tb;
 }

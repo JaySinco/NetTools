@@ -150,7 +150,7 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
         LOG(ERROR) << "failed to create udp socket";
         return false;
     }
-    std::shared_ptr<void *> socket_guard(nullptr, [=](void *) {
+    std::shared_ptr<void *> socket_guard(nullptr, [&](void *) {
         VLOG(3) << "socket closed";
         if (closesocket(s) == SOCKET_ERROR) {
             LOG(ERROR) << "failed to close socket!";

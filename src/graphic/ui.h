@@ -64,7 +64,7 @@ protected:
 
 public:
     MainFrame_g(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString &title = wxT("NetTools"),
-                const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(860, 620),
+                const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(960, 620),
                 long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
 
     ~MainFrame_g();

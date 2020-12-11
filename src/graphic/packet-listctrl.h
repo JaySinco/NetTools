@@ -16,6 +16,7 @@ public:
         FIELD_SOURCE_PORT,
         FIELD_DEST_PORT,
         FIELD_TYPE,
+        FIELD_OWNER,
         __FIELD_SIZE__,
     };
 

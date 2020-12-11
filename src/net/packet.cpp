@@ -5,8 +5,6 @@
 #include "icmp.h"
 #include "udp.h"
 #include "dns.h"
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_Ethernet, packet::decode<::ethernet>},
@@ -57,7 +55,7 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
         type = prot->succ_type();
     }
     d.time = tv;
-    d.source = get_owner();
+    d.owner = get_owner();
 }
 
 timeval packet::gettimeofday()
@@ -95,7 +93,7 @@ json packet::to_json() const
     json j;
     j["layers"] = ar;
     j["time"] = tv2s(d.time);
-    j["source"] = d.source;
+    j["owner"] = d.owner;
     return j;
 }
 
@@ -148,65 +146,50 @@ bool packet::has_type(const std::string &type) const
            d.layers.cend();
 }
 
-
-static std::string pid_to_image(u_int pid)
-{
-    //    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS | PROCESS_QUERY_INFORMATION |
-    //   PROCESS_VM_READ,
-    //   FALSE, pid);
-    // if (NULL != hProcess) {
-    //   std::cout << "hProcess" << hProcess << "\n";
-    //   TCHAR nameProc[1024];
-    //   if (GetProcessImageFileName(hProcess, nameProc, sizeof(nameProc) / sizeof( * nameProc)) == 0) {
-    //     std::cout << "GetProcessImageFileName Error";
-    //   } else {
-    //   	std::wcout << "nameProcess " << nameProc;
-	//   }
-
-    // } else {
-    //   printf("OpenProcess(%i) failed, error: %i\n",
-    //     PID, (int) GetLastError());
-    // }
-}
-
-using table_mapping_t = std::map<std::pair<ip4, u_short>, u_int>;
-
-static void update_port_table_tcp(table_mapping_t &mapping)
-{
-    ULONG size = sizeof(MIB_TCPTABLE);
-    PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
-    std::shared_ptr<void> ptable_guard(nullptr, [=](void *) { free(ptable); });
-    DWORD ret = 0;
-    if ((ret = GetTcpTable2(ptable, &size, TRUE)) == ERROR_INSUFFICIENT_BUFFER) {
-        free(ptable);
-        ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
-        if (ptable == nullptr) {
-            throw std::runtime_error("failed to allocate memory, size={}"_format(size));
-        }
-    }
-    ret = GetTcpTable2(ptable, &size, TRUE);
-    if (ret != NO_ERROR) {
-        throw std::runtime_error("failed to get tcp table, ret={}"_format(ret));
-    }
-    mapping.clear();
-    for (int i = 0; i < ptable->dwNumEntries; ++i) {
-        in_addr addr;
-        addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
-        ip4 ip(addr);
-        u_short port = ntohs(ptable->table[i].dwLocalPort);
-        u_int pid = ptable->table[i].dwOwningPid;
-        mapping[std::make_pair(ip, port)] = pid;
-    }
-}
-
 std::string packet::get_owner() const
 {
-    static table_mapping_t udp_mapping, tcp_mapping;
+    using namespace std::chrono;
+    static port_pid_table tb_udp, tb_tcp;
+    static system_clock::time_point tm_udp, tm_tcp;
 
-    if (has_type(Protocol_Type_TCP)) {
-    } else if (has_type(Protocol_Type_UDP)) {
+    port_pid_table *tb = nullptr;
+    ip4 ip;
+    u_short port = 0;
+    auto now = system_clock::now();
+    if (has_type(Protocol_Type_UDP)) {
+        if (duration_cast<seconds>(now - tm_udp).count() > 3) {
+            tb_udp = port_pid_table::udp();
+            tm_udp = now;
+        }
+        tb = &tb_udp;
+        const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
+        const auto &uh = dynamic_cast<const udp &>(*d.layers[2]);
+        if (adaptor::is_native(ih.get_detail().sip)) {
+            ip = ih.get_detail().sip;
+            port = uh.get_detail().sport;
+        } else if (adaptor::is_native(ih.get_detail().dip)) {
+            ip = ih.get_detail().dip;
+            port = uh.get_detail().dport;
+        } else {
+            return "";
+        }
+
+    } else if (has_type(Protocol_Type_TCP)) {
+        if (duration_cast<seconds>(now - tm_tcp).count() > 3) {
+            tb_tcp = port_pid_table::tcp();
+            tm_tcp = now;
+        }
+        tb = &tb_tcp;
+        return "";
+    } else {
+        return "";
     }
-    return "";
+
+    auto key = std::make_pair(ip, port);
+    if (tb->mapping.count(key) <= 0) {
+        return "";
+    }
+    return pid_to_image(tb->mapping.at(key));
 }
 
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,

@@ -71,6 +71,8 @@ public:
 
     static const adaptor &fit(const ip4 &hint = ip4::zeros);
 
+    static bool is_native(const ip4 &ip);
+
     static const std::vector<adaptor> &all();
 };
 
@@ -82,6 +84,16 @@ struct wsa_guard
 private:
     static wsa_guard g;
 };
+
+struct port_pid_table
+{
+    std::map<std::pair<ip4, u_short>, u_int> mapping;
+
+    static port_pid_table udp();
+    static port_pid_table tcp();
+};
+
+std::string pid_to_image(u_int pid);
 
 std::string ws2s(const std::wstring &wstr);
 

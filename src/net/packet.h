@@ -13,7 +13,7 @@ public:
     {
         timeval time;                                   // Received time
         std::vector<std::shared_ptr<protocol>> layers;  // Protocol layers
-        std::string source;                             // Program that generates this packet
+        std::string owner;                              // Program that generates this packet
     };
 
     packet();
