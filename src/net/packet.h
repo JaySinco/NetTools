@@ -11,8 +11,9 @@ class packet
 public:
     struct detail
     {
-        std::vector<std::shared_ptr<protocol>> layers;  // Protocol layers
         timeval time;                                   // Received time
+        std::vector<std::shared_ptr<protocol>> layers;  // Protocol layers
+        std::string source;                             // Program that generates this packet
     };
 
     packet();
@@ -31,6 +32,8 @@ public:
 
     bool is_error() const;
 
+    bool has_type(const std::string &type) const;
+
     static timeval gettimeofday();
 
     static packet arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip,
@@ -41,6 +44,8 @@ public:
 
 private:
     detail d;
+
+    std::string get_owner() const;
 
     using decoder = std::shared_ptr<protocol> (*)(const u_char *const start, const u_char *&end,
                                                   const protocol *prev);

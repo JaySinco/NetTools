@@ -5,6 +5,8 @@
 #include "icmp.h"
 #include "udp.h"
 #include "dns.h"
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_Ethernet, packet::decode<::ethernet>},
@@ -55,6 +57,7 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
         type = prot->succ_type();
     }
     d.time = tv;
+    d.source = get_owner();
 }
 
 timeval packet::gettimeofday()
@@ -92,6 +95,7 @@ json packet::to_json() const
     json j;
     j["layers"] = ar;
     j["time"] = tv2s(d.time);
+    j["source"] = d.source;
     return j;
 }
 
@@ -135,6 +139,74 @@ bool packet::is_error() const
                             }
                             return false;
                         }) != d.layers.cend();
+}
+
+bool packet::has_type(const std::string &type) const
+{
+    return std::find_if(d.layers.cbegin(), d.layers.cend(),
+                        [&](const std::shared_ptr<protocol> &pt) { return pt->type() == type; }) !=
+           d.layers.cend();
+}
+
+
+static std::string pid_to_image(u_int pid)
+{
+    //    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS | PROCESS_QUERY_INFORMATION |
+    //   PROCESS_VM_READ,
+    //   FALSE, pid);
+    // if (NULL != hProcess) {
+    //   std::cout << "hProcess" << hProcess << "\n";
+    //   TCHAR nameProc[1024];
+    //   if (GetProcessImageFileName(hProcess, nameProc, sizeof(nameProc) / sizeof( * nameProc)) == 0) {
+    //     std::cout << "GetProcessImageFileName Error";
+    //   } else {
+    //   	std::wcout << "nameProcess " << nameProc;
+	//   }
+
+    // } else {
+    //   printf("OpenProcess(%i) failed, error: %i\n",
+    //     PID, (int) GetLastError());
+    // }
+}
+
+using table_mapping_t = std::map<std::pair<ip4, u_short>, u_int>;
+
+static void update_port_table_tcp(table_mapping_t &mapping)
+{
+    ULONG size = sizeof(MIB_TCPTABLE);
+    PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
+    std::shared_ptr<void> ptable_guard(nullptr, [=](void *) { free(ptable); });
+    DWORD ret = 0;
+    if ((ret = GetTcpTable2(ptable, &size, TRUE)) == ERROR_INSUFFICIENT_BUFFER) {
+        free(ptable);
+        ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
+        if (ptable == nullptr) {
+            throw std::runtime_error("failed to allocate memory, size={}"_format(size));
+        }
+    }
+    ret = GetTcpTable2(ptable, &size, TRUE);
+    if (ret != NO_ERROR) {
+        throw std::runtime_error("failed to get tcp table, ret={}"_format(ret));
+    }
+    mapping.clear();
+    for (int i = 0; i < ptable->dwNumEntries; ++i) {
+        in_addr addr;
+        addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
+        ip4 ip(addr);
+        u_short port = ntohs(ptable->table[i].dwLocalPort);
+        u_int pid = ptable->table[i].dwOwningPid;
+        mapping[std::make_pair(ip, port)] = pid;
+    }
+}
+
+std::string packet::get_owner() const
+{
+    static table_mapping_t udp_mapping, tcp_mapping;
+
+    if (has_type(Protocol_Type_TCP)) {
+    } else if (has_type(Protocol_Type_UDP)) {
+    }
+    return "";
 }
 
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,
