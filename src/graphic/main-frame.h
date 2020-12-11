@@ -1,19 +1,18 @@
 #pragma once
 #include "prec.h"
 #include "ui.h"
-#include "net/transport.h"
+#include "net/packet.h"
 #include "net/validator.h"
-#include "sniff-list.h"
-#include "prop-frame.h"
+#include "property-frame.h"
 #include <atomic>
 
-class MainFrame : public MainFrameImpl
+class MainFrame : public MainFrame_g
 {
 public:
     MainFrame();
 
 protected:
-    PropFrame *m_prop_win;
+    PropertyFrame *m_prop;
 
 private:
     void on_quit(wxCommandEvent &event);

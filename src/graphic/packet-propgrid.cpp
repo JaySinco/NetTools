@@ -1,6 +1,6 @@
-#include "packet-prop.h"
+#include "packet-propgrid.h"
 
-void PacketProp::show_packet(const packet &pac)
+void PacketPropGrid::show_packet(const packet &pac)
 {
     Clear();
     json layers = pac.to_json()["layers"];
@@ -14,7 +14,7 @@ void PacketProp::show_packet(const packet &pac)
     Refresh();
 }
 
-void PacketProp::show_json(wxPGProperty *parent, const std::string &name, const json &j)
+void PacketPropGrid::show_json(wxPGProperty *parent, const std::string &name, const json &j)
 {
     if (j.is_array()) {
         wxPGProperty *p = nullptr;

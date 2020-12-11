@@ -1,29 +1,14 @@
-#include "sniff-list.h"
+#include "packet-listctrl.h"
 #include "net/ethernet.h"
 #include "net/ipv4.h"
 #include "net/udp.h"
 
-SniffList::SniffList(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size,
-                     long style, const wxValidator &validator, const wxString &name)
-    : wxListCtrl(parent, id, pos, size, style, validator, name)
-{
-    AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
-    AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
-    AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
-    AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
-    AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
-    AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
-    AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
-    AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
-    SetItemCount(0);
-}
-
-wxString SniffList::OnGetItemText(long item, long column) const
+wxString PacketListCtrl::OnGetItemText(long item, long column) const
 {
     return stringfy_field(data_ptr->at(item), column);
 }
 
-wxListItemAttr *SniffList::OnGetItemAttr(long item) const
+wxListItemAttr *PacketListCtrl::OnGetItemAttr(long item) const
 {
     wxListItemAttr attr;
     const auto &layers = data_ptr->at(item).get_detail().layers;
@@ -43,30 +28,23 @@ wxListItemAttr *SniffList::OnGetItemAttr(long item) const
     return const_cast<wxListItemAttr *>(&attr_list.back());
 }
 
-void SniffList::SetDataPtr(const std::vector<packet> *ptr) { data_ptr = ptr; }
-
-void SniffList::CleanBuf() { attr_list.clear(); }
-
-wxColour SniffList::hashed_color(const std::string &data)
+void PacketListCtrl::init(const std::vector<packet> *ptr)
 {
-    std::hash<std::string> hash_func;
-    size_t hash = hash_func(data);
-    auto p = reinterpret_cast<unsigned char *>(&hash);
-    return wxColour(p[0], p[1], p[2]);
+    data_ptr = ptr;
+    AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
+    AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
+    AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
+    AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
+    AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
+    AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
+    AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
+    AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
+    SetItemCount(0);
 }
 
-wxColour SniffList::hashed_color(ip4 a, ip4 b)
-{
-    if (a > b) {
-        std::swap(a, b);
-    }
-    char buf[sizeof(ip4) * 2];
-    std::memcpy(buf, &a, sizeof(ip4));
-    std::memcpy(buf + sizeof(ip4), &b, sizeof(ip4));
-    return hashed_color(std::string(buf, sizeof(buf)));
-}
+void PacketListCtrl::clear() { attr_list.clear(); }
 
-std::string SniffList::stringfy_field(const packet &pac, long column)
+std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
 {
     const auto &layers = pac.get_detail().layers;
     switch (column) {
@@ -119,4 +97,23 @@ std::string SniffList::stringfy_field(const packet &pac, long column)
             throw std::runtime_error("invalid column {}"_format(column));
     }
     return "";
+}
+
+wxColour PacketListCtrl::hashed_color(const std::string &data)
+{
+    std::hash<std::string> hash_func;
+    size_t hash = hash_func(data);
+    auto p = reinterpret_cast<unsigned char *>(&hash);
+    return wxColour(p[0], p[1], p[2]);
+}
+
+wxColour PacketListCtrl::hashed_color(ip4 a, ip4 b)
+{
+    if (a > b) {
+        std::swap(a, b);
+    }
+    char buf[sizeof(ip4) * 2];
+    std::memcpy(buf, &a, sizeof(ip4));
+    std::memcpy(buf + sizeof(ip4), &b, sizeof(ip4));
+    return hashed_color(std::string(buf, sizeof(buf)));
 }

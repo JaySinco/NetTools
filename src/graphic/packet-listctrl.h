@@ -1,9 +1,9 @@
 #pragma once
 #include "prec.h"
 #include <wx/listctrl.h>
-#include "net/transport.h"
+#include "net/packet.h"
 
-class SniffList : public wxListCtrl
+class PacketListCtrl : public wxListCtrl
 {
 public:
     enum LIST_IDX
@@ -19,22 +19,20 @@ public:
         __FIELD_SIZE__,
     };
 
-    SniffList(wxWindow *parent, wxWindowID id = wxID_ANY, const wxPoint &pos = wxDefaultPosition,
-              const wxSize &size = wxDefaultSize, long style = wxLC_ICON,
-              const wxValidator &validator = wxDefaultValidator,
-              const wxString &name = "SniffList");
+    using wxListCtrl::wxListCtrl;
 
     wxString OnGetItemText(long item, long column) const override;
     wxListItemAttr *OnGetItemAttr(long item) const override;
 
-    void SetDataPtr(const std::vector<packet> *ptr);
-    void CleanBuf();
+    void init(const std::vector<packet> *ptr);
+    void clear();
 
-    static wxColour hashed_color(ip4 a, ip4 b);
-    static wxColour hashed_color(const std::string &data);
     static std::string stringfy_field(const packet &pac, long column);
 
 private:
     const std::vector<packet> *data_ptr = nullptr;
     std::vector<wxListItemAttr> attr_list;
+
+    static wxColour hashed_color(ip4 a, ip4 b);
+    static wxColour hashed_color(const std::string &data);
 };

@@ -5,15 +5,15 @@
 // PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#include "packet-prop.h"
-#include "sniff-list.h"
+#include "packet-listctrl.h"
+#include "packet-propgrid.h"
 
 #include "ui.h"
 
 ///////////////////////////////////////////////////////////////////////////
 
-MainFrameImpl::MainFrameImpl(wxWindow *parent, wxWindowID id, const wxString &title,
-                             const wxPoint &pos, const wxSize &size, long style)
+MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title, const wxPoint &pos,
+                         const wxSize &size, long style)
     : wxFrame(parent, id, title, pos, size, style)
 {
     this->SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -70,8 +70,8 @@ MainFrameImpl::MainFrameImpl(wxWindow *parent, wxWindowID id, const wxString &ti
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_list = new SniffList(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
-                           wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
+    m_list = new PacketListCtrl(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
+                                wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
     m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                            wxT("Consolas")));
 
@@ -111,10 +111,10 @@ MainFrameImpl::MainFrameImpl(wxWindow *parent, wxWindowID id, const wxString &ti
     this->Centre(wxBOTH);
 }
 
-MainFrameImpl::~MainFrameImpl() {}
+MainFrame_g::~MainFrame_g() {}
 
-PropFrameImpl::PropFrameImpl(wxWindow *parent, wxWindowID id, const wxString &title,
-                             const wxPoint &pos, const wxSize &size, long style)
+PropertyFrame_g::PropertyFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
+                                 const wxPoint &pos, const wxSize &size, long style)
     : wxFrame(parent, id, title, pos, size, style)
 {
     this->SetSizeHints(wxDefaultSize, wxDefaultSize);
@@ -127,8 +127,8 @@ PropFrameImpl::PropFrameImpl(wxWindow *parent, wxWindowID id, const wxString &ti
     wxBoxSizer *bSizer10;
     bSizer10 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_prop = new PacketProp(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxSize(-1, -1),
-                            wxPG_DEFAULT_STYLE);
+    m_prop = new PacketPropGrid(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxSize(-1, -1),
+                                wxPG_DEFAULT_STYLE);
     bSizer10->Add(m_prop, 3, wxEXPAND, 3);
 
     bSizer9->Add(bSizer10, 1, wxEXPAND, 5);
@@ -139,4 +139,4 @@ PropFrameImpl::PropFrameImpl(wxWindow *parent, wxWindowID id, const wxString &ti
     this->Centre(wxBOTH);
 }
 
-PropFrameImpl::~PropFrameImpl() {}
+PropertyFrame_g::~PropertyFrame_g() {}

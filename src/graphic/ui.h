@@ -9,8 +9,8 @@
 
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
-class PacketProp;
-class SniffList;
+class PacketListCtrl;
+class PacketPropGrid;
 
 #include <wx/string.h>
 #include <wx/choice.h>
@@ -45,9 +45,9 @@ class SniffList;
 #define ID_SNIFFPROPGRID 1009
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class MainFrameImpl
+/// Class MainFrame_g
 ///////////////////////////////////////////////////////////////////////////////
-class MainFrameImpl : public wxFrame
+class MainFrame_g : public wxFrame
 {
 private:
 protected:
@@ -56,35 +56,34 @@ protected:
     wxButton *m_start;
     wxButton *m_stop;
     wxButton *m_clear;
-    SniffList *m_list;
+    PacketListCtrl *m_list;
     wxMenuBar *m_menu;
     wxMenu *m_tools;
     wxMenu *m_help;
     wxStatusBar *m_status;
 
 public:
-    MainFrameImpl(wxWindow *parent, wxWindowID id = wxID_ANY,
-                  const wxString &title = wxT("NetTools"), const wxPoint &pos = wxDefaultPosition,
-                  const wxSize &size = wxSize(860, 620),
-                  long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
+    MainFrame_g(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString &title = wxT("NetTools"),
+                const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(860, 620),
+                long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
 
-    ~MainFrameImpl();
+    ~MainFrame_g();
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class PropFrameImpl
+/// Class PropertyFrame_g
 ///////////////////////////////////////////////////////////////////////////////
-class PropFrameImpl : public wxFrame
+class PropertyFrame_g : public wxFrame
 {
 private:
 protected:
-    PacketProp *m_prop;
+    PacketPropGrid *m_prop;
 
 public:
-    PropFrameImpl(wxWindow *parent, wxWindowID id = wxID_ANY,
-                  const wxString &title = wxT("Packet Property"),
-                  const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(400, 600),
-                  long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
+    PropertyFrame_g(wxWindow *parent, wxWindowID id = wxID_ANY,
+                    const wxString &title = wxT("Property"), const wxPoint &pos = wxDefaultPosition,
+                    const wxSize &size = wxSize(400, 600),
+                    long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
 
-    ~PropFrameImpl();
+    ~PropertyFrame_g();
 };

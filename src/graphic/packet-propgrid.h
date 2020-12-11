@@ -1,9 +1,9 @@
 #pragma once
 #include "prec.h"
 #include <wx/propgrid/propgrid.h>
-#include "net/transport.h"
+#include "net/packet.h"
 
-class PacketProp : public wxPropertyGrid
+class PacketPropGrid : public wxPropertyGrid
 {
 public:
     using wxPropertyGrid::wxPropertyGrid;

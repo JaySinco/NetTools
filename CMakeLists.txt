@@ -130,10 +130,10 @@ add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns net)
 
 add_executable(gui WIN32
-  ${CMAKE_SOURCE_DIR}/src/graphic/packet-prop.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/sniff-list.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/packet-listctrl.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/packet-propgrid.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/prop-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/property-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/app.cpp
   )

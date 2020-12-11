@@ -1,4 +1,6 @@
 #include "main-frame.h"
+#include "packet-listctrl.h"
+#include "net/transport.h"
 #include <wx/aboutdlg.h>
 #include <thread>
 #define NOTIFY_TRY try {
@@ -10,10 +12,10 @@
         GetEventHandler()->CallAfter(std::bind(&MainFrame::notify_error, this, msg)); \
     }
 
-MainFrame::MainFrame() : MainFrameImpl(nullptr)
+MainFrame::MainFrame() : MainFrame_g(nullptr)
 {
     wxRect rect = this->GetScreenRect();
-    m_prop_win = new PropFrame(this);
+    m_prop = new PropertyFrame(this);
 
     auto &apt_def = adaptor::fit();
     int apt_idx = 0;
@@ -25,11 +27,11 @@ MainFrame::MainFrame() : MainFrameImpl(nullptr)
     }
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
-    m_list->SetDataPtr(&pac_list);
+    m_list->init(&pac_list);
     int status_width[] = {-9, -1};
     m_status->SetFieldsCount(2, status_width);
     update_status_total(0);
-    column_sort.resize(SniffList::__FIELD_SIZE__, false);
+    column_sort.resize(PacketListCtrl::__FIELD_SIZE__, false);
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
@@ -68,10 +70,10 @@ void MainFrame::on_sniff_stop(wxCommandEvent &event) { sniff_should_stop = true;
 void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
-    m_list->CleanBuf();
-    m_prop_win->clear();
-    if (m_prop_win->IsShown()) {
-        m_prop_win->Show(false);
+    m_list->clear();
+    m_prop->clear();
+    if (m_prop->IsShown()) {
+        m_prop->Show(false);
     }
     pac_list.clear();
     update_status_total(0);
@@ -79,14 +81,14 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
 
 void MainFrame::on_packet_selected(wxListEvent &event)
 {
-    if (!m_prop_win->IsShown()) {
+    if (!m_prop->IsShown()) {
         wxRect rect = this->GetScreenRect();
         rect.x += rect.width;
         rect.width = 430;
-        m_prop_win->SetSize(rect);
-        m_prop_win->Show(true);
+        m_prop->SetSize(rect);
+        m_prop->Show(true);
     }
-    m_prop_win->show_packet(pac_list.at(event.m_itemIndex));
+    m_prop->show_packet(pac_list.at(event.m_itemIndex));
 }
 
 void MainFrame::on_list_col_clicked(wxListEvent &event)
@@ -97,8 +99,8 @@ void MainFrame::on_list_col_clicked(wxListEvent &event)
     bool reverse = column_sort.at(event.m_col);
     column_sort.at(event.m_col) = !reverse;
     std::stable_sort(pac_list.begin(), pac_list.end(), [&](const packet &a, const packet &b) {
-        auto sa = SniffList::stringfy_field(a, event.m_col);
-        auto sb = SniffList::stringfy_field(b, event.m_col);
+        auto sa = PacketListCtrl::stringfy_field(a, event.m_col);
+        auto sb = PacketListCtrl::stringfy_field(b, event.m_col);
         return reverse ? sb < sa : sa < sb;
     });
     m_list->Refresh();
