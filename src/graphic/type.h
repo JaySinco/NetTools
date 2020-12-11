@@ -3,7 +3,7 @@
 #include <wx/listctrl.h>
 #include <wx/aboutdlg.h>
 #include <wx/propgrid/propgrid.h>
-#include "core/type.h"
+#include "net/type.h"
 
 enum
 {

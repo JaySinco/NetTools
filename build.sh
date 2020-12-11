@@ -12,10 +12,10 @@ FMT="${CURRENT_DIR}/external/clang-format/bin/clang-format.exe"
 CLOC="${CURRENT_DIR}/external/cloc/bin/cloc.exe"
 
 if [ ! $1 ]; then
-    TARGET_ARG=""
+    TARGET_ARG="default"
     ${CLOC} --quiet "${CURRENT_DIR}/src"
 else
-    TARGET_ARG="-t:$1"
+    TARGET_ARG="$1"
 fi
 
 find "${CURRENT_DIR}/src" -type f -exec ${FMT} -i {} \; \
@@ -27,4 +27,4 @@ pushd dest/ \
 cmake -G "Visual Studio 15 2017 Win64"  ../ \
     -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${CURRENT_DIR}/bin/ \
 && \
-MSBuild.exe -p:Configuration=Release -maxcpucount ${TARGET_ARG} *.sln
+MSBuild.exe -p:Configuration=Release -maxcpucount -t:${TARGET_ARG} *.sln

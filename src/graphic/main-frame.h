@@ -1,7 +1,7 @@
 #pragma once
 #include "type.h"
-#include "core/transport.h"
-#include "core/validator.h"
+#include "net/transport.h"
+#include "net/validator.h"
 #include "sniff-list.h"
 #include "prop-frame.h"
 #include <atomic>
@@ -9,7 +9,7 @@
 class MainFrame : public wxFrame
 {
 public:
-    MainFrame(const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
+    MainFrame(const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(860, 620));
 
 protected:
     wxStatusBar *m_status;

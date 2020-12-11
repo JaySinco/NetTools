@@ -17,7 +17,7 @@ bool App::OnInit()
     FLAGS_logtostderr = 1;
     FLAGS_minloglevel = 0;
 
-    MainFrame *frame = new MainFrame(wxDefaultPosition, wxSize(860, 620));
+    MainFrame *frame = new MainFrame();
     frame->Show(true);
     return true;
 }

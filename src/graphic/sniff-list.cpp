@@ -1,7 +1,7 @@
 #include "sniff-list.h"
-#include "core/ethernet.h"
-#include "core/ipv4.h"
-#include "core/udp.h"
+#include "net/ethernet.h"
+#include "net/ipv4.h"
+#include "net/udp.h"
 
 SniffList::SniffList(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size,
                      long style, const wxValidator &validator, const wxString &name)

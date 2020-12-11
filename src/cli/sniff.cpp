@@ -1,5 +1,5 @@
-#include "core/transport.h"
-#include "core/validator.h"
+#include "net/transport.h"
+#include "net/validator.h"
 
 DEFINE_string(ip, "", "ipv4 address used to choose adapter, select first if empty");
 DEFINE_string(filter, "", "capture filter applied at runtime");

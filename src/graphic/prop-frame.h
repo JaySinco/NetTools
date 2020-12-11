@@ -1,6 +1,6 @@
 #pragma once
 #include "type.h"
-#include "core/transport.h"
+#include "net/transport.h"
 #include "packet-prop.h"
 
 class PropFrame : public wxFrame
