@@ -245,7 +245,8 @@ p_validator validator::from_str(const std::string &code)
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
     if (!ok || it != code.end()) {
-        throw std::runtime_error("failed to parse validator: unexpected token near '{}'"_format(*it));
+        throw std::runtime_error(
+            "failed to parse validator: unexpected token near '{}'"_format(*it));
     }
     return ast::to_validator(ast);
 }

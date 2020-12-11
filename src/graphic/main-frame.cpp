@@ -1,4 +1,5 @@
 #include "main-frame.h"
+#include <wx/aboutdlg.h>
 #include <thread>
 #define NOTIFY_TRY try {
 #define NOTIFY_CATCH                                                                  \
@@ -9,10 +10,8 @@
         GetEventHandler()->CallAfter(std::bind(&MainFrame::notify_error, this, msg)); \
     }
 
-MainFrame::MainFrame(const wxPoint &pos, const wxSize &size)
-    : wxFrame(NULL, wxID_ANY, "NetTools", pos, size)
+MainFrame::MainFrame() : MainFrameImpl(nullptr)
 {
-    setup_ui();
     wxRect rect = this->GetScreenRect();
     m_prop_win = new PropFrame(this);
 
@@ -70,7 +69,7 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
     m_list->CleanBuf();
-    m_prop_win->m_prop->Clear();
+    m_prop_win->clear();
     if (m_prop_win->IsShown()) {
         m_prop_win->Show(false);
     }
@@ -87,7 +86,7 @@ void MainFrame::on_packet_selected(wxListEvent &event)
         m_prop_win->SetSize(rect);
         m_prop_win->Show(true);
     }
-    m_prop_win->m_prop->show_packet(pac_list.at(event.m_itemIndex));
+    m_prop_win->show_packet(pac_list.at(event.m_itemIndex));
 }
 
 void MainFrame::on_list_col_clicked(wxListEvent &event)

@@ -1,8 +1,22 @@
-#include "main-frame.h"
-#include "prop-frame.h"
+///////////////////////////////////////////////////////////////////////////
+// C++ code generated with wxFormBuilder (version Oct 26 2018)
+// http://www.wxformbuilder.org/
+//
+// PLEASE DO *NOT* EDIT THIS FILE!
+///////////////////////////////////////////////////////////////////////////
 
-void MainFrame::setup_ui()
+#include "packet-prop.h"
+#include "sniff-list.h"
+
+#include "ui.h"
+
+///////////////////////////////////////////////////////////////////////////
+
+MainFrameImpl::MainFrameImpl(wxWindow *parent, wxWindowID id, const wxString &title,
+                             const wxPoint &pos, const wxSize &size, long style)
+    : wxFrame(parent, id, title, pos, size, style)
 {
+    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
     this->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                          wxT("Arial")));
 
@@ -97,8 +111,13 @@ void MainFrame::setup_ui()
     this->Centre(wxBOTH);
 }
 
-void PropFrame::setup_ui()
+MainFrameImpl::~MainFrameImpl() {}
+
+PropFrameImpl::PropFrameImpl(wxWindow *parent, wxWindowID id, const wxString &title,
+                             const wxPoint &pos, const wxSize &size, long style)
+    : wxFrame(parent, id, title, pos, size, style)
 {
+    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
     this->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
                          wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
 
@@ -116,4 +135,8 @@ void PropFrame::setup_ui()
 
     this->SetSizer(bSizer9);
     this->Layout();
+
+    this->Centre(wxBOTH);
 }
+
+PropFrameImpl::~PropFrameImpl() {}

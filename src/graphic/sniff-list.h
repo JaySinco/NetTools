@@ -1,5 +1,6 @@
 #pragma once
-#include "type.h"
+#include "prec.h"
+#include <wx/listctrl.h>
 #include "net/transport.h"
 
 class SniffList : public wxListCtrl
@@ -29,6 +30,8 @@ public:
     void SetDataPtr(const std::vector<packet> *ptr);
     void CleanBuf();
 
+    static wxColour hashed_color(ip4 a, ip4 b);
+    static wxColour hashed_color(const std::string &data);
     static std::string stringfy_field(const packet &pac, long column);
 
 private:

@@ -1,27 +1,18 @@
 #pragma once
-#include "type.h"
+#include "prec.h"
+#include "ui.h"
 #include "net/transport.h"
 #include "net/validator.h"
 #include "sniff-list.h"
 #include "prop-frame.h"
 #include <atomic>
 
-class MainFrame : public wxFrame
+class MainFrame : public MainFrameImpl
 {
 public:
-    MainFrame(const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(860, 620));
+    MainFrame();
 
 protected:
-    wxStatusBar *m_status;
-    wxMenuBar *m_menu;
-    wxMenu *m_tools;
-    wxMenu *m_help;
-    wxChoice *m_adaptor;
-    wxTextCtrl *m_filter;
-    wxButton *m_start;
-    wxButton *m_stop;
-    wxButton *m_clear;
-    SniffList *m_list;
     PropFrame *m_prop_win;
 
 private:
@@ -38,7 +29,6 @@ private:
     void sniff_stopped();
     void notify_error(const std::string &msg);
     void update_status_total(size_t n);
-    void setup_ui();
 
     p_validator validator_;
     std::vector<packet> pac_list;
