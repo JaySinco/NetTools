@@ -28,7 +28,7 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
 
     m_panel4 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     m_panel4->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL,
-                             false, wxEmptyString));
+                             false, wxT("Arial")));
 
     wxBoxSizer *bSizer6;
     bSizer6 = new wxBoxSizer(wxVERTICAL);
