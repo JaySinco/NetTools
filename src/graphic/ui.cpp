@@ -26,6 +26,10 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
     wxBoxSizer *bSizer2;
     bSizer2 = new wxBoxSizer(wxHORIZONTAL);
 
+    m_panel4 = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    m_panel4->SetFont(wxFont(11, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL,
+                             false, wxEmptyString));
+
     wxBoxSizer *bSizer6;
     bSizer6 = new wxBoxSizer(wxVERTICAL);
 
@@ -34,9 +38,9 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
 
     wxArrayString m_adaptorChoices;
     m_adaptor =
-        new wxChoice(this, ID_ADAPTORCHOICE, wxDefaultPosition, wxDefaultSize, m_adaptorChoices, 0);
+        new wxChoice(m_panel4, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_adaptorChoices, 0);
     m_adaptor->SetSelection(0);
-    bSizer7->Add(m_adaptor, 1, wxEXPAND | wxFIXED_MINSIZE | wxLEFT | wxRIGHT | wxTOP, 3);
+    bSizer7->Add(m_adaptor, 1, wxEXPAND | wxFIXED_MINSIZE | wxRIGHT | wxTOP, 3);
 
     bSizer7->Add(0, 0, 4, wxEXPAND, 5);
 
@@ -46,45 +50,66 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
     bSizer8 = new wxBoxSizer(wxHORIZONTAL);
 
     m_filter =
-        new wxTextCtrl(this, ID_FILTERINPUT, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-    bSizer8->Add(m_filter, 5, wxALL | wxEXPAND, 3);
+        new wxTextCtrl(m_panel4, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    bSizer8->Add(m_filter, 9, wxBOTTOM | wxEXPAND | wxRIGHT | wxTOP, 3);
 
-    m_start = new wxButton(this, ID_SNIFFSTART, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0);
+    m_start = new wxButton(m_panel4, wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0);
     bSizer8->Add(m_start, 1, wxALL | wxEXPAND, 3);
 
-    m_stop = new wxButton(this, ID_SNIFFSTOP, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0);
+    m_stop = new wxButton(m_panel4, wxID_ANY, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0);
     bSizer8->Add(m_stop, 1, wxALL | wxEXPAND, 3);
 
-    m_clear = new wxButton(this, ID_SNIFFCLEAR, wxT("Clear"), wxDefaultPosition, wxDefaultSize, 0);
-    bSizer8->Add(m_clear, 1, wxALL | wxEXPAND, 3);
+    m_clear = new wxButton(m_panel4, wxID_ANY, wxT("Clear"), wxDefaultPosition, wxDefaultSize, 0);
+    bSizer8->Add(m_clear, 1, wxBOTTOM | wxEXPAND | wxLEFT | wxTOP, 3);
 
     bSizer6->Add(bSizer8, 1, wxEXPAND, 5);
 
-    bSizer2->Add(bSizer6, 1, wxEXPAND, 5);
+    m_panel4->SetSizer(bSizer6);
+    m_panel4->Layout();
+    bSizer6->Fit(m_panel4);
+    bSizer2->Add(m_panel4, 1, wxEXPAND, 2);
 
     bSizer1->Add(bSizer2, 1, wxEXPAND, 5);
 
     wxBoxSizer *bSizer3;
     bSizer3 = new wxBoxSizer(wxVERTICAL);
 
+    m_splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+                                      wxSP_3D | wxSP_THIN_SASH);
+    m_splitter->SetSashGravity(0.625);
+    m_splitter->Connect(wxEVT_IDLE, wxIdleEventHandler(MainFrame_g::m_splitterOnIdle), NULL, this);
+
+    m_panel_left =
+        new wxPanel(m_splitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
     wxBoxSizer *bSizer4;
     bSizer4 = new wxBoxSizer(wxHORIZONTAL);
 
-    m_list = new PacketListCtrl(this, ID_SNIFFLIST, wxDefaultPosition, wxDefaultSize,
+    m_list = new PacketListCtrl(m_panel_left, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                 wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
     m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                            wxT("Consolas")));
 
-    bSizer4->Add(m_list, 1, wxBOTTOM | wxEXPAND | wxLEFT | wxRIGHT, 3);
+    bSizer4->Add(m_list, 1, wxEXPAND, 3);
 
-    bSizer3->Add(bSizer4, 5, wxEXPAND, 5);
+    m_panel_left->SetSizer(bSizer4);
+    m_panel_left->Layout();
+    bSizer4->Fit(m_panel_left);
+    m_panel_right =
+        new wxPanel(m_splitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+    wxBoxSizer *bSizer10;
+    bSizer10 = new wxBoxSizer(wxHORIZONTAL);
 
-    wxBoxSizer *bSizer5;
-    bSizer5 = new wxBoxSizer(wxHORIZONTAL);
+    m_prop = new PacketPropGrid(m_panel_right, wxID_ANY, wxDefaultPosition, wxSize(-1, -1),
+                                wxPG_DEFAULT_STYLE | wxHSCROLL | wxVSCROLL);
+    bSizer10->Add(m_prop, 3, wxEXPAND, 3);
 
-    bSizer3->Add(bSizer5, 5, wxEXPAND, 5);
+    m_panel_right->SetSizer(bSizer10);
+    m_panel_right->Layout();
+    bSizer10->Fit(m_panel_right);
+    m_splitter->SplitVertically(m_panel_left, m_panel_right, 922);
+    bSizer3->Add(m_splitter, 1, wxEXPAND, 2);
 
-    bSizer1->Add(bSizer3, 8, wxEXPAND, 5);
+    bSizer1->Add(bSizer3, 9, wxEXPAND, 5);
 
     this->SetSizer(bSizer1);
     this->Layout();
@@ -106,37 +131,9 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
 
     this->SetMenuBar(m_menu);
 
-    m_status = this->CreateStatusBar(1, wxSTB_SIZEGRIP, ID_STATUSBAR);
+    m_status = this->CreateStatusBar(1, wxSTB_SIZEGRIP, wxID_ANY);
 
     this->Centre(wxBOTH);
 }
 
 MainFrame_g::~MainFrame_g() {}
-
-PropertyFrame_g::PropertyFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
-                                 const wxPoint &pos, const wxSize &size, long style)
-    : wxFrame(parent, id, title, pos, size, style)
-{
-    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
-    this->SetFont(wxFont(wxNORMAL_FONT->GetPointSize(), wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL,
-                         wxFONTWEIGHT_NORMAL, false, wxT("Arial")));
-
-    wxBoxSizer *bSizer9;
-    bSizer9 = new wxBoxSizer(wxVERTICAL);
-
-    wxBoxSizer *bSizer10;
-    bSizer10 = new wxBoxSizer(wxHORIZONTAL);
-
-    m_prop = new PacketPropGrid(this, ID_SNIFFPROPGRID, wxDefaultPosition, wxSize(-1, -1),
-                                wxPG_DEFAULT_STYLE);
-    bSizer10->Add(m_prop, 3, wxEXPAND, 3);
-
-    bSizer9->Add(bSizer10, 1, wxEXPAND, 5);
-
-    this->SetSizer(bSizer9);
-    this->Layout();
-
-    this->Centre(wxBOTH);
-}
-
-PropertyFrame_g::~PropertyFrame_g() {}

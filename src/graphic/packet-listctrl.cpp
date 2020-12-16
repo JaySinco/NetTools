@@ -39,7 +39,7 @@ void PacketListCtrl::init(const std::vector<packet> *ptr)
     AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
-    AppendColumn("owner", wxLIST_FORMAT_LEFT, 100);
+    AppendColumn("owner", wxLIST_FORMAT_LEFT, 80);
     SetItemCount(0);
 }
 

@@ -3,16 +3,12 @@
 #include "ui.h"
 #include "net/packet.h"
 #include "net/validator.h"
-#include "property-frame.h"
 #include <atomic>
 
 class MainFrame : public MainFrame_g
 {
 public:
     MainFrame();
-
-protected:
-    PropertyFrame *m_prop;
 
 private:
     void on_quit(wxCommandEvent &event);

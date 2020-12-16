@@ -11,7 +11,7 @@ UI_PROJ_TM=`stat -c %Y ${UI_PROJ}`
 UI_CODE_TM=`stat -c %Y ${CURRENT_DIR}/src/graphic/ui.cpp`
 
 if [ $UI_CODE_TM -le $UI_PROJ_TM ]; then
-    "${WXBUILDER}" -g "${UI_PROJ}"
+    "${WXBUILDER}" -g "${UI_PROJ}" 2>/dev/null && echo "code generated for ${UI_PROJ}"
 fi
 
 if [ ! $1 ]; then

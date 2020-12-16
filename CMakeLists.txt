@@ -133,7 +133,6 @@ add_executable(gui WIN32
   ${CMAKE_SOURCE_DIR}/src/graphic/packet-listctrl.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/packet-propgrid.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/property-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/graphic/app.cpp
   )

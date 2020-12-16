@@ -1,5 +1,6 @@
 #include "main-frame.h"
 #include "packet-listctrl.h"
+#include "packet-propgrid.h"
 #include "net/transport.h"
 #include <wx/aboutdlg.h>
 #include <thread>
@@ -14,9 +15,6 @@
 
 MainFrame::MainFrame() : MainFrame_g(nullptr)
 {
-    wxRect rect = this->GetScreenRect();
-    m_prop = new PropertyFrame(this);
-
     auto &apt_def = adaptor::fit();
     int apt_idx = 0;
     for (const auto &apt : adaptor::all()) {
@@ -28,17 +26,18 @@ MainFrame::MainFrame() : MainFrame_g(nullptr)
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
     m_list->init(&pac_list);
-    int status_width[] = {-9, -1};
+    m_prop->SetSplitterPosition(140);
+    int status_width[] = {-12, -1};
     m_status->SetFieldsCount(2, status_width);
     update_status_total(0);
     column_sort.resize(PacketListCtrl::__FIELD_SIZE__, false);
+    m_filter->SetFocus();
 
     Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
     Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
-    Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this, ID_SNIFFSTART);
-    Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this, ID_SNIFFSTOP);
-    Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this, ID_SNIFFCLEAR);
-
+    m_start->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this);
+    m_stop->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this);
+    m_clear->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this);
     m_list->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::on_packet_selected, this);
     m_list->Bind(wxEVT_LIST_COL_CLICK, &MainFrame::on_list_col_clicked, this);
     m_filter->Bind(wxEVT_KILL_FOCUS, &MainFrame::on_filter_changed, this);
@@ -71,23 +70,13 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
     m_list->DeleteAllItems();
     m_list->clear();
-    m_prop->clear();
-    if (m_prop->IsShown()) {
-        m_prop->Show(false);
-    }
+    m_prop->Clear();
     pac_list.clear();
     update_status_total(0);
 }
 
 void MainFrame::on_packet_selected(wxListEvent &event)
 {
-    if (!m_prop->IsShown()) {
-        wxRect rect = this->GetScreenRect();
-        rect.x += rect.width;
-        rect.width = 430;
-        m_prop->SetSize(rect);
-        m_prop->Show(true);
-    }
     m_prop->show_packet(pac_list.at(event.m_itemIndex));
 }
 
@@ -112,6 +101,7 @@ void MainFrame::on_filter_changed(wxFocusEvent &event)
     event.Skip();
     std::string filter = m_filter->GetValue();
     if (filter.size() == 0) {
+        validator_.reset();
         return;
     }
     validator_ = validator::from_str(filter);
