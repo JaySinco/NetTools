@@ -11,12 +11,6 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
-    google::InitGoogleLogging(argv[0]);
-    char **argv_ = argv;
-    gflags::ParseCommandLineFlags(&argc, &argv_, true);
-    FLAGS_logtostderr = 1;
-    FLAGS_minloglevel = 0;
-
     MainFrame *frame = new MainFrame;
     frame->Show(true);
     return true;
@@ -24,6 +18,6 @@ bool App::OnInit()
 
 int App::OnExit()
 {
-    VLOG(1) << "application about to exit.";
+    spdlog::debug("application about to exit.");
     return wxApp::OnExit();
 }

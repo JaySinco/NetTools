@@ -4,6 +4,7 @@
 #include <sstream>
 #include <codecvt>
 #include <mutex>
+#include <spdlog/cfg/env.h>
 #include <boost/filesystem.hpp>
 
 const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
@@ -178,7 +179,7 @@ const std::vector<adaptor> &adaptor::all()
                 apt.mask = mask;
                 apt.gateway = gateway;
                 if (pinfo->AddressLength != sizeof(mac)) {
-                    LOG(WARNING) << "wrong mac length: " << pinfo->AddressLength;
+                    spdlog::warn("wrong mac length: {}", pinfo->AddressLength);
                 } else {
                     auto c = reinterpret_cast<u_char *>(&apt.mac_);
                     for (unsigned i = 0; i < pinfo->AddressLength; ++i) {
@@ -206,9 +207,13 @@ wsa_guard::wsa_guard()
 
 wsa_guard::~wsa_guard() { WSACleanup(); }
 
+logger_guard logger_guard::g;
+
+logger_guard::logger_guard() { spdlog::cfg::load_env_levels(); }
+
 port_pid_table port_pid_table::tcp()
 {
-    VLOG(2) << "get tcp port-pid table";
+    spdlog::debug("get tcp port-pid table");
     ULONG size = sizeof(MIB_TCPTABLE);
     PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
@@ -238,7 +243,7 @@ port_pid_table port_pid_table::tcp()
 
 port_pid_table port_pid_table::udp()
 {
-    VLOG(2) << "get udp port-pid table";
+    spdlog::debug("get udp port-pid table");
     ULONG size = sizeof(MIB_UDPTABLE_OWNER_PID);
     PMIB_UDPTABLE_OWNER_PID ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });

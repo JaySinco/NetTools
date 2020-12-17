@@ -4,7 +4,7 @@ arp::arp(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (end != start + sizeof(detail)) {
-        VLOG(3) << "abnormal arp length: expected=" << sizeof(detail) << ", got=" << end - start;
+        spdlog::debug("abnormal arp length: expected={}, got={}", sizeof(detail), end - start);
     }
 }
 
@@ -36,9 +36,9 @@ json arp::to_json() const
     j["protocol-type"] = d.prot_type;
     j["hardware-addr-len"] = d.hw_len;
     j["protocol-addr-len"] = d.prot_len;
-    j["operate"] = (d.op == 1 || d.op == 3)
-                       ? "request"
-                       : (d.op == 2 || d.op == 4) ? "reply" : Protocol_Type_Unknow(d.op);
+    j["operate"] = (d.op == 1 || d.op == 3)   ? "request"
+                   : (d.op == 2 || d.op == 4) ? "reply"
+                                              : Protocol_Type_Unknow(d.op);
     j["source-mac"] = d.smac.to_str();
     j["source-ip"] = d.sip.to_str();
     j["dest-mac"] = d.dmac.to_str();
@@ -48,9 +48,9 @@ json arp::to_json() const
 
 std::string arp::type() const
 {
-    return (d.op == 1 || d.op == 2)
-               ? Protocol_Type_ARP
-               : (d.op == 3 || d.op == 4) ? Protocol_Type_RARP : Protocol_Type_Unknow(d.op);
+    return (d.op == 1 || d.op == 2)   ? Protocol_Type_ARP
+           : (d.op == 3 || d.op == 4) ? Protocol_Type_RARP
+                                      : Protocol_Type_Unknow(d.op);
 }
 
 std::string arp::succ_type() const { return Protocol_Type_Void; }

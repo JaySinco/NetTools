@@ -12,7 +12,6 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/",     
         "${workspaceFolder}/external/gflags/include/",
-        "${workspaceFolder}/external/glog/include/",
         "${workspaceFolder}/external/spdlog/include/",
         "${workspaceFolder}/external/npcap/include/",
         "${workspaceFolder}/external/fmt/include/",
@@ -27,6 +26,5 @@
     ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "editor.fontSize": 16
+    "files.trimFinalNewlines": true
 }

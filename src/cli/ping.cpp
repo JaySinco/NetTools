@@ -5,13 +5,8 @@
 int main(int argc, char *argv[])
 {
     NT_TRY
-    google::InitGoogleLogging(argv[0]);
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-    FLAGS_logtostderr = 1;
-    FLAGS_minloglevel = 0;
-
     if (argc < 2) {
-        LOG(ERROR) << "empty target name, please input ip or host name";
+        spdlog::error("empty target name, please input ip or host name");
         return -1;
     }
 
@@ -22,7 +17,7 @@ int main(int argc, char *argv[])
         ip_desc << target_ip.to_str();
     } else {
         if (!ip4::from_domain(target_name, &target_ip)) {
-            LOG(ERROR) << "invalid ip or host name: " << target_name;
+            spdlog::error("invalid ip or host name: {}", target_name);
             return -1;
         }
         ip_desc << target_name << " [" << target_ip.to_str() << "]";
@@ -43,7 +38,7 @@ int main(int argc, char *argv[])
         long cost_ms;
         if (transport::ping(handle, apt, target_ip, reply, cost_ms, 128, "greatjaysinco")) {
             if (reply.is_error()) {
-                VLOG(1) << reply.to_json().dump(3);
+                spdlog::debug(reply.to_json().dump(3));
                 std::cout << "error" << std::endl;
                 continue;
             }

@@ -41,10 +41,10 @@ add_custom_target(vpn ALL
     ${CMAKE_SOURCE_DIR}/resources/vpn_client.bat
     ${CMAKE_SOURCE_DIR}/resources/frps.ini
     ${CMAKE_SOURCE_DIR}/resources/frpc.ini
-    ${CMAKE_SOURCE_DIR}/external/nssm/bin/nssm.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frps.exe
-    ${CMAKE_SOURCE_DIR}/external/frp/bin/frpc.exe
-    ${CMAKE_SOURCE_DIR}/external/brook/bin/brook.exe
+    ${CMAKE_SOURCE_DIR}/external/.bin/nssm.exe
+    ${CMAKE_SOURCE_DIR}/external/.bin/frps.exe
+    ${CMAKE_SOURCE_DIR}/external/.bin/frpc.exe
+    ${CMAKE_SOURCE_DIR}/external/.bin/brook.exe
   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
   )
 
@@ -57,7 +57,6 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
-  ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/spdlog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
   ${CMAKE_SOURCE_DIR}/external/fmt/include/
@@ -71,19 +70,14 @@ include_directories(${INCLUDE_DIR})
 
 set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/gflags/lib/
-  ${CMAKE_SOURCE_DIR}/external/glog/lib/
   ${CMAKE_SOURCE_DIR}/external/spdlog/lib/
   ${CMAKE_SOURCE_DIR}/external/npcap/lib/
+  ${CMAKE_SOURCE_DIR}/external/fmt/lib/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
-
-add_library(fmt STATIC
-  ${CMAKE_SOURCE_DIR}/external/fmt/src/format.cc
-  ${CMAKE_SOURCE_DIR}/external/fmt/src/os.cc
-  )
 
 add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/net/type.cpp
@@ -102,9 +96,8 @@ target_compile_definitions(net PUBLIC _UNICODE)
 target_precompile_headers(net PUBLIC ${CMAKE_SOURCE_DIR}/src/prec.h)
 target_link_libraries(net
   gflags_static.lib
-  glog.lib
   spdlog.lib
-  fmt
+  fmt.lib
   shlwapi.lib
   wpcap.lib
   ws2_32.lib
@@ -143,7 +136,7 @@ target_link_libraries(gui net)
 add_custom_command(TARGET gui
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap.exe
+    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
   $<TARGET_FILE_DIR:gui>
   )
 

