@@ -1,7 +1,3 @@
 /bin
 /dest
-/external/boost
-/external/wxWidgets
-/external/gflags/src
-/external/glog/src
-/external/spdlog/src
+/external
