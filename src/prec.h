@@ -7,6 +7,9 @@
 #include <chrono>
 #include <fmt/ranges.h>
 #include <fmt/format.h>
+#define SPDLOG_FMT_EXTERNAL
+#define SPDLOG_COMPILED_LIB
+#include "spdlog/spdlog.h"
 #include <json.hpp>
 #include <gflags/gflags.h>
 #define GOOGLE_GLOG_DLL_DECL
