@@ -3,9 +3,6 @@
 #include <map>
 #include "protocol.h"
 
-std::string tv2s(const timeval &tv);
-long operator-(const timeval &tv1, const timeval &tv2);
-
 class packet
 {
 public:

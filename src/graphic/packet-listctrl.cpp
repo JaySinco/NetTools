@@ -50,7 +50,7 @@ std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
     const auto &layers = pac.get_detail().layers;
     switch (column) {
         case FIELD_TIME:
-            return tv2s(pac.get_detail().time);
+            return util::tv2s(pac.get_detail().time);
         case FIELD_SOURCE_MAC:
             if (layers.front()->type() == Protocol_Type_Ethernet) {
                 const auto &eh = dynamic_cast<const ethernet &>(*layers.front());

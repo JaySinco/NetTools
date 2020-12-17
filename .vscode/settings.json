@@ -27,5 +27,6 @@
     ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true
+    "files.trimFinalNewlines": true,
+    "editor.fontSize": 16
 }

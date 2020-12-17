@@ -16,23 +16,6 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_DNS, packet::decode<::dns>},
 };
 
-std::string tv2s(const timeval &tv)
-{
-    tm local;
-    time_t timestamp = tv.tv_sec;
-    localtime_s(&local, &timestamp);
-    char timestr[16] = {0};
-    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
-    return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
-}
-
-long operator-(const timeval &tv1, const timeval &tv2)
-{
-    long diff_sec = tv1.tv_sec - tv2.tv_sec;
-    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
-    return (diff_sec * 1000 + diff_ms);
-}
-
 packet::packet() { d.time = gettimeofday(); }
 
 packet::packet(const u_char *const start, const u_char *const end, const timeval &tv)
@@ -92,7 +75,7 @@ json packet::to_json() const
     }
     json j;
     j["layers"] = ar;
-    j["time"] = tv2s(d.time);
+    j["time"] = util::tv2s(d.time);
     j["owner"] = d.owner;
     return j;
 }
@@ -189,7 +172,7 @@ std::string packet::get_owner() const
     if (tb->mapping.count(key) <= 0) {
         return "";
     }
-    return pid_to_image(tb->mapping.at(key));
+    return util::pid_to_image(tb->mapping.at(key));
 }
 
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,

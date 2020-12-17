@@ -93,15 +93,14 @@ struct port_pid_table
     static port_pid_table tcp();
 };
 
-std::string pid_to_image(u_int pid);
+class util
+{
+public:
+    static std::string pid_to_image(u_int pid);
+    static std::string tv2s(const timeval &tv);
+    static std::string ws2s(const std::wstring &wstr);
+    static std::wstring s2ws(const std::string &str);
+    static std::wstring get_curdir();
+};
 
-std::string ws2s(const std::wstring &wstr);
-
-std::wstring s2ws(const std::string &str);
-
-std::wstring get_curdir();
-
-std::string string_join(const std::vector<std::string> &svec, const std::string &delimit);
-
-std::vector<std::string> string_split(const std::string &str, const std::string &delimit = "\n",
-                                      bool ignore_empty = true);
+long operator-(const timeval &tv1, const timeval &tv2);

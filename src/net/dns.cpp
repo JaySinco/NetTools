@@ -1,4 +1,5 @@
 #include "dns.h"
+#include <boost/algorithm/string.hpp>
 
 dns::dns(const u_char *const start, const u_char *&end, const protocol *prev)
 {
@@ -167,7 +168,8 @@ const dns::extra_detail &dns::get_extra() const { return extra; }
 std::string dns::encode_domain(const std::string &domain)
 {
     std::string bytes;
-    auto svec = string_split(domain, ".");
+    std::vector<std::string> svec;
+    boost::split(svec, domain, boost::is_any_of("."));
     for (const auto &s : svec) {
         if (s.size() > 63) {
             throw std::runtime_error("segment of domain exceed 63: {}"_format(s));
@@ -199,7 +201,7 @@ std::string dns::decode_domain(const u_char *const pstart, const u_char *const p
         }
     }
     if (!compressed) ++it;
-    return string_join(domain_vec, ".");
+    return boost::join(domain_vec, ".");
 }
 
 dns::detail dns::ntoh(const detail &d, bool reverse)

@@ -206,69 +206,6 @@ wsa_guard::wsa_guard()
 
 wsa_guard::~wsa_guard() { WSACleanup(); }
 
-std::string ws2s(const std::wstring &wstr)
-{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-    return myconv.to_bytes(wstr);
-}
-
-std::wstring s2ws(const std::string &str)
-{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-    return myconv.from_bytes(str);
-}
-
-std::wstring get_curdir()
-{
-    wchar_t szFilePath[MAX_PATH + 1] = {0};
-    GetModuleFileNameW(NULL, szFilePath, MAX_PATH);
-    (wcsrchr(szFilePath, L'\\'))[0] = 0;
-    return szFilePath;
-}
-
-std::string string_join(const std::vector<std::string> &svec, const std::string &delimit)
-{
-    if (svec.empty()) return "";
-    std::ostringstream ss;
-    ss << svec[0];
-    for (int i = 1; i < svec.size(); ++i) {
-        ss << delimit << svec[i];
-    }
-    return ss.str();
-}
-
-std::vector<std::string> string_split(const std::string &str, const std::string &delimit,
-                                      bool ignore_empty)
-{
-    if (str.empty()) return {};
-    if (delimit.empty()) return {1, str};
-
-    std::vector<std::string> svec;
-    size_t index = std::string::npos;
-    size_t last_pos = 0;
-    while ((index = str.find(delimit, last_pos)) != std::string::npos) {
-        if (index != last_pos || !ignore_empty)
-            svec.push_back(str.substr(last_pos, index - last_pos));
-        last_pos = index + delimit.size();
-    }
-    std::string last_one = str.substr(last_pos);
-    if (!last_one.empty() || !ignore_empty) svec.push_back(last_one);
-
-    return svec;
-}
-
-std::string pid_to_image(u_int pid)
-{
-    std::string s_default = "pid({})"_format(pid);
-    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    if (handle == NULL) return s_default;
-    char buf[1024];
-    DWORD size = sizeof(buf);
-    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) return s_default;
-    boost::filesystem::path fp(std::string(buf, size));
-    return fp.filename().string();
-}
-
 port_pid_table port_pid_table::tcp()
 {
     VLOG(2) << "get tcp port-pid table";
@@ -328,4 +265,53 @@ port_pid_table port_pid_table::udp()
         tb.mapping[std::make_pair(ip, port)] = pid;
     }
     return tb;
+}
+
+std::string util::ws2s(const std::wstring &wstr)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+    return myconv.to_bytes(wstr);
+}
+
+std::wstring util::s2ws(const std::string &str)
+{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+    return myconv.from_bytes(str);
+}
+
+std::wstring util::get_curdir()
+{
+    wchar_t szFilePath[MAX_PATH + 1] = {0};
+    GetModuleFileNameW(NULL, szFilePath, MAX_PATH);
+    (wcsrchr(szFilePath, L'\\'))[0] = 0;
+    return szFilePath;
+}
+
+std::string util::tv2s(const timeval &tv)
+{
+    tm local;
+    time_t timestamp = tv.tv_sec;
+    localtime_s(&local, &timestamp);
+    char timestr[16] = {0};
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
+    return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
+}
+
+std::string util::pid_to_image(u_int pid)
+{
+    std::string s_default = "pid({})"_format(pid);
+    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (handle == NULL) return s_default;
+    char buf[1024];
+    DWORD size = sizeof(buf);
+    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) return s_default;
+    boost::filesystem::path fp(std::string(buf, size));
+    return fp.filename().string();
+}
+
+long operator-(const timeval &tv1, const timeval &tv2)
+{
+    long diff_sec = tv1.tv_sec - tv2.tv_sec;
+    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
+    return (diff_sec * 1000 + diff_ms);
 }
