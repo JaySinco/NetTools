@@ -24,7 +24,7 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
     std::string type = Protocol_Type_Ethernet;
     while (type != Protocol_Type_Void && pstart < end) {
         if (decoder_dict.count(type) <= 0) {
-            spdlog::debug("unimplemented protocol: {} -> {}", d.layers.back()->type(), type);
+            VLOG(3) << "unimplemented protocol: {} -> {}"_format(d.layers.back()->type(), type);
             break;
         }
         const u_char *pend = end;

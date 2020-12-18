@@ -92,11 +92,11 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
         auto passed_sec =
             std::chrono::duration_cast<std::chrono::seconds>(start_tm - cached[ip].second);
         if (passed_sec.count() < 30) {
-            spdlog::debug("use cached mac for {}", ip.to_str());
+            VLOG(2) << "use cached mac for {}"_format(ip.to_str());
             mac_ = cached[ip].first;
             return true;
         } else {
-            spdlog::debug("cached mac for {}  expired, send arp to update", ip.to_str());
+            VLOG(2) << "cached mac for {}  expired, send arp to update"_format(ip.to_str());
         }
     }
     adaptor apt = adaptor::fit(ip);
@@ -132,7 +132,7 @@ bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &
     mac dmac;
     ip4 dip = apt.ip.is_local(ip, apt.mask) ? ip : apt.gateway;
     if (!ip2mac(handle, dip, dmac)) {
-        spdlog::debug("can't resolve mac address of {}", dip.to_str());
+        VLOG(1) << "can't resolve mac address of {}"_format(dip.to_str());
         return false;
     }
     packet req = packet::ping(apt.mac_, apt.ip, dmac, ip, ttl, echo, forbid_slice);
@@ -147,13 +147,13 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
 {
     SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s == INVALID_SOCKET) {
-        spdlog::error("failed to create udp socket");
+        LOG(ERROR) << "failed to create udp socket";
         return false;
     }
     std::shared_ptr<void *> socket_guard(nullptr, [&](void *) {
-        spdlog::debug("socket closed");
+        VLOG(1) << "socket closed";
         if (closesocket(s) == SOCKET_ERROR) {
-            spdlog::error("failed to close socket");
+            LOG(ERROR) << "failed to close socket";
         };
     });
     sockaddr_in addr;
@@ -165,13 +165,13 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
     query.to_bytes(packet);
     if (sendto(s, reinterpret_cast<const char *>(packet.data()), static_cast<int>(packet.size()), 0,
                reinterpret_cast<sockaddr *>(&addr), sizeof(sockaddr_in)) == SOCKET_ERROR) {
-        spdlog::error("failed to send dns data: {}", WSAGetLastError());
+        LOG(ERROR) << "failed to send dns data: {}"_format(WSAGetLastError());
         return false;
     }
     DWORD timeout = timeout_ms;
     if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char *>(&timeout),
                    sizeof(DWORD)) == SOCKET_ERROR) {
-        spdlog::error("failed to set socket receive timeout: {}", WSAGetLastError());
+        LOG(ERROR) << "failed to set socket receive timeout: {}"_format(WSAGetLastError());
         return false;
     }
     char buf[1024] = {0};
@@ -179,7 +179,7 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
     int from_len = sizeof(sockaddr_in);
     int recv_len = recvfrom(s, buf, sizeof(buf), 0, reinterpret_cast<sockaddr *>(&from), &from_len);
     if (recv_len == SOCKET_ERROR) {
-        spdlog::error("failed to receive dns data: {}", WSAGetLastError());
+        LOG(ERROR) << "failed to receive dns data: {}"_format(WSAGetLastError());
         return false;
     }
     const u_char *start = reinterpret_cast<u_char *>(buf);
@@ -210,12 +210,12 @@ int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int h
             throw std::runtime_error("failed to call ping routine");
         }
         if (!reply.is_error()) {
-            spdlog::debug("- {:5d}", vtest + offset);
+            VLOG(1) << "- {:5d}"_format(vtest + offset);
             low = vtest;
         } else {
             auto &p = dynamic_cast<const icmp &>(*reply.get_detail().layers.back());
             if (p.get_detail().type == 3 && p.get_detail().code == 4) {
-                spdlog::debug("+ {:5d}", vtest + offset);
+                VLOG(1) << "+ {:5d}"_format(vtest + offset);
                 high = vtest;
             } else {
                 throw std::runtime_error(

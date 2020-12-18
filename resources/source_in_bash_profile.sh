@@ -3,8 +3,8 @@
 _build_completions()
 {
     if [ -d "dest" ]; then
-        COMPREPLY=($(compgen -W "$(find dest -maxdepth 1 -name *.vcxproj | grep -v [[:upper:]] | awk -F [/.] '{print $2}')" -- "${COMP_WORDS[-1]}"))
-        COMPREPLY+=("clean")
+        COMPREPLY+=($(compgen -W "$(find dest -maxdepth 1 -name *.vcxproj | grep -v [[:upper:]] | awk -F [/.] '{print $2}')" -- "${COMP_WORDS[-1]}"))
+        COMPREPLY+=($(compgen -W "clean" -- "${COMP_WORDS[-1]}"))
     fi
 }
 

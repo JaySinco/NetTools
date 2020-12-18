@@ -11,6 +11,8 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
+    char **argv_ = argv;
+    INIT_LOG(argc, argv_);
     MainFrame *frame = new MainFrame;
     frame->Show(true);
     return true;
@@ -18,6 +20,6 @@ bool App::OnInit()
 
 int App::OnExit()
 {
-    spdlog::debug("application about to exit.");
+    VLOG(1) << "application about to exit.";
     return wxApp::OnExit();
 }

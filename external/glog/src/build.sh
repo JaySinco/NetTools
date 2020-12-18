@@ -6,7 +6,9 @@ mkdir -p build/ \
 && \
 cd build \
 && \
-${CMAKE_CMD} "${CMAKE_GENERATOR}" ../spdlog-1.8.2 \
+${CMAKE_CMD} "${CMAKE_GENERATOR}" ../glog-0.4.0 \
+    -DWITH_GFLAGS=on \
+    -Dgflags_DIR="../../gflags" \
     -DMSVC_RUNTIME="static" \
     -DCMAKE_INSTALL_PREFIX="${cwd}/../" \
 && \

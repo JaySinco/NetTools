@@ -4,7 +4,7 @@ arp::arp(const u_char *const start, const u_char *&end, const protocol *prev)
 {
     d = ntoh(*reinterpret_cast<const detail *>(start));
     if (end != start + sizeof(detail)) {
-        spdlog::debug("abnormal arp length: expected={}, got={}", sizeof(detail), end - start);
+        VLOG(3) << "abnormal arp length: expected={}, got={}"_format(sizeof(detail), end - start);
     }
 }
 

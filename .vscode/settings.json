@@ -12,7 +12,7 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/",     
         "${workspaceFolder}/external/gflags/include/",
-        "${workspaceFolder}/external/spdlog/include/",
+        "${workspaceFolder}/external/glog/include/",
         "${workspaceFolder}/external/npcap/include/",
         "${workspaceFolder}/external/fmt/include/",
         "${workspaceFolder}/external/json/include/",

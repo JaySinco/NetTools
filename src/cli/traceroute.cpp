@@ -6,8 +6,10 @@
 int main(int argc, char *argv[])
 {
     NT_TRY
+    INIT_LOG(argc, argv);
+
     if (argc < 2) {
-        spdlog::error("empty target name, please input ip or host name");
+        LOG(ERROR) << "empty target name, please input ip or host name";
         return -1;
     }
 
@@ -18,7 +20,7 @@ int main(int argc, char *argv[])
         ip_desc << target_ip.to_str();
     } else {
         if (!ip4::from_domain(target_name, &target_ip)) {
-            spdlog::error("invalid ip or host name: {}", target_name);
+            LOG(ERROR) << "invalid ip or host name: {}"_format(target_name);
             return -1;
         }
         ip_desc << target_name << " [" << target_ip.to_str() << "]";

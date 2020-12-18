@@ -8,28 +8,29 @@ DEFINE_string(driver_filter, "", "capture filter applied to adapter driver");
 int main(int argc, char *argv[])
 {
     NT_TRY
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    INIT_LOG(argc, argv);
 
     auto &apt = adaptor::fit(FLAGS_ip.size() > 0 ? ip4(FLAGS_ip) : ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
     std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
-    spdlog::info(apt.to_json().dump(3));
+    LOG(INFO) << apt.to_json().dump(3);
 
     if (FLAGS_driver_filter.size() > 0) {
-        spdlog::info(R"(set driver filter "{}", mask={})", FLAGS_driver_filter, apt.mask.to_str());
+        LOG(INFO) << R"(set driver filter "{}", mask={})"_format(FLAGS_driver_filter,
+                                                                 apt.mask.to_str());
         transport::setfilter(handle, FLAGS_driver_filter, apt.mask);
     }
 
     p_validator validator_;
     if (FLAGS_filter.size() > 0) {
-        spdlog::info(R"(set filter "{}")", FLAGS_filter);
+        LOG(INFO) << R"(set filter "{}")"_format(FLAGS_filter);
         validator_ = validator::from_str(FLAGS_filter);
     }
 
-    spdlog::info("begin to sniff...");
+    LOG(INFO) << "begin to sniff...";
     transport::recv(handle, [&](const packet &p) {
         if (!validator_ || validator_->test(p)) {
-            spdlog::info(p.to_json()["layers"].dump(3));
+            LOG(INFO) << p.to_json()["layers"].dump(3);
         }
         return false;
     });

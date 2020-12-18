@@ -1,11 +1,16 @@
 #pragma once
 #include "prec.h"
-
 #define ntoh_cvt(field, reverse, suffix) field = ((reverse) ? ntoh##suffix : hton##suffix)(field);
+#define INIT_LOG(argc, argv)                           \
+    google::InitGoogleLogging(argv[0]);                \
+    gflags::ParseCommandLineFlags(&argc, &argv, true); \
+    FLAGS_logtostderr = 1;                             \
+    FLAGS_minloglevel = 0;
+
 #define NT_TRY try {
 #define NT_CATCH \
     }            \
-    catch (const std::runtime_error &e) { spdlog::error(e.what()); }
+    catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
 
 struct mac
 {
@@ -87,14 +92,6 @@ struct wsa_guard
 
 private:
     static wsa_guard g;
-};
-
-struct logger_guard
-{
-    logger_guard();
-
-private:
-    static logger_guard g;
 };
 
 struct port_pid_table
