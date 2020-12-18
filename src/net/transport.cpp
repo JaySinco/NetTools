@@ -89,9 +89,7 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
     static std::map<ip4, std::pair<mac, std::chrono::time_point<std::chrono::system_clock>>> cached;
     auto start_tm = std::chrono::system_clock::now();
     if (use_cache && cached.count(ip) > 0) {
-        auto passed_sec =
-            std::chrono::duration_cast<std::chrono::seconds>(start_tm - cached[ip].second);
-        if (passed_sec.count() < 30) {
+        if (start_tm - cached[ip].second < 30s) {
             VLOG(2) << "use cached mac for {}"_format(ip.to_str());
             mac_ = cached[ip].first;
             return true;

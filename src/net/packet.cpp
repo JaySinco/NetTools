@@ -140,7 +140,7 @@ std::string packet::get_owner() const
     u_short port = 0;
     auto now = system_clock::now();
     if (has_type(Protocol_Type_UDP)) {
-        if (duration_cast<seconds>(now - tm_udp).count() > 3) {
+        if (now - tm_udp > 3s) {
             tb_udp = port_pid_table::udp();
             tm_udp = now;
         }
@@ -158,7 +158,7 @@ std::string packet::get_owner() const
         }
 
     } else if (has_type(Protocol_Type_TCP)) {
-        if (duration_cast<seconds>(now - tm_tcp).count() > 3) {
+        if (now - tm_tcp > 3s) {
             tb_tcp = port_pid_table::tcp();
             tm_tcp = now;
         }

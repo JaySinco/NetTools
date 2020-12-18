@@ -6,7 +6,6 @@
     gflags::ParseCommandLineFlags(&argc, &argv, true); \
     FLAGS_logtostderr = 1;                             \
     FLAGS_minloglevel = 0;
-
 #define NT_TRY try {
 #define NT_CATCH \
     }            \

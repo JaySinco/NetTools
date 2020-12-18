@@ -200,7 +200,9 @@ std::string dns::decode_domain(const u_char *const pstart, const u_char *const p
             break;
         }
     }
-    if (!compressed) ++it;
+    if (!compressed) {
+        ++it;
+    }
     return boost::join(domain_vec, ".");
 }
 

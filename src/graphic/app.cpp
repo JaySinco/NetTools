@@ -13,6 +13,7 @@ bool App::OnInit()
 {
     char **argv_ = argv;
     INIT_LOG(argc, argv_);
+
     MainFrame *frame = new MainFrame;
     frame->Show(true);
     return true;

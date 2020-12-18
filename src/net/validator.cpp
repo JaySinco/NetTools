@@ -62,7 +62,9 @@ public:
     {
         const json *out = nullptr;
         auto ok = psel_->select(j, out);
-        if (!ok) return false;
+        if (!ok) {
+            return false;
+        }
         return pval_->test(*out);
     }
 

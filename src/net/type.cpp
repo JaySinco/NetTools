@@ -301,10 +301,14 @@ std::string util::pid_to_image(u_int pid)
 {
     std::string s_default = "pid({})"_format(pid);
     HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    if (handle == NULL) return s_default;
+    if (handle == NULL) {
+        return s_default;
+    }
     char buf[1024];
     DWORD size = sizeof(buf);
-    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) return s_default;
+    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) {
+        return s_default;
+    }
     boost::filesystem::path fp(std::string(buf, size));
     return fp.filename().string();
 }
