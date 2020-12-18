@@ -71,7 +71,7 @@ const ethernet::detail &ethernet::get_detail() const { return d; }
 ethernet::detail ethernet::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.type, !reverse, s);
+    ntohx(dt.type, !reverse, s);
     return dt;
 }
 

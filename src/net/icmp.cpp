@@ -174,8 +174,8 @@ std::string icmp::icmp_type() const
 icmp::detail icmp::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.u.s.id, !reverse, s);
-    ntoh_cvt(dt.u.s.sn, !reverse, s);
+    ntohx(dt.u.s.id, !reverse, s);
+    ntohx(dt.u.s.sn, !reverse, s);
     return dt;
 }
 

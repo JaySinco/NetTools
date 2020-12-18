@@ -1,15 +1,15 @@
 #pragma once
 #include "prec.h"
-#define ntoh_cvt(field, reverse, suffix) field = ((reverse) ? ntoh##suffix : hton##suffix)(field);
+#define NT_TRY try {
+#define NT_CATCH \
+    }            \
+    catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
+
 #define INIT_LOG(argc, argv)                           \
     google::InitGoogleLogging(argv[0]);                \
     gflags::ParseCommandLineFlags(&argc, &argv, true); \
     FLAGS_logtostderr = 1;                             \
     FLAGS_minloglevel = 0;
-#define NT_TRY try {
-#define NT_CATCH \
-    }            \
-    catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
 
 struct mac
 {

@@ -69,9 +69,9 @@ const arp::detail &arp::get_detail() const { return d; }
 arp::detail arp::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.hw_type, !reverse, s);
-    ntoh_cvt(dt.prot_type, !reverse, s);
-    ntoh_cvt(dt.op, !reverse, s);
+    ntohx(dt.hw_type, !reverse, s);
+    ntohx(dt.prot_type, !reverse, s);
+    ntohx(dt.op, !reverse, s);
     return dt;
 }
 

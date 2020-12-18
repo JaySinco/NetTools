@@ -101,9 +101,9 @@ u_short ipv4::payload_size() const { return d.tlen - 4 * (d.ver_ihl & 0xf); }
 ipv4::detail ipv4::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.tlen, !reverse, s);
-    ntoh_cvt(dt.id, !reverse, s);
-    ntoh_cvt(dt.flags_fo, !reverse, s);
+    ntohx(dt.tlen, !reverse, s);
+    ntohx(dt.id, !reverse, s);
+    ntohx(dt.flags_fo, !reverse, s);
     return dt;
 }
 

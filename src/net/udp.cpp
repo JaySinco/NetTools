@@ -67,9 +67,9 @@ const udp::extra_detail &udp::get_extra() const { return extra; }
 udp::detail udp::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.sport, !reverse, s);
-    ntoh_cvt(dt.dport, !reverse, s);
-    ntoh_cvt(dt.len, !reverse, s);
+    ntohx(dt.sport, !reverse, s);
+    ntohx(dt.dport, !reverse, s);
+    ntohx(dt.len, !reverse, s);
     return dt;
 }
 

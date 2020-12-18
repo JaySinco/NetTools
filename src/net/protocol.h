@@ -18,6 +18,8 @@
 #define Protocol_Type_TELNET "telnet"
 #define Protocol_Type_RDP "rdp"
 
+#define ntohx(field, reverse, suffix) field = ((reverse) ? ntoh##suffix : hton##suffix)(field);
+
 class protocol
 {
 public:

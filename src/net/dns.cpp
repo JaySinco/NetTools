@@ -209,12 +209,12 @@ std::string dns::decode_domain(const u_char *const pstart, const u_char *const p
 dns::detail dns::ntoh(const detail &d, bool reverse)
 {
     detail dt = d;
-    ntoh_cvt(dt.id, !reverse, s);
-    ntoh_cvt(dt.flags, !reverse, s);
-    ntoh_cvt(dt.qrn, !reverse, s);
-    ntoh_cvt(dt.rrn, !reverse, s);
-    ntoh_cvt(dt.arn, !reverse, s);
-    ntoh_cvt(dt.ern, !reverse, s);
+    ntohx(dt.id, !reverse, s);
+    ntohx(dt.flags, !reverse, s);
+    ntohx(dt.qrn, !reverse, s);
+    ntohx(dt.rrn, !reverse, s);
+    ntohx(dt.arn, !reverse, s);
+    ntohx(dt.ern, !reverse, s);
     return dt;
 }
 
