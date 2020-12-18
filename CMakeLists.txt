@@ -33,21 +33,6 @@ endmacro()
 
 project(NetTools)
 
-add_custom_target(vpn ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/resources/autorun.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_slave.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_server.bat
-    ${CMAKE_SOURCE_DIR}/resources/vpn_client.bat
-    ${CMAKE_SOURCE_DIR}/resources/frps.ini
-    ${CMAKE_SOURCE_DIR}/resources/frpc.ini
-    ${CMAKE_SOURCE_DIR}/external/.bin/nssm.exe
-    ${CMAKE_SOURCE_DIR}/external/.bin/frps.exe
-    ${CMAKE_SOURCE_DIR}/external/.bin/frpc.exe
-    ${CMAKE_SOURCE_DIR}/external/.bin/brook.exe
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
-  )
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
@@ -104,6 +89,21 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
+add_executable(gui WIN32
+  ${CMAKE_SOURCE_DIR}/src/graphic/packet-listctrl.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/packet-propgrid.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/ui.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/main-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/graphic/app.cpp
+  )
+target_link_libraries(gui net)
+add_custom_command(TARGET gui
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
+  $<TARGET_FILE_DIR:gui>
+  )
+
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/cli/lsdev.cpp)
 target_link_libraries(lsdev net)
 
@@ -125,24 +125,5 @@ target_link_libraries(traceroute net)
 add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns net)
 
-add_executable(gui WIN32
-  ${CMAKE_SOURCE_DIR}/src/graphic/packet-listctrl.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/packet-propgrid.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/main-frame.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/app.cpp
-  )
-target_link_libraries(gui net)
-add_custom_command(TARGET gui
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
-  $<TARGET_FILE_DIR:gui>
-  )
-
 add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
 target_link_libraries(test net)
-
-add_custom_target(default ALL
-  DEPENDS lsdev sniff arp ping mtu traceroute dns gui test
-  )

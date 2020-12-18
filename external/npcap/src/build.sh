@@ -1,17 +1,19 @@
 #!/bin/bash
 
-INSTALLER=npcap-1.10.exe
-SDK=npcap-sdk-1.06.zip
+installer=npcap-1.10.exe
+sdk=npcap-sdk-1.06.zip
 
 cd ..
-curl -LJO -x socks5h://localhost:8172 https://nmap.org/npcap/dist/${SDK} \
+${DOWNLOAD} https://nmap.org/npcap/dist/${sdk} \
 && \
-unzip ${SDK} \
+unzip ${sdk} \
 && \
-mv Include include && mv Lib _lib && mv _lib/x64 lib \
+mv Include _include && mv _include include \
 && \
-rm -rf docs Examples-pcap _lib Examples-remote Npcap_Guide.html ${SDK} \
+mv Lib _lib && mv _lib/x64 lib \
+&& \
+rm -rf docs Examples-pcap _lib Examples-remote Npcap_Guide.html ${sdk} \
 && \
 mkdir -p bin && cd bin \
 && \
-curl -LJO -x socks5h://localhost:8172 https://nmap.org/npcap/dist/${INSTALLER} \
+${DOWNLOAD} https://nmap.org/npcap/dist/${installer} \
