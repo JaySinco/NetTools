@@ -30,7 +30,7 @@ mkdir -p dest/ bin/ \
 && \
 cd dest/ \
 && \
-cmake -G "Visual Studio 15 2017 Win64"  ../ \
+${CMAKE_CMD} "${CMAKE_GENERATOR}" ../ \
     -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${cwd}/bin/ \
 && \
 ${MSVC_BUILD} ${target}
