@@ -26,7 +26,8 @@ packet::packet(const u_char *const start, const u_char *const end, const timeval
     std::string type = Protocol_Type_Ethernet;
     while (type != Protocol_Type_Void && pstart < end) {
         if (decoder_dict.count(type) <= 0) {
-            VLOG(3) << "unimplemented protocol: {} -> {}"_format(d.layers.back()->type(), type);
+            VLOG_IF(3, protocol::is_specific(type))
+                << "unimplemented protocol: {} -> {}"_format(d.layers.back()->type(), type);
             break;
         }
         const u_char *pend = end;
@@ -137,54 +138,42 @@ std::string packet::get_owner() const
     static port_pid_table tb_udp, tb_tcp;
     static system_clock::time_point tm_udp, tm_tcp;
 
-    port_pid_table *tb = nullptr;
-    ip4 ip;
-    u_short port = 0;
+    auto lookup = [](const port_pid_table &tb, const ip4 &ip, u_short port) -> std::string {
+        if (!adaptor::is_native(ip)) {
+            return "";
+        }
+        auto key = std::make_pair(ip, port);
+        if (tb.mapping.count(std::make_pair(ip, port)) <= 0) {
+            return "";
+        }
+        return util::pid_to_image(tb.mapping.at(key));
+    };
+
     auto now = system_clock::now();
     if (has_type(Protocol_Type_UDP)) {
         if (now - tm_udp > 3s) {
-            tb_udp = port_pid_table::udp();
+            for (const auto &it : port_pid_table::udp().mapping) {
+                tb_udp.mapping[it.first] = it.second;
+            }
             tm_udp = now;
         }
-        tb = &tb_udp;
         const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
         const auto &uh = dynamic_cast<const udp &>(*d.layers[2]);
-        if (adaptor::is_native(ih.get_detail().sip)) {
-            ip = ih.get_detail().sip;
-            port = uh.get_detail().sport;
-        } else if (adaptor::is_native(ih.get_detail().dip)) {
-            ip = ih.get_detail().dip;
-            port = uh.get_detail().dport;
-        } else {
-            return "";
-        }
-
+        return "{}{}"_format(lookup(tb_udp, ih.get_detail().sip, uh.get_detail().sport),
+                             lookup(tb_udp, ih.get_detail().dip, uh.get_detail().dport));
     } else if (has_type(Protocol_Type_TCP)) {
         if (now - tm_tcp > 3s) {
-            tb_tcp = port_pid_table::tcp();
+            for (const auto &it : port_pid_table::tcp().mapping) {
+                tb_tcp.mapping[it.first] = it.second;
+            }
             tm_tcp = now;
         }
-        tb = &tb_tcp;
         const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
         const auto &th = dynamic_cast<const tcp &>(*d.layers[2]);
-        if (adaptor::is_native(ih.get_detail().sip)) {
-            ip = ih.get_detail().sip;
-            port = th.get_detail().sport;
-        } else if (adaptor::is_native(ih.get_detail().dip)) {
-            ip = ih.get_detail().dip;
-            port = th.get_detail().dport;
-        } else {
-            return "";
-        }
-    } else {
-        return "";
+        return "{}{}"_format(lookup(tb_tcp, ih.get_detail().sip, th.get_detail().sport),
+                             lookup(tb_tcp, ih.get_detail().dip, th.get_detail().dport));
     }
-
-    auto key = std::make_pair(ip, port);
-    if (tb->mapping.count(key) <= 0) {
-        return "";
-    }
-    return util::pid_to_image(tb->mapping.at(key));
+    return "";
 }
 
 packet packet::arp(const mac &smac, const ip4 &sip, const mac &dmac, const ip4 &dip, bool reply,

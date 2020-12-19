@@ -107,6 +107,7 @@ bool ip4::from_domain(const std::string &s, ip4 *ip)
     if (ip) {
         *ip = reinterpret_cast<sockaddr_in *>(first_addr->ai_addr)->sin_addr;
     }
+    freeaddrinfo(first_addr);
     return true;
 }
 
@@ -208,7 +209,7 @@ wsa_guard::~wsa_guard() { WSACleanup(); }
 
 port_pid_table port_pid_table::tcp()
 {
-    VLOG(2) << "get tcp port-pid table";
+    VLOG(3) << "get tcp port-pid table";
     ULONG size = sizeof(MIB_TCPTABLE);
     PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
@@ -238,7 +239,7 @@ port_pid_table port_pid_table::tcp()
 
 port_pid_table port_pid_table::udp()
 {
-    VLOG(2) << "get udp port-pid table";
+    VLOG(3) << "get udp port-pid table";
     ULONG size = sizeof(MIB_UDPTABLE_OWNER_PID);
     PMIB_UDPTABLE_OWNER_PID ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
@@ -299,18 +300,33 @@ std::string util::tv2s(const timeval &tv)
 
 std::string util::pid_to_image(u_int pid)
 {
+    static std::map<u_int, std::pair<std::string, std::chrono::system_clock::time_point>> cached;
+    auto start_tm = std::chrono::system_clock::now();
+    if (cached.count(pid) > 0) {
+        if (start_tm - cached[pid].second < 60s) {
+            VLOG(3) << "use cached image for pid={}"_format(pid);
+            return cached[pid].first;
+        } else {
+            VLOG(3) << "cached image for pid={} expired, call winapi to update"_format(pid);
+        }
+    }
     std::string s_default = "pid({})"_format(pid);
     HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (handle == NULL) {
+        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
         return s_default;
     }
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { CloseHandle(handle); });
     char buf[1024];
     DWORD size = sizeof(buf);
     if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) {
+        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
         return s_default;
     }
     boost::filesystem::path fp(std::string(buf, size));
-    return fp.filename().string();
+    std::string image = fp.filename().string();
+    cached[pid] = std::make_pair(image, std::chrono::system_clock::now());
+    return image;
 }
 
 long operator-(const timeval &tv1, const timeval &tv2)
