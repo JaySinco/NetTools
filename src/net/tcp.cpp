@@ -19,8 +19,8 @@ json tcp::to_json() const
     j["tcp-type"] = succ_type();
     j["source-port"] = d.sport;
     j["dest-port"] = d.dport;
-    j["sequence-no"] = d.sn;
-    j["acknowledge-no"] = d.an;
+    j["sequence-num"] = d.sn;
+    j["acknowledge-num"] = d.an;
     size_t header_size = 4 * (d.thl_flags >> 12 & 0xf);
     j["header-size"] = header_size;
     return j;
