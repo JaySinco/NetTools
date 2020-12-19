@@ -149,6 +149,61 @@ BOOST_FUSION_ADAPT_STRUCT(ast::match_expr_value, v_sel, v_opt);
 
 namespace ast
 {
+json to_json(const or_expr_value &v);
+json to_json(const and_expr_value &v);
+json to_json(const unit_expr_value &v);
+json to_json(const group_expr_value &v);
+json to_json(const match_expr_value &v);
+
+json to_json(const or_expr_value &v)
+{
+    json j;
+    j["type"] = "or_expr";
+    j["expr"] = json::array();
+    for (int i = 0; i < v.size(); ++i) {
+        j["expr"].push_back(to_json(v.at(i)));
+    }
+    return j;
+}
+
+json to_json(const and_expr_value &v)
+{
+    json j;
+    j["type"] = "and_expr";
+    j["expr"] = json::array();
+    for (int i = 0; i < v.size(); ++i) {
+        j["expr"].push_back(to_json(v.at(i)));
+    }
+    return j;
+}
+
+class unit_expr_visitor_json : public boost::static_visitor<json>
+{
+public:
+    json operator()(const match_expr_value &v) const { return to_json(v); }
+
+    json operator()(const group_expr_value &v) const { return to_json(v); }
+};
+
+json to_json(const unit_expr_value &v) { return boost::apply_visitor(unit_expr_visitor_json{}, v); }
+
+json to_json(const group_expr_value &v) { return to_json(static_cast<or_expr_value>(v)); }
+
+json to_json(const match_expr_value &v)
+{
+    json j;
+    j["type"] = "match_expr";
+    j["selector"] = v.v_sel;
+    if (v.v_opt) {
+        j["value"] = *v.v_opt;
+    }
+    return j;
+}
+
+}  // namespace ast
+
+namespace ast
+{
 p_filter to_filter(const or_expr_value &v);
 p_filter to_filter(const and_expr_value &v);
 p_filter to_filter(const unit_expr_value &v);
@@ -173,7 +228,7 @@ p_filter to_filter(const and_expr_value &v)
     return combine;
 }
 
-class unit_expr_visitor : public boost::static_visitor<p_filter>
+class unit_expr_visitor_filter : public boost::static_visitor<p_filter>
 {
 public:
     p_filter operator()(const match_expr_value &v) const { return to_filter(v); }
@@ -183,7 +238,7 @@ public:
 
 p_filter to_filter(const unit_expr_value &v)
 {
-    return boost::apply_visitor(unit_expr_visitor{}, v);
+    return boost::apply_visitor(unit_expr_visitor_filter{}, v);
 }
 
 p_filter to_filter(const group_expr_value &v) { return to_filter(static_cast<or_expr_value>(v)); }
@@ -244,6 +299,7 @@ p_filter filter::from_str(const std::string &code)
     ast::entry_value ast;
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
+    VLOG(1) << "ast generated for filter `{}` => {}"_format(code, ast::to_json(ast).dump(3));
     if (!ok || it != code.end()) {
         throw std::runtime_error("failed to parse filter: unexpected token near '{}'"_format(*it));
     }
