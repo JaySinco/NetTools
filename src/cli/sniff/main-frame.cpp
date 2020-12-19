@@ -86,10 +86,10 @@ void MainFrame::on_filter_changed(wxFocusEvent &event)
     event.Skip();
     std::string filter = m_filter->GetValue();
     if (filter.size() == 0) {
-        validator_.reset();
+        filter_.reset();
         return;
     }
-    validator_ = validator::from_str(filter);
+    filter_ = filter::from_str(filter);
     NOTIFY_CATCH
 }
 
@@ -140,7 +140,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
 void MainFrame::sniff_recv(std::vector<packet> data)
 {
     auto filter_end = std::remove_if(data.begin(), data.end(), [&](const packet &pac) {
-        return validator_ && !validator_->test(pac);
+        return filter_ && !filter_->test(pac);
     });
 
     if (filter_end != data.begin()) {

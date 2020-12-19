@@ -2,7 +2,7 @@
 #include "prec.h"
 #include "ui.h"
 #include "net/packet.h"
-#include "net/validator.h"
+#include "net/filter.h"
 #include <atomic>
 
 class MainFrame : public MainFrame_g
@@ -23,7 +23,7 @@ private:
     void notify_error(const std::string &msg);
     void update_status_total(size_t n);
 
-    p_validator validator_;
+    p_filter filter_;
     std::vector<packet> pac_list;
     std::vector<bool> column_sort;
     std::atomic<bool> sniff_should_stop;

@@ -1,4 +1,4 @@
-#include "validator.h"
+#include "filter.h"
 #include <regex>
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/home/x3.hpp>
@@ -10,7 +10,7 @@
 
 namespace x3 = boost::spirit::x3;
 
-class selector : public validator
+class selector : public filter
 {
 public:
     selector(const std::vector<std::string> &path) : path_(path) {}
@@ -53,10 +53,10 @@ private:
 
 using p_selector = std::shared_ptr<selector>;
 
-class select_validator : public validator
+class select_filter : public filter
 {
 public:
-    select_validator(p_selector psel, p_validator pval) : psel_(psel), pval_(pval) {}
+    select_filter(p_selector psel, p_filter pval) : psel_(psel), pval_(pval) {}
 
     bool test(const json &j) const override
     {
@@ -70,13 +70,13 @@ public:
 
 private:
     p_selector psel_;
-    p_validator pval_;
+    p_filter pval_;
 };
 
-class value_validator : public validator
+class value_filter : public filter
 {
 public:
-    value_validator(const std::string &value) : value_(value) {}
+    value_filter(const std::string &value) : value_(value) {}
 
     bool test(const json &j) const override
     {
@@ -93,28 +93,28 @@ private:
     std::string value_;
 };
 
-class and_validator : public validator
+class and_filter : public filter
 {
 public:
-    and_validator(p_validator left, p_validator right) : left_(left), right_(right) {}
+    and_filter(p_filter left, p_filter right) : left_(left), right_(right) {}
 
     bool test(const json &j) const override { return left_->test(j) && right_->test(j); }
 
 private:
-    p_validator left_;
-    p_validator right_;
+    p_filter left_;
+    p_filter right_;
 };
 
-class or_validator : public validator
+class or_filter : public filter
 {
 public:
-    or_validator(p_validator left, p_validator right) : left_(left), right_(right) {}
+    or_filter(p_filter left, p_filter right) : left_(left), right_(right) {}
 
     bool test(const json &j) const override { return left_->test(j) || right_->test(j); }
 
 private:
-    p_validator left_;
-    p_validator right_;
+    p_filter left_;
+    p_filter right_;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -149,54 +149,51 @@ BOOST_FUSION_ADAPT_STRUCT(ast::match_expr_value, v_sel, v_opt);
 
 namespace ast
 {
-p_validator to_validator(const or_expr_value &v);
-p_validator to_validator(const and_expr_value &v);
-p_validator to_validator(const unit_expr_value &v);
-p_validator to_validator(const group_expr_value &v);
-p_validator to_validator(const match_expr_value &v);
+p_filter to_filter(const or_expr_value &v);
+p_filter to_filter(const and_expr_value &v);
+p_filter to_filter(const unit_expr_value &v);
+p_filter to_filter(const group_expr_value &v);
+p_filter to_filter(const match_expr_value &v);
 
-p_validator to_validator(const or_expr_value &v)
+p_filter to_filter(const or_expr_value &v)
 {
-    p_validator combine = to_validator(v.at(0));
+    p_filter combine = to_filter(v.at(0));
     for (int i = 0; i < v.size(); ++i) {
-        combine = std::make_shared<or_validator>(combine, to_validator(v.at(i)));
+        combine = std::make_shared<or_filter>(combine, to_filter(v.at(i)));
     }
     return combine;
 }
 
-p_validator to_validator(const and_expr_value &v)
+p_filter to_filter(const and_expr_value &v)
 {
-    p_validator combine = to_validator(v.at(0));
+    p_filter combine = to_filter(v.at(0));
     for (int i = 0; i < v.size(); ++i) {
-        combine = std::make_shared<and_validator>(combine, to_validator(v.at(i)));
+        combine = std::make_shared<and_filter>(combine, to_filter(v.at(i)));
     }
     return combine;
 }
 
-class unit_expr_visitor : public boost::static_visitor<p_validator>
+class unit_expr_visitor : public boost::static_visitor<p_filter>
 {
 public:
-    p_validator operator()(const match_expr_value &v) const { return to_validator(v); }
+    p_filter operator()(const match_expr_value &v) const { return to_filter(v); }
 
-    p_validator operator()(const group_expr_value &v) const { return to_validator(v); }
+    p_filter operator()(const group_expr_value &v) const { return to_filter(v); }
 };
 
-p_validator to_validator(const unit_expr_value &v)
+p_filter to_filter(const unit_expr_value &v)
 {
     return boost::apply_visitor(unit_expr_visitor{}, v);
 }
 
-p_validator to_validator(const group_expr_value &v)
-{
-    return to_validator(static_cast<or_expr_value>(v));
-}
+p_filter to_filter(const group_expr_value &v) { return to_filter(static_cast<or_expr_value>(v)); }
 
-p_validator to_validator(const match_expr_value &v)
+p_filter to_filter(const match_expr_value &v)
 {
     p_selector pv_sel = std::make_shared<selector>(v.v_sel);
     if (v.v_opt) {
-        p_validator pv_opt = std::make_shared<value_validator>(*v.v_opt);
-        return std::make_shared<select_validator>(pv_sel, pv_opt);
+        p_filter pv_opt = std::make_shared<value_filter>(*v.v_opt);
+        return std::make_shared<select_filter>(pv_sel, pv_opt);
     }
     return pv_sel;
 }
@@ -230,7 +227,7 @@ const auto &entry = or_expr;
 
 }  // namespace parser
 
-bool validator::test(const packet &pac) const
+bool filter::test(const packet &pac) const
 {
     json j;
     auto layers = pac.get_detail().layers;
@@ -242,14 +239,13 @@ bool validator::test(const packet &pac) const
     return test(j);
 }
 
-p_validator validator::from_str(const std::string &code)
+p_filter filter::from_str(const std::string &code)
 {
     ast::entry_value ast;
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::entry, x3::space, ast);
     if (!ok || it != code.end()) {
-        throw std::runtime_error(
-            "failed to parse validator: unexpected token near '{}'"_format(*it));
+        throw std::runtime_error("failed to parse filter: unexpected token near '{}'"_format(*it));
     }
-    return ast::to_validator(ast);
+    return ast::to_filter(ast);
 }

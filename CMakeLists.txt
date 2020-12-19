@@ -80,7 +80,7 @@ add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/net/udp.cpp
   ${CMAKE_SOURCE_DIR}/src/net/dns.cpp
   ${CMAKE_SOURCE_DIR}/src/net/packet.cpp
-  ${CMAKE_SOURCE_DIR}/src/net/validator.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/filter.cpp
   ${CMAKE_SOURCE_DIR}/src/net/transport.cpp
   )
 target_compile_definitions(net PUBLIC _UNICODE)
