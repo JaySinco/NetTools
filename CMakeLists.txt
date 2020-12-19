@@ -64,6 +64,12 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
+add_custom_target(sync ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+  )
+
 add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/net/type.cpp
   ${CMAKE_SOURCE_DIR}/src/net/protocol.cpp
@@ -89,25 +95,17 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
-add_executable(gui WIN32
-  ${CMAKE_SOURCE_DIR}/src/graphic/packet-listctrl.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/packet-propgrid.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/main-frame.cpp
-  ${CMAKE_SOURCE_DIR}/src/graphic/app.cpp
-  )
-target_link_libraries(gui net)
-add_custom_command(TARGET gui
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
-  $<TARGET_FILE_DIR:gui>
-  )
-
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/cli/lsdev.cpp)
 target_link_libraries(lsdev net)
 
-add_executable(sniff ${CMAKE_SOURCE_DIR}/src/cli/sniff.cpp)
+add_executable(sniff WIN32
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/packet-listctrl.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/packet-propgrid.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/ui.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/main-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/app.cpp
+  ${CMAKE_SOURCE_DIR}/resources/app.manifest
+  )
 target_link_libraries(sniff net)
 
 add_executable(arp ${CMAKE_SOURCE_DIR}/src/cli/arp.cpp)

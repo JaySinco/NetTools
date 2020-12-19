@@ -6,7 +6,7 @@ fmt="${cwd}/external/.bin/clang-format.exe"
 cloc="${cwd}/external/.bin/cloc.exe"
 uifbp="${cwd}/resources/ui.fbp"
 
-if [ $(stat -c %Y ${cwd}/src/graphic/ui.cpp) -le $(stat -c %Y ${uifbp}) ]; then
+if [ $(stat -c %Y ${cwd}/src/cli/sniff/ui.cpp) -le $(stat -c %Y ${uifbp}) ]; then
     "${wxbuilder}" -g "${uifbp}" 2>/dev/null && echo "code generated for ${uifbp}"
 fi
 

@@ -2,7 +2,6 @@
 #include "packet-listctrl.h"
 #include "packet-propgrid.h"
 #include "net/transport.h"
-#include <wx/aboutdlg.h>
 #include <thread>
 #define NOTIFY_TRY try {
 #define NOTIFY_CATCH                                                                  \
@@ -33,26 +32,12 @@ MainFrame::MainFrame() : MainFrame_g(nullptr)
     column_sort.resize(PacketListCtrl::__FIELD_SIZE__, false);
     m_filter->SetFocus();
 
-    Bind(wxEVT_MENU, &MainFrame::on_quit, this, ID_QUIT);
-    Bind(wxEVT_MENU, &MainFrame::on_about, this, ID_ABOUT);
     m_start->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this);
     m_stop->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this);
     m_clear->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this);
     m_list->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::on_packet_selected, this);
     m_list->Bind(wxEVT_LIST_COL_CLICK, &MainFrame::on_list_col_clicked, this);
     m_filter->Bind(wxEVT_KILL_FOCUS, &MainFrame::on_filter_changed, this);
-}
-
-void MainFrame::on_quit(wxCommandEvent &event) { Close(true); }
-
-void MainFrame::on_about(wxCommandEvent &event)
-{
-    wxAboutDialogInfo info;
-    info.SetName("NetTools");
-    info.SetDescription("Network Toolset Program");
-    info.AddDeveloper("Mr.Robot");
-    info.SetWebSite("https://github.com/JaySinco/NetTools");
-    wxAboutBox(info, this);
 }
 
 void MainFrame::on_sniff_start(wxCommandEvent &event)
@@ -158,14 +143,16 @@ void MainFrame::sniff_recv(std::vector<packet> data)
         return validator_ && !validator_->test(pac);
     });
 
-    using iter_t = std::vector<packet>::iterator;
-    pac_list.insert(pac_list.end(), std::move_iterator<iter_t>(data.begin()),
-                    std::move_iterator<iter_t>(filter_end));
+    if (filter_end != data.begin()) {
+        using iter_t = std::vector<packet>::iterator;
+        pac_list.insert(pac_list.end(), std::move_iterator<iter_t>(data.begin()),
+                        std::move_iterator<iter_t>(filter_end));
 
-    m_list->SetItemCount(pac_list.size());
-    m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
-    m_list->Refresh();
-    update_status_total(pac_list.size());
+        m_list->SetItemCount(pac_list.size());
+        m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
+        m_list->Refresh();
+        update_status_total(pac_list.size());
+    }
 }
 
 void MainFrame::sniff_stopped()

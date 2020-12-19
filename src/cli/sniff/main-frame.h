@@ -11,8 +11,6 @@ public:
     MainFrame();
 
 private:
-    void on_quit(wxCommandEvent &event);
-    void on_about(wxCommandEvent &event);
     void on_sniff_start(wxCommandEvent &event);
     void on_sniff_stop(wxCommandEvent &event);
     void on_sniff_clear(wxCommandEvent &event);
