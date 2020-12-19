@@ -55,14 +55,14 @@ protected:
 
 public:
     MainFrame_g(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString &title = wxT("Sniff"),
-                const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(1250, 750),
+                const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxSize(1000, 600),
                 long style = wxDEFAULT_FRAME_STYLE | wxTAB_TRAVERSAL);
 
     ~MainFrame_g();
 
     void m_splitterOnIdle(wxIdleEvent &)
     {
-        m_splitter->SetSashPosition(922);
+        m_splitter->SetSashPosition(675);
         m_splitter->Disconnect(wxEVT_IDLE, wxIdleEventHandler(MainFrame_g::m_splitterOnIdle), NULL,
                                this);
     }

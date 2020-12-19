@@ -48,7 +48,7 @@ void PacketPropGrid::show_json(wxPGProperty *parent, const std::string &name, co
             Append(p);
         }
     } else if (j.is_number()) {
-        auto p = new wxIntProperty(name, wxPG_LABEL, j.get<long>());
+        auto p = new wxStringProperty(name, wxPG_LABEL, std::to_string(j.get<long long>()));
         if (parent != nullptr) {
             AppendIn(parent, p);
         } else {

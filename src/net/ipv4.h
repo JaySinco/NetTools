@@ -6,7 +6,7 @@ class ipv4 : public protocol
 public:
     struct detail
     {
-        u_char ver_ihl;    // Version (4 bits) + Internet header length (4 bits)
+        u_char ver_ihl;    // Version (4 bits) + Header length (4 bits)
         u_char tos;        // Type of service
         u_short tlen;      // Total length
         u_short id;        // Identification

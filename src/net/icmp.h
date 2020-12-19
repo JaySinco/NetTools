@@ -25,7 +25,7 @@ public:
     {
         std::string raw;  // Raw data, including ping echo
         ipv4 eip;         // Error ip header
-        u_char buf[8];    // At least 8-bit behind ip header
+        u_char buf[8];    // At least 8 bytes behind ip header
     };
 
     icmp() = default;

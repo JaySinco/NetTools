@@ -4,6 +4,7 @@
 #include "ipv4.h"
 #include "icmp.h"
 #include "udp.h"
+#include "tcp.h"
 #include "dns.h"
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
@@ -13,6 +14,7 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_IPv4, packet::decode<::ipv4>},
     {Protocol_Type_ICMP, packet::decode<::icmp>},
     {Protocol_Type_UDP, packet::decode<::udp>},
+    {Protocol_Type_TCP, packet::decode<::tcp>},
     {Protocol_Type_DNS, packet::decode<::dns>},
 };
 
@@ -163,7 +165,17 @@ std::string packet::get_owner() const
             tm_tcp = now;
         }
         tb = &tb_tcp;
-        return "";
+        const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
+        const auto &th = dynamic_cast<const tcp &>(*d.layers[2]);
+        if (adaptor::is_native(ih.get_detail().sip)) {
+            ip = ih.get_detail().sip;
+            port = th.get_detail().sport;
+        } else if (adaptor::is_native(ih.get_detail().dip)) {
+            ip = ih.get_detail().dip;
+            port = th.get_detail().dport;
+        } else {
+            return "";
+        }
     } else {
         return "";
     }

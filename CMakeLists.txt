@@ -78,6 +78,7 @@ add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/net/ipv4.cpp
   ${CMAKE_SOURCE_DIR}/src/net/icmp.cpp
   ${CMAKE_SOURCE_DIR}/src/net/udp.cpp
+  ${CMAKE_SOURCE_DIR}/src/net/tcp.cpp
   ${CMAKE_SOURCE_DIR}/src/net/dns.cpp
   ${CMAKE_SOURCE_DIR}/src/net/packet.cpp
   ${CMAKE_SOURCE_DIR}/src/net/filter.cpp

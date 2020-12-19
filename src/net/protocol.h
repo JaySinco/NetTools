@@ -3,7 +3,7 @@
 #include <vector>
 
 #define Protocol_Type_Void "void"
-#define Protocol_Type_Unknow(n) ("unknow({:#x})"_format(n))
+#define Protocol_Type_Unknow(n) (n < 0 ? "unknow" : "unknow({:#x})"_format(n))
 #define Protocol_Type_Ethernet "ethernet"
 #define Protocol_Type_IPv4 "ipv4"
 #define Protocol_Type_IPv6 "ipv6"
@@ -14,6 +14,7 @@
 #define Protocol_Type_UDP "udp"
 #define Protocol_Type_DNS "dns"
 #define Protocol_Type_HTTP "http"
+#define Protocol_Type_HTTPS "https"
 #define Protocol_Type_SSH "ssh"
 #define Protocol_Type_TELNET "telnet"
 #define Protocol_Type_RDP "rdp"

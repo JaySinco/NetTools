@@ -87,7 +87,7 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
     m_panel_right->SetSizer(bSizer10);
     m_panel_right->Layout();
     bSizer10->Fit(m_panel_right);
-    m_splitter->SplitVertically(m_panel_left, m_panel_right, 922);
+    m_splitter->SplitVertically(m_panel_left, m_panel_right, 675);
     bSizer1->Add(m_splitter, 1, wxEXPAND, 2);
 
     this->SetSizer(bSizer1);

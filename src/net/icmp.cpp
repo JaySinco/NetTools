@@ -145,6 +145,9 @@ json icmp::to_json() const
     }
     if (tp == "error") {
         j["error-ipv4"] = extra.eip.to_json();
+        j["error-sport"] = ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0]));
+        j["error-dport"] =
+            ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0] + sizeof(u_short)));
     }
     return j;
 }

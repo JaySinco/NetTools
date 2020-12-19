@@ -2,6 +2,7 @@
 #include "net/ethernet.h"
 #include "net/ipv4.h"
 #include "net/udp.h"
+#include "net/tcp.h"
 
 wxString PacketListCtrl::OnGetItemText(long item, long column) const
 {
@@ -32,14 +33,12 @@ void PacketListCtrl::init(const std::vector<packet> *ptr)
 {
     data_ptr = ptr;
     AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
-    AppendColumn("smac", wxLIST_FORMAT_LEFT, 140);
-    AppendColumn("dmac", wxLIST_FORMAT_LEFT, 140);
     AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
     AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);
     AppendColumn("sport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("dport", wxLIST_FORMAT_LEFT, 55);
     AppendColumn("type", wxLIST_FORMAT_LEFT, 70);
-    AppendColumn("owner", wxLIST_FORMAT_LEFT, 80);
+    AppendColumn("owner", wxLIST_FORMAT_LEFT, 120);
     SetItemCount(0);
 }
 
@@ -51,18 +50,6 @@ std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
     switch (column) {
         case FIELD_TIME:
             return util::tv2s(pac.get_detail().time);
-        case FIELD_SOURCE_MAC:
-            if (layers.front()->type() == Protocol_Type_Ethernet) {
-                const auto &eh = dynamic_cast<const ethernet &>(*layers.front());
-                return eh.get_detail().smac.to_str();
-            }
-            break;
-        case FIELD_DEST_MAC:
-            if (layers.front()->type() == Protocol_Type_Ethernet) {
-                const auto &eh = dynamic_cast<const ethernet &>(*layers.front());
-                return eh.get_detail().dmac.to_str();
-            }
-            break;
         case FIELD_SOURCE_IP:
             if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
                 const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
@@ -80,11 +67,19 @@ std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
                 const auto &uh = dynamic_cast<const udp &>(*layers[2]);
                 return std::to_string(uh.get_detail().sport);
             }
+            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_TCP) {
+                const auto &th = dynamic_cast<const tcp &>(*layers[2]);
+                return std::to_string(th.get_detail().sport);
+            }
             break;
         case FIELD_DEST_PORT:
             if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
                 const auto &uh = dynamic_cast<const udp &>(*layers[2]);
                 return std::to_string(uh.get_detail().dport);
+            }
+            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_TCP) {
+                const auto &th = dynamic_cast<const tcp &>(*layers[2]);
+                return std::to_string(th.get_detail().dport);
             }
             break;
         case FIELD_TYPE: {
