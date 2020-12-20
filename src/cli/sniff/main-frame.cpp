@@ -37,7 +37,7 @@ MainFrame::MainFrame() : MainFrame_g(nullptr)
     m_clear->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this);
     m_list->Bind(wxEVT_LIST_ITEM_SELECTED, &MainFrame::on_packet_selected, this);
     m_list->Bind(wxEVT_LIST_COL_CLICK, &MainFrame::on_list_col_clicked, this);
-    m_filter->Bind(wxEVT_KILL_FOCUS, &MainFrame::on_filter_changed, this);
+    m_filter->Bind(wxEVT_TEXT_ENTER, &MainFrame::on_filter_changed, this);
 }
 
 void MainFrame::on_sniff_start(wxCommandEvent &event)
@@ -53,7 +53,6 @@ void MainFrame::on_sniff_stop(wxCommandEvent &event) { sniff_should_stop = true;
 
 void MainFrame::on_sniff_clear(wxCommandEvent &event)
 {
-    m_list->DeleteAllItems();
     m_list->clear();
     m_prop->Clear();
     idx_list.clear();
@@ -79,10 +78,9 @@ void MainFrame::on_list_col_clicked(wxListEvent &event)
     m_list->Refresh();
 }
 
-void MainFrame::on_filter_changed(wxFocusEvent &event)
+void MainFrame::on_filter_changed(wxCommandEvent &event)
 {
     NOTIFY_TRY
-    event.Skip();
     std::string filter = m_filter->GetValue();
     if (filter.size() == 0) {
         filter_.reset();

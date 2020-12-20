@@ -42,8 +42,8 @@ MainFrame_g::MainFrame_g(wxWindow *parent, wxWindowID id, const wxString &title,
     m_adaptor->SetSelection(0);
     bSizer6->Add(m_adaptor, 1, wxBOTTOM | wxEXPAND | wxFIXED_MINSIZE | wxRIGHT | wxTOP, 3);
 
-    m_filter =
-        new wxTextCtrl(m_panel_left, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+    m_filter = new wxTextCtrl(m_panel_left, wxID_ANY, wxEmptyString, wxDefaultPosition,
+                              wxDefaultSize, wxTE_PROCESS_ENTER);
     bSizer6->Add(m_filter, 4, wxBOTTOM | wxEXPAND | wxLEFT | wxTOP, 3);
 
     bSizer4->Add(bSizer6, 1, wxEXPAND, 5);

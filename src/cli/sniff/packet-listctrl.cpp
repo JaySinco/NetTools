@@ -43,7 +43,11 @@ void PacketListCtrl::init(const std::vector<size_t> *p_idx, const std::vector<pa
     SetItemCount(0);
 }
 
-void PacketListCtrl::clear() { attr_list.clear(); }
+void PacketListCtrl::clear()
+{
+    DeleteAllItems();
+    attr_list.clear();
+}
 
 std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
 {
