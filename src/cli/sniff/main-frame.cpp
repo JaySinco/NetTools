@@ -24,11 +24,11 @@ MainFrame::MainFrame() : MainFrame_g(nullptr)
     }
     m_adaptor->SetSelection(apt_idx);
     m_stop->Disable();
-    m_list->init(&pac_list);
+    m_list->init(&idx_list, &pac_list);
     m_prop->SetSplitterPosition(140);
-    int status_width[] = {-12, -1};
+    int status_width[] = {97, -1};
     m_status->SetFieldsCount(2, status_width);
-    update_status_total(0);
+    update_status_bar();
     column_sort.resize(PacketListCtrl::__FIELD_SIZE__, false);
     m_filter->SetFocus();
     std::thread(&MainFrame::port_table_update_background, this, 10).detach();
@@ -56,25 +56,24 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
     m_list->DeleteAllItems();
     m_list->clear();
     m_prop->Clear();
+    idx_list.clear();
     pac_list.clear();
-    update_status_total(0);
+    port_table::clear();
+    update_status_bar();
 }
 
 void MainFrame::on_packet_selected(wxListEvent &event)
 {
-    m_prop->show_packet(pac_list.at(event.m_itemIndex));
+    m_prop->show_packet(pac_list.at(idx_list.at(event.m_itemIndex)));
 }
 
 void MainFrame::on_list_col_clicked(wxListEvent &event)
 {
-    if (!m_start->IsEnabled()) {
-        return;
-    }
     bool reverse = column_sort.at(event.m_col);
     column_sort.at(event.m_col) = !reverse;
-    std::stable_sort(pac_list.begin(), pac_list.end(), [&](const packet &a, const packet &b) {
-        auto sa = PacketListCtrl::stringfy_field(a, event.m_col);
-        auto sb = PacketListCtrl::stringfy_field(b, event.m_col);
+    std::stable_sort(idx_list.begin(), idx_list.end(), [&](size_t a, size_t b) {
+        auto sa = PacketListCtrl::stringfy_field(pac_list.at(a), event.m_col);
+        auto sb = PacketListCtrl::stringfy_field(pac_list.at(b), event.m_col);
         return reverse ? sb < sa : sa < sb;
     });
     m_list->Refresh();
@@ -87,9 +86,18 @@ void MainFrame::on_filter_changed(wxFocusEvent &event)
     std::string filter = m_filter->GetValue();
     if (filter.size() == 0) {
         filter_.reset();
-        return;
+    } else {
+        filter_ = filter::from_str(filter);
     }
-    filter_ = filter::from_str(filter);
+    idx_list.clear();
+    for (size_t i = 0; i < pac_list.size(); ++i) {
+        if (!filter_ || filter_->test(pac_list[i])) {
+            idx_list.push_back(i);
+        }
+    }
+    m_list->SetItemCount(idx_list.size());
+    m_list->Refresh();
+    update_status_bar();
     NOTIFY_CATCH
 }
 
@@ -147,20 +155,19 @@ void MainFrame::port_table_update_background(int update_freq_ms)
 
 void MainFrame::sniff_recv(std::vector<packet> data)
 {
-    auto filter_end = std::remove_if(data.begin(), data.end(), [&](const packet &pac) {
-        return filter_ && !filter_->test(pac);
-    });
-
-    if (filter_end != data.begin()) {
-        using iter_t = std::vector<packet>::iterator;
-        pac_list.insert(pac_list.end(), std::move_iterator<iter_t>(data.begin()),
-                        std::move_iterator<iter_t>(filter_end));
-
-        m_list->SetItemCount(pac_list.size());
-        m_list->ScrollList(0, m_list->GetViewRect().height - m_list->GetScrollPos(wxVERTICAL));
-        m_list->Refresh();
-        update_status_total(pac_list.size());
+    bool need_refresh = false;
+    for (auto &pac : data) {
+        pac_list.push_back(std::move(pac));
+        if (!filter_ || filter_->test(pac_list.back())) {
+            need_refresh = true;
+            idx_list.push_back(pac_list.size() - 1);
+        }
     }
+    if (need_refresh) {
+        m_list->SetItemCount(idx_list.size());
+        m_list->Refresh();
+    }
+    update_status_bar();
 }
 
 void MainFrame::sniff_stopped()
@@ -175,7 +182,14 @@ void MainFrame::notify_error(const std::string &msg)
     diag.ShowModal();
 }
 
-void MainFrame::update_status_total(size_t n)
+void MainFrame::update_status_bar()
 {
-    m_status->SetStatusText("Total:{:8d}"_format(n), 1);
+    size_t filtered = idx_list.size();
+    size_t total = pac_list.size();
+    if (filter_) {
+        m_status->SetStatusText(" Filtered: {}"_format(filtered), 1);
+    } else {
+        m_status->SetStatusText(" No Filter Set", 1);
+    }
+    m_status->SetStatusText(" Total: {}"_format(total), 0);
 }

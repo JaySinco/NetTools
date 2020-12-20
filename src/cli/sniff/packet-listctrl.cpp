@@ -6,13 +6,13 @@
 
 wxString PacketListCtrl::OnGetItemText(long item, long column) const
 {
-    return stringfy_field(data_ptr->at(item), column);
+    return stringfy_field(data_ptr->at(idx_ptr->at(item)), column);
 }
 
 wxListItemAttr *PacketListCtrl::OnGetItemAttr(long item) const
 {
     wxListItemAttr attr;
-    const auto &layers = data_ptr->at(item).get_detail().layers;
+    const auto &layers = data_ptr->at(idx_ptr->at(item)).get_detail().layers;
     if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
         const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
         const ip4 &sip = ih.get_detail().sip;
@@ -29,9 +29,10 @@ wxListItemAttr *PacketListCtrl::OnGetItemAttr(long item) const
     return const_cast<wxListItemAttr *>(&attr_list.back());
 }
 
-void PacketListCtrl::init(const std::vector<packet> *ptr)
+void PacketListCtrl::init(const std::vector<size_t> *p_idx, const std::vector<packet> *p_data)
 {
-    data_ptr = ptr;
+    idx_ptr = p_idx;
+    data_ptr = p_data;
     AppendColumn("time", wxLIST_FORMAT_LEFT, 105);
     AppendColumn("sip", wxLIST_FORMAT_LEFT, 120);
     AppendColumn("dip", wxLIST_FORMAT_LEFT, 120);

@@ -22,9 +22,10 @@ private:
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
     void notify_error(const std::string &msg);
-    void update_status_total(size_t n);
+    void update_status_bar();
 
     p_filter filter_;
+    std::vector<size_t> idx_list;
     std::vector<packet> pac_list;
     std::vector<bool> column_sort;
     std::atomic<bool> sniff_should_stop;

@@ -23,12 +23,13 @@ public:
     wxString OnGetItemText(long item, long column) const override;
     wxListItemAttr *OnGetItemAttr(long item) const override;
 
-    void init(const std::vector<packet> *ptr);
+    void init(const std::vector<size_t> *p_idx, const std::vector<packet> *p_data);
     void clear();
 
     static std::string stringfy_field(const packet &pac, long column);
 
 private:
+    const std::vector<size_t> *idx_ptr = nullptr;
     const std::vector<packet> *data_ptr = nullptr;
     std::vector<wxListItemAttr> attr_list;
 

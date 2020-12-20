@@ -206,15 +206,17 @@ wsa_guard::wsa_guard()
 
 wsa_guard::~wsa_guard() { WSACleanup(); }
 
-std::mutex port_table::mutex;
-port_table::storage_type port_table::map;
+std::mutex port_table::lk_map;
+port_table::storage_t port_table::map;
+std::mutex port_table::lk_image;
+port_table::image_cache_t port_table::image_cache;
 
 std::string port_table::pid_to_image(u_int pid)
 {
-    static std::map<u_int, std::pair<std::string, std::chrono::system_clock::time_point>> cached;
+    std::lock_guard<std::mutex> lk(lk_image);
     auto start_tm = std::chrono::system_clock::now();
-    auto it = cached.find(pid);
-    if (it != cached.end()) {
+    auto it = image_cache.find(pid);
+    if (it != image_cache.end()) {
         if (start_tm - it->second.second < 60s) {
             VLOG(3) << "use cached image for pid={}"_format(pid);
             return it->second.first;
@@ -225,23 +227,23 @@ std::string port_table::pid_to_image(u_int pid)
     std::string s_default = "pid({})"_format(pid);
     HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (handle == NULL) {
-        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
+        image_cache[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
         return s_default;
     }
     std::shared_ptr<void> handle_guard(nullptr, [&](void *) { CloseHandle(handle); });
     char buf[1024];
     DWORD size = sizeof(buf);
     if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) {
-        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
+        image_cache[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
         return s_default;
     }
     boost::filesystem::path fp(std::string(buf, size));
     std::string image = fp.filename().string();
-    cached[pid] = std::make_pair(image, std::chrono::system_clock::now());
+    image_cache[pid] = std::make_pair(image, std::chrono::system_clock::now());
     return image;
 }
 
-port_table::storage_type port_table::tcp()
+port_table::storage_t port_table::tcp()
 {
     ULONG size = sizeof(MIB_TCPTABLE);
     PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
@@ -258,7 +260,7 @@ port_table::storage_type port_table::tcp()
     if (ret != NO_ERROR) {
         throw std::runtime_error("failed to get tcp port-pid table, ret={}"_format(ret));
     }
-    port_table::storage_type map;
+    port_table::storage_t map;
     for (int i = 0; i < ptable->dwNumEntries; ++i) {
         in_addr addr;
         addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
@@ -272,7 +274,7 @@ port_table::storage_type port_table::tcp()
     return map;
 }
 
-port_table::storage_type port_table::udp()
+port_table::storage_t port_table::udp()
 {
     ULONG size = sizeof(MIB_UDPTABLE_OWNER_PID);
     PMIB_UDPTABLE_OWNER_PID ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
@@ -290,7 +292,7 @@ port_table::storage_type port_table::udp()
     if (ret != NO_ERROR) {
         throw std::runtime_error("failed to get udp port-pid table, ret={}"_format(ret));
     }
-    port_table::storage_type map;
+    port_table::storage_t map;
     for (int i = 0; i < ptable->dwNumEntries; ++i) {
         in_addr addr;
         addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
@@ -306,16 +308,28 @@ port_table::storage_type port_table::udp()
 
 void port_table::update()
 {
-    storage_type map_tcp(tcp());
-    storage_type map_udp(udp());
-    std::lock_guard<std::mutex> lk(mutex);
+    storage_t map_tcp(tcp());
+    storage_t map_udp(udp());
+    std::lock_guard<std::mutex> lk(lk_map);
     map.insert(map_tcp.begin(), map_tcp.end());
     map.insert(map_udp.begin(), map_udp.end());
 }
 
+void port_table::clear()
+{
+    {
+        std::lock_guard<std::mutex> lk_i(lk_image);
+        image_cache.clear();
+    }
+    {
+        std::lock_guard<std::mutex> lk_m(lk_map);
+        map.clear();
+    }
+}
+
 std::string port_table::lookup(const key_type &key)
 {
-    std::lock_guard<std::mutex> lk(mutex);
+    std::lock_guard<std::mutex> lk(lk_map);
     auto it = map.find(key);
     if (it == map.end()) {
         return "";
