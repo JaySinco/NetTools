@@ -31,7 +31,7 @@ MainFrame::MainFrame() : MainFrame_g(nullptr)
     update_status_total(0);
     column_sort.resize(PacketListCtrl::__FIELD_SIZE__, false);
     m_filter->SetFocus();
-
+    std::thread(&MainFrame::port_table_update_background, this, 10).detach();
     m_start->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_start, this);
     m_stop->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_stop, this);
     m_clear->Bind(wxEVT_BUTTON, &MainFrame::on_sniff_clear, this);
@@ -135,6 +135,14 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
         throw std::runtime_error("failed to read packets: {}"_format(pcap_geterr(handle)));
     }
     NOTIFY_CATCH
+}
+
+void MainFrame::port_table_update_background(int update_freq_ms)
+{
+    while (true) {
+        port_table::update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(update_freq_ms));
+    }
 }
 
 void MainFrame::sniff_recv(std::vector<packet> data)

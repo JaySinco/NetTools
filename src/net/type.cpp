@@ -3,7 +3,6 @@
 #include <iphlpapi.h>
 #include <sstream>
 #include <codecvt>
-#include <mutex>
 #include <boost/filesystem.hpp>
 
 const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
@@ -207,9 +206,43 @@ wsa_guard::wsa_guard()
 
 wsa_guard::~wsa_guard() { WSACleanup(); }
 
-port_pid_table port_pid_table::tcp()
+std::mutex port_table::mutex;
+port_table::storage_type port_table::map;
+
+std::string port_table::pid_to_image(u_int pid)
 {
-    VLOG(3) << "get tcp port-pid table";
+    static std::map<u_int, std::pair<std::string, std::chrono::system_clock::time_point>> cached;
+    auto start_tm = std::chrono::system_clock::now();
+    auto it = cached.find(pid);
+    if (it != cached.end()) {
+        if (start_tm - it->second.second < 60s) {
+            VLOG(3) << "use cached image for pid={}"_format(pid);
+            return it->second.first;
+        } else {
+            VLOG(3) << "cached image for pid={} expired, call winapi to update"_format(pid);
+        }
+    }
+    std::string s_default = "pid({})"_format(pid);
+    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (handle == NULL) {
+        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
+        return s_default;
+    }
+    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { CloseHandle(handle); });
+    char buf[1024];
+    DWORD size = sizeof(buf);
+    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) {
+        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
+        return s_default;
+    }
+    boost::filesystem::path fp(std::string(buf, size));
+    std::string image = fp.filename().string();
+    cached[pid] = std::make_pair(image, std::chrono::system_clock::now());
+    return image;
+}
+
+port_table::storage_type port_table::tcp()
+{
     ULONG size = sizeof(MIB_TCPTABLE);
     PMIB_TCPTABLE2 ptable = reinterpret_cast<MIB_TCPTABLE2 *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
@@ -225,21 +258,22 @@ port_pid_table port_pid_table::tcp()
     if (ret != NO_ERROR) {
         throw std::runtime_error("failed to get tcp port-pid table, ret={}"_format(ret));
     }
-    port_pid_table tb;
+    port_table::storage_type map;
     for (int i = 0; i < ptable->dwNumEntries; ++i) {
         in_addr addr;
         addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
         ip4 ip(addr);
         u_short port = ntohs(ptable->table[i].dwLocalPort);
         u_int pid = ptable->table[i].dwOwningPid;
-        tb.mapping[std::make_pair(ip, port)] = pid;
+        if (pid != 0) {
+            map[std::make_tuple("tcp", ip, port)] = pid_to_image(pid);
+        }
     }
-    return tb;
+    return map;
 }
 
-port_pid_table port_pid_table::udp()
+port_table::storage_type port_table::udp()
 {
-    VLOG(3) << "get udp port-pid table";
     ULONG size = sizeof(MIB_UDPTABLE_OWNER_PID);
     PMIB_UDPTABLE_OWNER_PID ptable = reinterpret_cast<MIB_UDPTABLE_OWNER_PID *>(malloc(size));
     std::shared_ptr<void> ptable_guard(nullptr, [&](void *) { free(ptable); });
@@ -256,16 +290,37 @@ port_pid_table port_pid_table::udp()
     if (ret != NO_ERROR) {
         throw std::runtime_error("failed to get udp port-pid table, ret={}"_format(ret));
     }
-    port_pid_table tb;
+    port_table::storage_type map;
     for (int i = 0; i < ptable->dwNumEntries; ++i) {
         in_addr addr;
         addr.S_un.S_addr = ptable->table[i].dwLocalAddr;
         ip4 ip(addr);
         u_short port = ntohs(ptable->table[i].dwLocalPort);
         u_int pid = ptable->table[i].dwOwningPid;
-        tb.mapping[std::make_pair(ip, port)] = pid;
+        if (pid != 0) {
+            map[std::make_tuple("udp", ip, port)] = pid_to_image(pid);
+        }
     }
-    return tb;
+    return map;
+}
+
+void port_table::update()
+{
+    storage_type map_tcp(tcp());
+    storage_type map_udp(udp());
+    std::lock_guard<std::mutex> lk(mutex);
+    map.insert(map_tcp.begin(), map_tcp.end());
+    map.insert(map_udp.begin(), map_udp.end());
+}
+
+std::string port_table::lookup(const key_type &key)
+{
+    std::lock_guard<std::mutex> lk(mutex);
+    auto it = map.find(key);
+    if (it == map.end()) {
+        return "";
+    }
+    return it->second;
 }
 
 std::string util::ws2s(const std::wstring &wstr)
@@ -296,37 +351,6 @@ std::string util::tv2s(const timeval &tv)
     char timestr[16] = {0};
     strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
     return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
-}
-
-std::string util::pid_to_image(u_int pid)
-{
-    static std::map<u_int, std::pair<std::string, std::chrono::system_clock::time_point>> cached;
-    auto start_tm = std::chrono::system_clock::now();
-    if (cached.count(pid) > 0) {
-        if (start_tm - cached[pid].second < 60s) {
-            VLOG(3) << "use cached image for pid={}"_format(pid);
-            return cached[pid].first;
-        } else {
-            VLOG(3) << "cached image for pid={} expired, call winapi to update"_format(pid);
-        }
-    }
-    std::string s_default = "pid({})"_format(pid);
-    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    if (handle == NULL) {
-        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
-        return s_default;
-    }
-    std::shared_ptr<void> handle_guard(nullptr, [&](void *) { CloseHandle(handle); });
-    char buf[1024];
-    DWORD size = sizeof(buf);
-    if (!QueryFullProcessImageNameA(handle, 0, buf, &size)) {
-        cached[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
-        return s_default;
-    }
-    boost::filesystem::path fp(std::string(buf, size));
-    std::string image = fp.filename().string();
-    cached[pid] = std::make_pair(image, std::chrono::system_clock::now());
-    return image;
 }
 
 long operator-(const timeval &tv1, const timeval &tv2)

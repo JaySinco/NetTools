@@ -18,6 +18,7 @@ private:
     void on_list_col_clicked(wxListEvent &event);
     void on_filter_changed(wxFocusEvent &event);
     void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
+    void port_table_update_background(int update_freq_ms);
     void sniff_recv(std::vector<packet> data);
     void sniff_stopped();
     void notify_error(const std::string &msg);

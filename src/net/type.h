@@ -1,5 +1,6 @@
 #pragma once
 #include "prec.h"
+#include <mutex>
 #define NT_TRY try {
 #define NT_CATCH \
     }            \
@@ -93,18 +94,25 @@ private:
     static wsa_guard g;
 };
 
-struct port_pid_table
+class port_table
 {
-    std::map<std::pair<ip4, u_short>, u_int> mapping;
+public:
+    using key_type = std::tuple<std::string, ip4, u_short>;
+    using storage_type = std::map<key_type, std::string>;
+    static void update();
+    static std::string lookup(const key_type &key);
 
-    static port_pid_table udp();
-    static port_pid_table tcp();
+private:
+    static std::string pid_to_image(u_int pid);
+    static storage_type tcp();
+    static storage_type udp();
+    static std::mutex mutex;
+    static storage_type map;
 };
 
 class util
 {
 public:
-    static std::string pid_to_image(u_int pid);
     static std::string tv2s(const timeval &tv);
     static std::string ws2s(const std::wstring &wstr);
     static std::wstring s2ws(const std::string &str);

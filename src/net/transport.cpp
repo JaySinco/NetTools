@@ -88,13 +88,16 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
 {
     static std::map<ip4, std::pair<mac, std::chrono::system_clock::time_point>> cached;
     auto start_tm = std::chrono::system_clock::now();
-    if (use_cache && cached.count(ip) > 0) {
-        if (start_tm - cached[ip].second < 30s) {
-            VLOG(3) << "use cached mac for {}"_format(ip.to_str());
-            mac_ = cached[ip].first;
-            return true;
-        } else {
-            VLOG(3) << "cached mac for {} expired, send arp to update"_format(ip.to_str());
+    if (use_cache) {
+        auto it = cached.find(ip);
+        if (it != cached.end()) {
+            if (start_tm - it->second.second < 30s) {
+                VLOG(3) << "use cached mac for {}"_format(ip.to_str());
+                mac_ = it->second.first;
+                return true;
+            } else {
+                VLOG(3) << "cached mac for {} expired, send arp to update"_format(ip.to_str());
+            }
         }
     }
     adaptor apt = adaptor::fit(ip);

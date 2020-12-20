@@ -134,44 +134,25 @@ bool packet::has_type(const std::string &type) const
 
 std::string packet::get_owner() const
 {
-    using namespace std::chrono;
-    static port_pid_table tb_udp, tb_tcp;
-    static system_clock::time_point tm_udp, tm_tcp;
-
-    auto lookup = [](const port_pid_table &tb, const ip4 &ip, u_short port) -> std::string {
-        if (!adaptor::is_native(ip)) {
-            return "";
+    auto output = [](const std::string &src, const std::string &dest) -> std::string {
+        if (src == dest) {
+            return src;
         }
-        auto key = std::make_pair(ip, port);
-        if (tb.mapping.count(std::make_pair(ip, port)) <= 0) {
-            return "";
+        if (src.size() > 0 && dest.size() > 0) {
+            return "{} > {}"_format(src, dest);
         }
-        return util::pid_to_image(tb.mapping.at(key));
+        return std::max(src, dest);
     };
-
-    auto now = system_clock::now();
     if (has_type(Protocol_Type_UDP)) {
-        if (now - tm_udp > 3s) {
-            for (const auto &it : port_pid_table::udp().mapping) {
-                tb_udp.mapping[it.first] = it.second;
-            }
-            tm_udp = now;
-        }
-        const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
-        const auto &uh = dynamic_cast<const udp &>(*d.layers[2]);
-        return "{}{}"_format(lookup(tb_udp, ih.get_detail().sip, uh.get_detail().sport),
-                             lookup(tb_udp, ih.get_detail().dip, uh.get_detail().dport));
+        const auto &id = dynamic_cast<const ipv4 &>(*d.layers[1]).get_detail();
+        const auto &ud = dynamic_cast<const udp &>(*d.layers[2]).get_detail();
+        return output(port_table::lookup(std::make_tuple("udp", id.sip, ud.sport)),
+                      port_table::lookup(std::make_tuple("udp", id.dip, ud.dport)));
     } else if (has_type(Protocol_Type_TCP)) {
-        if (now - tm_tcp > 3s) {
-            for (const auto &it : port_pid_table::tcp().mapping) {
-                tb_tcp.mapping[it.first] = it.second;
-            }
-            tm_tcp = now;
-        }
-        const auto &ih = dynamic_cast<const ipv4 &>(*d.layers[1]);
-        const auto &th = dynamic_cast<const tcp &>(*d.layers[2]);
-        return "{}{}"_format(lookup(tb_tcp, ih.get_detail().sip, th.get_detail().sport),
-                             lookup(tb_tcp, ih.get_detail().dip, th.get_detail().dport));
+        const auto &id = dynamic_cast<const ipv4 &>(*d.layers[1]).get_detail();
+        const auto &td = dynamic_cast<const tcp &>(*d.layers[2]).get_detail();
+        return output(port_table::lookup(std::make_tuple("tcp", id.sip, td.sport)),
+                      port_table::lookup(std::make_tuple("tcp", id.dip, td.dport)));
     }
     return "";
 }
