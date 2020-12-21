@@ -83,6 +83,15 @@ json packet::to_json() const
     return j;
 }
 
+const json &packet::to_json_cached() const
+{
+    if (j_cached) {
+        return *j_cached;
+    }
+    const_cast<packet &>(*this).j_cached = to_json();
+    return *j_cached;
+}
+
 bool packet::link_to(const packet &rhs) const
 {
     if (d.layers.size() != rhs.d.layers.size()) {

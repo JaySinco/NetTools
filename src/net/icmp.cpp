@@ -111,8 +111,7 @@ void icmp::to_bytes(std::vector<u_char> &bytes) const
     std::memcpy(buf, &dt, sizeof(detail));
     std::memcpy(buf + sizeof(detail), extra.raw.data(), extra.raw.size());
     dt.crc = calc_checksum(buf, tlen);
-    auto pt = const_cast<icmp *>(this);
-    pt->d.crc = dt.crc;
+    const_cast<icmp &>(*this).d.crc = dt.crc;
     std::memcpy(buf, &dt, sizeof(detail));
     bytes.insert(bytes.cbegin(), buf, buf + tlen);
     delete[] buf;

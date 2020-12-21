@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <map>
+#include <optional>
 #include "protocol.h"
 
 class packet
@@ -20,6 +21,8 @@ public:
     void to_bytes(std::vector<u_char> &bytes) const;
 
     json to_json() const;
+
+    const json &to_json_cached() const;
 
     bool link_to(const packet &rhs) const;
 
@@ -41,6 +44,8 @@ public:
 
 private:
     detail d;
+
+    std::optional<json> j_cached;
 
     std::string get_owner() const;
 

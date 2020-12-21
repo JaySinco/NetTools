@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <sstream>
 #include <json.hpp>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>

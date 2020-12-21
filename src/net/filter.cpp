@@ -53,85 +53,93 @@ private:
 
 using p_selector = std::shared_ptr<selector>;
 
-class select_filter : public filter
+class comparison_filter : public filter
 {
 public:
-    select_filter(p_selector psel, p_filter pval) : psel_(psel), pval_(pval) {}
+    enum class op_t
+    {
+        EQUAL,
+        LESS,
+        GREATER,
+    };
+
+    comparison_filter(p_selector psel, op_t op, const std::string &value)
+        : psel_(psel), op_(op), value_(value)
+    {
+    }
 
     bool test(const json &j) const override
     {
-        const json *out = nullptr;
-        auto ok = psel_->select(j, out);
+        const json *child = nullptr;
+        auto ok = psel_->select(j, child);
         if (!ok) {
             return false;
         }
-        return pval_->test(*out);
-    }
 
-private:
-    p_selector psel_;
-    p_filter pval_;
-};
-
-class value_filter : public filter
-{
-public:
-    value_filter(const std::string &value) : value_(value) {}
-
-    bool test(const json &j) const override
-    {
         std::string s;
-        if (j.is_string()) {
-            s = j.get<std::string>();
+        if (child->is_string()) {
+            s = child->get<std::string>();
         } else {
-            s = j.dump();
+            s = child->dump();
         }
         return s == value_;
     }
 
 private:
+    p_selector psel_;
+    op_t op_;
     std::string value_;
 };
 
-class and_filter : public filter
+std::ostream &operator<<(std::ostream &os, comparison_filter::op_t op)
+{
+    switch (op) {
+        case comparison_filter::op_t::EQUAL:
+            return os << "=";
+        case comparison_filter::op_t::LESS:
+            return os << "<";
+        case comparison_filter::op_t::GREATER:
+            return os << ">";
+    }
+    return os;
+}
+
+class logic_filter : public filter
 {
 public:
-    and_filter(const std::vector<p_filter> &pf_list) : pf_list_(pf_list) {}
+    enum class op_t
+    {
+        AND,
+        OR,
+        NOT,
+    };
+
+    logic_filter(const std::vector<p_filter> &pf_list, op_t op) : pf_list_(pf_list), op_(op) {}
 
     bool test(const json &j) const override
     {
-        return std::accumulate(pf_list_.cbegin(), pf_list_.cend(), true,
-                               [&](bool ret, const p_filter &pf) { return ret && pf->test(j); });
+        bool ok;
+        switch (op_) {
+            case op_t::AND:
+                ok = std::accumulate(
+                    pf_list_.cbegin(), pf_list_.cend(), true,
+                    [&](bool ret, const p_filter &pf) { return ret && pf->test(j); });
+                break;
+            case op_t::OR:
+                ok = std::accumulate(
+                    pf_list_.cbegin(), pf_list_.cend(), false,
+                    [&](bool ret, const p_filter &pf) { return ret || pf->test(j); });
+                break;
+            case op_t::NOT:
+                ok = !pf_list_[0]->test(j);
+                break;
+        }
+        return ok;
     }
 
 private:
     std::vector<p_filter> pf_list_;
-};
-
-class or_filter : public filter
-{
-public:
-    or_filter(const std::vector<p_filter> &pf_list) : pf_list_(pf_list) {}
-
-    bool test(const json &j) const override
-    {
-        return std::accumulate(pf_list_.cbegin(), pf_list_.cend(), false,
-                               [&](bool ret, const p_filter &pf) { return ret || pf->test(j); });
-    }
-
-private:
-    std::vector<p_filter> pf_list_;
-};
-
-class not_filter : public filter
-{
-public:
-    not_filter(p_filter pf) : pf_(pf) {}
-
-    bool test(const json &j) const override { return !pf_->test(j); }
-
-private:
-    p_filter pf_;
+    op_t op_;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -140,214 +148,190 @@ private:
 
 namespace ast
 {
-struct or_expr_value;
+struct expr_value;
 
-using expr_value = or_expr_value;
+using comp_value = std::pair<comparison_filter::op_t, std::string>;
 
-struct selector_expr_value : std::vector<std::string>
+struct match_value
 {
-    using std::vector<std::string>::operator=;
+    std::vector<std::string> select_;
+    boost::optional<comp_value> compare_;
 };
 
-struct match_expr_value
-{
-    selector_expr_value v_sel;
-    boost::optional<std::string> v_opt;
-};
+using unit_value = boost::variant<match_value, x3::forward_ast<expr_value>>;
+using not_value = std::pair<boost::optional<char>, unit_value>;
+using and_value = std::vector<not_value>;
+using or_value = std::vector<and_value>;
 
-struct group_expr_value : x3::forward_ast<expr_value>
+struct expr_value : or_value
 {
-    using x3::forward_ast<expr_value>::operator=;
-};
-
-struct unit_expr_value : boost::variant<match_expr_value, group_expr_value>
-{
-    using boost::variant<match_expr_value, group_expr_value>::operator=;
-};
-
-struct not_expr_value : unit_expr_value
-{
-    using unit_expr_value::operator=;
-};
-
-struct and_expr_value : std::vector<boost::variant<unit_expr_value, not_expr_value>>
-{
-    using std::vector<boost::variant<unit_expr_value, not_expr_value>>::operator=;
-};
-
-struct or_expr_value : std::vector<and_expr_value>
-{
-    using std::vector<and_expr_value>::operator=;
+    using or_value::operator=;
 };
 
 }  // namespace ast
 
-BOOST_FUSION_ADAPT_STRUCT(ast::match_expr_value, v_sel, v_opt);
+BOOST_FUSION_ADAPT_STRUCT(ast::match_value, select_, compare_);
 
 namespace ast
 {
-json to_json(const or_expr_value &v);
-json to_json(const and_expr_value &v);
-json to_json(const not_expr_value &v);
-json to_json(const unit_expr_value &v);
-json to_json(const group_expr_value &v);
-json to_json(const match_expr_value &v);
+json to_json(const expr_value &v);
 
-json to_json(const or_expr_value &v)
-{
-    json j;
-    j["type"] = "or_expr";
-    j["expr"] = json::array();
-    for (int i = 0; i < v.size(); ++i) {
-        j["expr"].push_back(to_json(v.at(i)));
-    }
-    return j;
-}
-
-json to_json(const and_expr_value &v)
-{
-    json j;
-    j["type"] = "and_expr";
-    j["expr"] = json::array();
-    for (int i = 0; i < v.size(); ++i) {
-        json item;
-        if (auto p_not = boost::get<const not_expr_value>(&v[i])) {
-            item = to_json(*p_not);
-        } else if (auto p_unit = boost::get<const unit_expr_value>(&v[i])) {
-            item = to_json(*p_unit);
-        }
-        j["expr"].push_back(item);
-    }
-    return j;
-}
-
-json to_json(const not_expr_value &v)
-{
-    json j;
-    j["type"] = "not_expr";
-    j["expr"] = to_json(static_cast<const unit_expr_value &>(v));
-    return j;
-}
-
-json to_json(const unit_expr_value &v)
-{
-    json j;
-    if (auto p_match = boost::get<const match_expr_value>(&v)) {
-        j["type"] = "unit_expr";
-        j["expr"] = to_json(*p_match);
-
-    } else if (auto p_group = boost::get<const group_expr_value>(&v)) {
-        j["type"] = "unit_expr";
-        j["expr"] = to_json(*p_group);
-    }
-    return j;
-}
-
-json to_json(const group_expr_value &v)
-{
-    json j;
-    j["type"] = "group_expr";
-    j["expr"] = to_json(static_cast<const expr_value &>(v));
-    return j;
-}
-
-json to_json(const match_expr_value &v)
+json to_json(const match_value &v)
 {
     json j;
     j["type"] = "match_expr";
-    j["selector"] = v.v_sel;
-    if (v.v_opt) {
-        j["value"] = *v.v_opt;
+    j["selector"] = v.select_;
+    if (v.compare_) {
+        j["op"] = fmt::to_string((*v.compare_).first);
+        j["value"] = (*v.compare_).second;
     }
     return j;
 }
+
+json to_json(const unit_value &v)
+{
+    if (auto p_match = boost::get<const match_value>(&v)) {
+        return to_json(*p_match);
+    } else if (auto p_expr = boost::get<const x3::forward_ast<expr_value>>(&v)) {
+        return to_json(static_cast<const expr_value &>(*p_expr));
+    }
+    return {};
+}
+
+json to_json(const not_value &v)
+{
+    json sec = to_json(v.second);
+    if (!v.first) {
+        return sec;
+    }
+    json j;
+    j["type"] = "not_expr";
+    j["expr"] = sec;
+    return j;
+}
+
+json to_json(const and_value &v)
+{
+    if (v.size() == 1) {
+        return to_json(v[0]);
+    }
+    json j;
+    j["type"] = "and_expr";
+    j["expr"] = json::array();
+    for (const auto &it : v) {
+        j["expr"].push_back(to_json(it));
+    }
+    return j;
+}
+
+json to_json(const or_value &v)
+{
+    if (v.size() == 1) {
+        return to_json(v[0]);
+    }
+    json j;
+    j["type"] = "or_expr";
+    j["expr"] = json::array();
+    for (const auto &it : v) {
+        j["expr"].push_back(to_json(it));
+    }
+    return j;
+}
+
+json to_json(const expr_value &v) { return to_json(static_cast<const or_value &>(v)); }
 
 }  // namespace ast
 
 namespace ast
 {
-p_filter to_filter(const or_expr_value &v);
-p_filter to_filter(const and_expr_value &v);
-p_filter to_filter(const not_expr_value &v);
-p_filter to_filter(const unit_expr_value &v);
-p_filter to_filter(const group_expr_value &v);
-p_filter to_filter(const match_expr_value &v);
+p_filter to_filter(const expr_value &v);
 
-p_filter to_filter(const or_expr_value &v)
+p_filter to_filter(const match_value &v)
 {
+    p_selector p_sel = std::make_shared<selector>(v.select_);
+    if (!v.compare_) {
+        return p_sel;
+    }
+    auto &cp = *v.compare_;
+    return std::make_shared<comparison_filter>(p_sel, cp.first, cp.second);
+}
+
+p_filter to_filter(const unit_value &v)
+{
+    if (auto p_match = boost::get<const match_value>(&v)) {
+        return to_filter(*p_match);
+    } else if (auto p_expr = boost::get<const x3::forward_ast<expr_value>>(&v)) {
+        return to_filter(static_cast<const expr_value &>(*p_expr));
+    }
+    return {};
+}
+
+p_filter to_filter(const not_value &v)
+{
+    p_filter sec = to_filter(v.second);
+    if (!v.first) {
+        return sec;
+    }
+    std::vector<p_filter> pf_list = {sec};
+    return std::make_shared<logic_filter>(pf_list, logic_filter::op_t::NOT);
+}
+
+p_filter to_filter(const and_value &v)
+{
+    if (v.size() == 1) {
+        return to_filter(v[0]);
+    }
     std::vector<p_filter> pf_list;
     for (const auto &it : v) {
         pf_list.push_back(to_filter(it));
     }
-    return std::make_shared<or_filter>(pf_list);
+    return std::make_shared<logic_filter>(pf_list, logic_filter::op_t::AND);
 }
 
-p_filter to_filter(const and_expr_value &v)
+p_filter to_filter(const or_value &v)
 {
+    if (v.size() == 1) {
+        return to_filter(v[0]);
+    }
     std::vector<p_filter> pf_list;
-    for (int i = 0; i < v.size(); ++i) {
-        if (auto p_not = boost::get<const not_expr_value>(&v[i])) {
-            pf_list.push_back(to_filter(*p_not));
-        } else if (auto p_unit = boost::get<const unit_expr_value>(&v[i])) {
-            pf_list.push_back(to_filter(*p_unit));
-        }
+    for (const auto &it : v) {
+        pf_list.push_back(to_filter(it));
     }
-    return std::make_shared<and_filter>(pf_list);
+    return std::make_shared<logic_filter>(pf_list, logic_filter::op_t::OR);
 }
 
-p_filter to_filter(const not_expr_value &v)
-{
-    return std::make_shared<not_filter>(to_filter(static_cast<const unit_expr_value &>(v)));
-}
-
-p_filter to_filter(const unit_expr_value &v)
-{
-    p_filter pf;
-    if (auto p_match = boost::get<const match_expr_value>(&v)) {
-        pf = to_filter(*p_match);
-    } else if (auto p_group = boost::get<const group_expr_value>(&v)) {
-        pf = to_filter(*p_group);
-    }
-    return pf;
-}
-
-p_filter to_filter(const group_expr_value &v)
-{
-    return to_filter(static_cast<const expr_value &>(v));
-}
-
-p_filter to_filter(const match_expr_value &v)
-{
-    p_selector pv_sel = std::make_shared<selector>(v.v_sel);
-    if (v.v_opt) {
-        p_filter pv_opt = std::make_shared<value_filter>(*v.v_opt);
-        return std::make_shared<select_filter>(pv_sel, pv_opt);
-    }
-    return pv_sel;
-}
+p_filter to_filter(const expr_value &v) { return to_filter(static_cast<const or_value &>(v)); }
 
 }  // namespace ast
 
 namespace parser
 {
-const x3::rule<class match_expr_class, ast::match_expr_value> match_expr = "match_expr";
-const x3::rule<class not_expr_class, ast::not_expr_value> not_expr = "not_expr";
-const x3::rule<class and_expr_class, ast::and_expr_value> and_expr = "and_expr";
-const x3::rule<class or_expr_class, ast::or_expr_value> or_expr = "or_expr";
+struct compare_op_ : x3::symbols<comparison_filter::op_t>
+{
+    compare_op_()
+    {
+        add("=", comparison_filter::op_t::EQUAL)(">", comparison_filter::op_t::GREATER)(
+            "<", comparison_filter::op_t::LESS);
+    }
 
-const auto &expr = or_expr;
-const auto plain = x3::lexeme[+x3::char_("0-9a-zA-Z")];
-const auto quoted_string = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
+} compare_op;
+
+const x3::rule<class expr_class, ast::expr_value> expr = "expr";
+const x3::rule<class comp_class, ast::comp_value> comp = "comp";
+
+const auto plain = x3::lexeme[+x3::char_(".0-9a-zA-Z")];
+const auto quoted = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
 const auto selector = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
-const auto value = plain | quoted_string;
-const auto unit = match_expr | '(' >> expr >> ')';
+const auto target = plain | quoted;
+const auto comp_def = compare_op >> target;
+const auto match = selector >> -comp;
+const auto unit = match | '(' >> expr >> ')';
+const auto not = -x3::char_('!') >> unit;
+const auto and = not % "&&";
+const auto or = and % "||";
+const auto expr_def = or ;
 
-const auto match_expr_def = selector >> -('=' >> value);
-const auto not_expr_def = '!' >> unit;
-const auto and_expr_def = (unit | not_expr) % '&';
-const auto or_expr_def = and_expr % '|';
-
-BOOST_SPIRIT_DEFINE(match_expr, not_expr, and_expr, or_expr);
+BOOST_SPIRIT_DEFINE(expr, comp);
 
 }  // namespace parser
 
