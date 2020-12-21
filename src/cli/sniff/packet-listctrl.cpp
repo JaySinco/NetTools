@@ -47,6 +47,7 @@ void PacketListCtrl::clear()
 {
     DeleteAllItems();
     attr_list.clear();
+    attr_list.shrink_to_fit();
 }
 
 std::string PacketListCtrl::stringfy_field(const packet &pac, long column)

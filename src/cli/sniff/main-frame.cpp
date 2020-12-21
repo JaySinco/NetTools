@@ -56,7 +56,9 @@ void MainFrame::on_sniff_clear(wxCommandEvent &event)
     m_list->clear();
     m_prop->Clear();
     idx_list.clear();
+    idx_list.shrink_to_fit();
     pac_list.clear();
+    pac_list.shrink_to_fit();
     port_table::clear();
     update_status_bar();
 }
