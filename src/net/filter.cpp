@@ -330,11 +330,7 @@ p_filter to_filter(const match_expr_value &v)
 
 namespace parser
 {
-const x3::rule<class value_expr_class, std::string> value_expr = "value_expr";
-const x3::rule<class selector_expr_class, ast::selector_expr_value> selector_expr = "selector_expr";
 const x3::rule<class match_expr_class, ast::match_expr_value> match_expr = "match_expr";
-const x3::rule<class group_expr_class, ast::group_expr_value> group_expr = "group_expr";
-const x3::rule<class unit_expr_class, ast::unit_expr_value> unit_expr = "unit_expr";
 const x3::rule<class not_expr_class, ast::not_expr_value> not_expr = "not_expr";
 const x3::rule<class and_expr_class, ast::and_expr_value> and_expr = "and_expr";
 const x3::rule<class or_expr_class, ast::or_expr_value> or_expr = "or_expr";
@@ -342,17 +338,16 @@ const x3::rule<class or_expr_class, ast::or_expr_value> or_expr = "or_expr";
 const auto &expr = or_expr;
 const auto plain = x3::lexeme[+x3::char_("0-9a-zA-Z")];
 const auto quoted_string = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
-const auto value_expr_def = plain | quoted_string;
-const auto selector_expr_def = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
-const auto match_expr_def = selector_expr >> -('=' >> value_expr);
-const auto group_expr_def = '(' >> expr >> ')';
-const auto unit_expr_def = match_expr | group_expr;
-const auto not_expr_def = '!' >> unit_expr;
-const auto and_expr_def = (unit_expr | not_expr) % '&';
+const auto selector = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
+const auto value = plain | quoted_string;
+const auto unit = match_expr | '(' >> expr >> ')';
+
+const auto match_expr_def = selector >> -('=' >> value);
+const auto not_expr_def = '!' >> unit;
+const auto and_expr_def = (unit | not_expr) % '&';
 const auto or_expr_def = and_expr % '|';
 
-BOOST_SPIRIT_DEFINE(value_expr, selector_expr, match_expr, group_expr, unit_expr, not_expr,
-                    and_expr, or_expr);
+BOOST_SPIRIT_DEFINE(match_expr, not_expr, and_expr, or_expr);
 
 }  // namespace parser
 
