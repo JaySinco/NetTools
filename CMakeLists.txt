@@ -46,6 +46,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
   ${CMAKE_SOURCE_DIR}/external/fmt/include/
   ${CMAKE_SOURCE_DIR}/external/json/include/
+  ${CMAKE_SOURCE_DIR}/external/magic_enum/include/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
@@ -105,7 +106,6 @@ add_executable(sniff WIN32
   ${CMAKE_SOURCE_DIR}/src/cli/sniff/ui.cpp
   ${CMAKE_SOURCE_DIR}/src/cli/sniff/main-frame.cpp
   ${CMAKE_SOURCE_DIR}/src/cli/sniff/app.cpp
-  ${CMAKE_SOURCE_DIR}/resources/app.manifest
   )
 target_link_libraries(sniff net)
 

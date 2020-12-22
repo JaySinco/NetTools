@@ -7,6 +7,7 @@
 #include <boost/fusion/include/std_tuple.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/include/io.hpp>
+#include <magic_enum.hpp>
 
 namespace x3 = boost::spirit::x3;
 
@@ -19,6 +20,14 @@ public:
     {
         const json *out = nullptr;
         return select(j, out);
+    }
+
+    json to_json() const override
+    {
+        json j;
+        j["type"] = "selector";
+        j["path"] = path_;
+        return j;
     }
 
     bool select(const json &in, const json *&out) const
@@ -59,8 +68,11 @@ public:
     enum class op_t
     {
         EQUAL,
+        NOT_EQUAL,
         LESS,
+        LESS_EQUAL,
         GREATER,
+        GREATER_EQUAL,
     };
 
     comparison_filter(p_selector psel, op_t op, const std::string &value)
@@ -85,24 +97,21 @@ public:
         return s == value_;
     }
 
+    json to_json() const override
+    {
+        json j;
+        j["type"] = "compare";
+        j["op"] = magic_enum::enum_name(op_);
+        j["selector"] = psel_->to_json();
+        j["value"] = value_;
+        return j;
+    }
+
 private:
     p_selector psel_;
     op_t op_;
     std::string value_;
 };
-
-std::ostream &operator<<(std::ostream &os, comparison_filter::op_t op)
-{
-    switch (op) {
-        case comparison_filter::op_t::EQUAL:
-            return os << "=";
-        case comparison_filter::op_t::LESS:
-            return os << "<";
-        case comparison_filter::op_t::GREATER:
-            return os << ">";
-    }
-    return os;
-}
 
 class logic_filter : public filter
 {
@@ -135,6 +144,18 @@ public:
                 break;
         }
         return ok;
+    }
+
+    json to_json() const override
+    {
+        json j;
+        j["type"] = "logic";
+        j["op"] = magic_enum::enum_name(op_);
+        j["list"] = json::array();
+        for (const auto &pf : pf_list_) {
+            j["list"].push_back(pf->to_json());
+        }
+        return j;
     }
 
 private:
@@ -172,75 +193,44 @@ struct expr_value : or_value
 
 BOOST_FUSION_ADAPT_STRUCT(ast::match_value, select_, compare_);
 
-namespace ast
+namespace parser
 {
-json to_json(const expr_value &v);
-
-json to_json(const match_value &v)
+struct compare_op_ : x3::symbols<comparison_filter::op_t>
 {
-    json j;
-    j["type"] = "match_expr";
-    j["selector"] = v.select_;
-    if (v.compare_) {
-        j["op"] = fmt::to_string((*v.compare_).first);
-        j["value"] = (*v.compare_).second;
+    compare_op_()
+    {
+        // clang-format off
+        add
+            ("=" , comparison_filter::op_t::EQUAL)
+            ("!=", comparison_filter::op_t::NOT_EQUAL)
+            (">" , comparison_filter::op_t::GREATER)
+            (">=", comparison_filter::op_t::GREATER_EQUAL)
+            ("<" , comparison_filter::op_t::LESS)
+            ("<=", comparison_filter::op_t::LESS_EQUAL)
+        ;
+        // clang-format on
     }
-    return j;
-}
 
-json to_json(const unit_value &v)
-{
-    if (auto p_match = boost::get<const match_value>(&v)) {
-        return to_json(*p_match);
-    } else if (auto p_expr = boost::get<const x3::forward_ast<expr_value>>(&v)) {
-        return to_json(static_cast<const expr_value &>(*p_expr));
-    }
-    return {};
-}
+} compare_op;
 
-json to_json(const not_value &v)
-{
-    json sec = to_json(v.second);
-    if (!v.first) {
-        return sec;
-    }
-    json j;
-    j["type"] = "not_expr";
-    j["expr"] = sec;
-    return j;
-}
+const x3::rule<class expr_class, ast::expr_value> expr = "expr";
+const x3::rule<class comp_class, ast::comp_value> comp = "comp";
 
-json to_json(const and_value &v)
-{
-    if (v.size() == 1) {
-        return to_json(v[0]);
-    }
-    json j;
-    j["type"] = "and_expr";
-    j["expr"] = json::array();
-    for (const auto &it : v) {
-        j["expr"].push_back(to_json(it));
-    }
-    return j;
-}
+const auto plain = x3::lexeme[+x3::char_(".0-9a-zA-Z")];
+const auto quoted = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
+const auto selector = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
+const auto target = plain | quoted;
+const auto comp_def = compare_op >> target;
+const auto match = selector >> -comp;
+const auto unit = match | '(' >> expr >> ')';
+const auto not = -x3::char_('!') >> unit;
+const auto and = not % "&&";
+const auto or = and % "||";
+const auto expr_def = or ;
 
-json to_json(const or_value &v)
-{
-    if (v.size() == 1) {
-        return to_json(v[0]);
-    }
-    json j;
-    j["type"] = "or_expr";
-    j["expr"] = json::array();
-    for (const auto &it : v) {
-        j["expr"].push_back(to_json(it));
-    }
-    return j;
-}
+BOOST_SPIRIT_DEFINE(expr, comp);
 
-json to_json(const expr_value &v) { return to_json(static_cast<const or_value &>(v)); }
-
-}  // namespace ast
+}  // namespace parser
 
 namespace ast
 {
@@ -304,37 +294,6 @@ p_filter to_filter(const expr_value &v) { return to_filter(static_cast<const or_
 
 }  // namespace ast
 
-namespace parser
-{
-struct compare_op_ : x3::symbols<comparison_filter::op_t>
-{
-    compare_op_()
-    {
-        add("=", comparison_filter::op_t::EQUAL)(">", comparison_filter::op_t::GREATER)(
-            "<", comparison_filter::op_t::LESS);
-    }
-
-} compare_op;
-
-const x3::rule<class expr_class, ast::expr_value> expr = "expr";
-const x3::rule<class comp_class, ast::comp_value> comp = "comp";
-
-const auto plain = x3::lexeme[+x3::char_(".0-9a-zA-Z")];
-const auto quoted = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
-const auto selector = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
-const auto target = plain | quoted;
-const auto comp_def = compare_op >> target;
-const auto match = selector >> -comp;
-const auto unit = match | '(' >> expr >> ')';
-const auto not = -x3::char_('!') >> unit;
-const auto and = not % "&&";
-const auto or = and % "||";
-const auto expr_def = or ;
-
-BOOST_SPIRIT_DEFINE(expr, comp);
-
-}  // namespace parser
-
 bool filter::test(const packet &pac) const
 {
     json j;
@@ -352,9 +311,10 @@ p_filter filter::from_str(const std::string &code)
     ast::expr_value ast;
     auto it = code.begin();
     bool ok = x3::phrase_parse(it, code.end(), parser::expr, x3::space, ast);
-    VLOG(1) << "ast generated for filter `{}` => {}"_format(code, ast::to_json(ast).dump(3));
     if (!ok || it != code.end()) {
         throw std::runtime_error("failed to parse filter: unexpected token near '{}'"_format(*it));
     }
-    return ast::to_filter(ast);
+    p_filter pf = ast::to_filter(ast);
+    VLOG(1) << "filter generated for `{}` => {}"_format(code, pf->to_json().dump(3));
+    return pf;
 }

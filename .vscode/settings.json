@@ -21,6 +21,7 @@
         "${workspaceFolder}/external/npcap/include/",
         "${workspaceFolder}/external/fmt/include/",
         "${workspaceFolder}/external/json/include/",
+        "${workspaceFolder}/external/magic_enum/include/",
         "${workspaceFolder}/external/wxWidgets/include/",
         "${workspaceFolder}/external/wxWidgets/include/msvc/",
         "${workspaceFolder}/external/boost/include/boost-1_74/"
