@@ -3,11 +3,13 @@
 void PacketPropGrid::show_packet(const packet &pac)
 {
     Clear();
-    json layers = pac.to_json()["layers"];
+    const auto &j = pac.to_json_flat();
+    const auto &layers = j["layers"];
     for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
-        std::string type = (*it)["type"].get<std::string>();
+        std::string type = *it;
         Append(new wxPropertyCategory(type, wxPG_LABEL));
-        for (auto vit = it->begin(); vit != it->end(); ++vit) {
+        const auto &value = j[type];
+        for (auto vit = value.begin(); vit != value.end(); ++vit) {
             show_json(nullptr, vit.key(), vit.value());
         }
     }

@@ -294,17 +294,7 @@ p_filter to_filter(const expr_value &v) { return to_filter(static_cast<const or_
 
 }  // namespace ast
 
-bool filter::test(const packet &pac) const
-{
-    json j;
-    auto &layers = pac.get_detail().layers;
-    for (auto it = layers.cbegin(); it != layers.cend(); ++it) {
-        auto type = (*it)->type();
-        j[type] = (*it)->to_json();
-    }
-    j["owner"] = pac.get_detail().owner;
-    return test(j);
-}
+bool filter::test(const packet &pac) const { return test(pac.to_json_flat()); }
 
 p_filter filter::from_str(const std::string &code)
 {

@@ -22,7 +22,7 @@ public:
 
     json to_json() const;
 
-    const json &to_json_cached() const;
+    const json &to_json_flat() const;
 
     bool link_to(const packet &rhs) const;
 
@@ -45,7 +45,7 @@ public:
 private:
     detail d;
 
-    std::optional<json> j_cached;
+    std::optional<json> j_flat;
 
     std::string get_owner() const;
 

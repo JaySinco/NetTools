@@ -72,24 +72,31 @@ void packet::to_bytes(std::vector<u_char> &bytes) const
 
 json packet::to_json() const
 {
-    json ar = json::array();
-    for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
-        ar.push_back((*it)->to_json());
-    }
     json j;
-    j["layers"] = ar;
+    j["layers"] = json::array();
+    for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
+        j["layers"].push_back((*it)->to_json());
+    }
     j["time"] = util::tv2s(d.time);
     j["owner"] = d.owner;
     return j;
 }
 
-const json &packet::to_json_cached() const
+const json &packet::to_json_flat() const
 {
-    if (j_cached) {
-        return *j_cached;
+    if (!j_flat) {
+        json j;
+        j["layers"] = json::array();
+        for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
+            std::string type = (*it)->type();
+            j[type] = (*it)->to_json();
+            j["layers"].push_back(type);
+        }
+        j["time"] = util::tv2s(d.time);
+        j["owner"] = d.owner;
+        const_cast<packet &>(*this).j_flat = j;
     }
-    const_cast<packet &>(*this).j_cached = to_json();
-    return *j_cached;
+    return *j_flat;
 }
 
 bool packet::link_to(const packet &rhs) const

@@ -45,58 +45,54 @@ void PacketListCtrl::init(const std::vector<size_t> *p_idx, const std::vector<pa
 
 void PacketListCtrl::clear()
 {
-    DeleteAllItems();
+    SetItemCount(0);
     attr_list.clear();
     attr_list.shrink_to_fit();
 }
 
 std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
 {
-    const auto &layers = pac.get_detail().layers;
+    const auto &j = pac.to_json_flat();
+    const auto &layers = j["layers"];
     switch (column) {
         case FIELD_TIME:
-            return util::tv2s(pac.get_detail().time);
+            return j["time"];
         case FIELD_SOURCE_IP:
-            if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
-                const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
-                return ih.get_detail().sip.to_str();
+            if (layers.size() > 1 && layers[1] == Protocol_Type_IPv4) {
+                return j[Protocol_Type_IPv4]["source-ip"];
             }
             break;
         case FIELD_DEST_IP:
-            if (layers.size() > 1 && layers[1]->type() == Protocol_Type_IPv4) {
-                const auto &ih = dynamic_cast<const ipv4 &>(*layers[1]);
-                return ih.get_detail().dip.to_str();
+            if (layers.size() > 1 && layers[1] == Protocol_Type_IPv4) {
+                return j[Protocol_Type_IPv4]["dest-ip"];
             }
             break;
         case FIELD_SOURCE_PORT:
-            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
-                const auto &uh = dynamic_cast<const udp &>(*layers[2]);
-                return std::to_string(uh.get_detail().sport);
+            if (layers.size() > 2 && layers[2] == Protocol_Type_UDP) {
+                return std::to_string(j[Protocol_Type_UDP]["source-port"].get<u_short>());
             }
-            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_TCP) {
-                const auto &th = dynamic_cast<const tcp &>(*layers[2]);
-                return std::to_string(th.get_detail().sport);
+            if (layers.size() > 2 && layers[2] == Protocol_Type_TCP) {
+                return std::to_string(j[Protocol_Type_TCP]["source-port"].get<u_short>());
             }
             break;
         case FIELD_DEST_PORT:
-            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_UDP) {
-                const auto &uh = dynamic_cast<const udp &>(*layers[2]);
-                return std::to_string(uh.get_detail().dport);
+            if (layers.size() > 2 && layers[2] == Protocol_Type_UDP) {
+                return std::to_string(j[Protocol_Type_UDP]["dest-port"].get<u_short>());
             }
-            if (layers.size() > 2 && layers[2]->type() == Protocol_Type_TCP) {
-                const auto &th = dynamic_cast<const tcp &>(*layers[2]);
-                return std::to_string(th.get_detail().dport);
+            if (layers.size() > 2 && layers[2] == Protocol_Type_TCP) {
+                return std::to_string(j[Protocol_Type_TCP]["dest-port"].get<u_short>());
             }
             break;
         case FIELD_TYPE: {
-            std::string type = layers.back()->succ_type();
+            auto &p_back = pac.get_detail().layers.back();
+            std::string type = p_back->succ_type();
             if (!protocol::is_specific(type)) {
-                type = layers.back()->type();
+                type = p_back->type();
             }
             return type;
         }
         case FIELD_OWNER:
-            return pac.get_detail().owner;
+            return j["owner"];
         default:
             throw std::runtime_error("invalid column {}"_format(column));
     }
