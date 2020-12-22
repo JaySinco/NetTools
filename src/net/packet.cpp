@@ -70,21 +70,9 @@ void packet::to_bytes(std::vector<u_char> &bytes) const
     }
 }
 
-json packet::to_json() const
+const json &packet::to_json() const
 {
-    json j;
-    j["layers"] = json::array();
-    for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
-        j["layers"].push_back((*it)->to_json());
-    }
-    j["time"] = util::tv2s(d.time);
-    j["owner"] = d.owner;
-    return j;
-}
-
-const json &packet::to_json_flat() const
-{
-    if (!j_flat) {
+    if (!j_cached) {
         json j;
         j["layers"] = json::array();
         for (auto it = d.layers.cbegin(); it != d.layers.cend(); ++it) {
@@ -94,9 +82,9 @@ const json &packet::to_json_flat() const
         }
         j["time"] = util::tv2s(d.time);
         j["owner"] = d.owner;
-        const_cast<packet &>(*this).j_flat = j;
+        const_cast<packet &>(*this).j_cached = j;
     }
-    return *j_flat;
+    return *j_cached;
 }
 
 bool packet::link_to(const packet &rhs) const

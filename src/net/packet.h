@@ -20,9 +20,7 @@ public:
 
     void to_bytes(std::vector<u_char> &bytes) const;
 
-    json to_json() const;
-
-    const json &to_json_flat() const;
+    const json &to_json() const;
 
     bool link_to(const packet &rhs) const;
 
@@ -45,7 +43,7 @@ public:
 private:
     detail d;
 
-    std::optional<json> j_flat;
+    std::optional<json> j_cached;
 
     std::string get_owner() const;
 

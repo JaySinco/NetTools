@@ -137,6 +137,7 @@ void MainFrame::sniff_background(const adaptor &apt, const std::string &filter, 
             continue;  // timeout elapsed
         }
         packet pac(start, start + info->len, info->ts);
+        pac.to_json();
         data.push_back(pac);
     }
     if (res == -1) {

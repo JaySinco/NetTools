@@ -52,7 +52,7 @@ void PacketListCtrl::clear()
 
 std::string PacketListCtrl::stringfy_field(const packet &pac, long column)
 {
-    const auto &j = pac.to_json_flat();
+    const auto &j = pac.to_json();
     const auto &layers = j["layers"];
     switch (column) {
         case FIELD_TIME:

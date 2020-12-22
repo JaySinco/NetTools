@@ -294,7 +294,7 @@ p_filter to_filter(const expr_value &v) { return to_filter(static_cast<const or_
 
 }  // namespace ast
 
-bool filter::test(const packet &pac) const { return test(pac.to_json_flat()); }
+bool filter::test(const packet &pac) const { return test(pac.to_json()); }
 
 p_filter filter::from_str(const std::string &code)
 {

@@ -3,7 +3,7 @@
 void PacketPropGrid::show_packet(const packet &pac)
 {
     Clear();
-    const auto &j = pac.to_json_flat();
+    const auto &j = pac.to_json();
     const auto &layers = j["layers"];
     for (auto it = layers.rbegin(); it != layers.rend(); ++it) {
         std::string type = *it;
