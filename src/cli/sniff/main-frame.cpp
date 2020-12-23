@@ -2,6 +2,7 @@
 #include "packet-listctrl.h"
 #include "packet-propgrid.h"
 #include "net/transport.h"
+#include <execution>
 #include <thread>
 #define NOTIFY_TRY try {
 #define NOTIFY_CATCH                                                                  \
@@ -72,11 +73,12 @@ void MainFrame::on_list_col_clicked(wxListEvent &event)
 {
     bool reverse = column_sort.at(event.m_col);
     column_sort.at(event.m_col) = !reverse;
-    std::stable_sort(idx_list.begin(), idx_list.end(), [&](size_t a, size_t b) {
-        auto sa = PacketListCtrl::stringfy_field(pac_list.at(a), event.m_col);
-        auto sb = PacketListCtrl::stringfy_field(pac_list.at(b), event.m_col);
-        return reverse ? sb < sa : sa < sb;
-    });
+    std::stable_sort(std::execution::par_unseq, idx_list.begin(), idx_list.end(),
+                     [&](size_t a, size_t b) {
+                         auto sa = PacketListCtrl::stringfy_field(pac_list.at(a), event.m_col);
+                         auto sb = PacketListCtrl::stringfy_field(pac_list.at(b), event.m_col);
+                         return reverse ? sb < sa : sa < sb;
+                     });
     m_list->Refresh();
 }
 

@@ -11,6 +11,8 @@
 
 namespace x3 = boost::spirit::x3;
 
+static std::regex is_number("[0-9]+");
+
 class selector : public filter
 {
 public:
@@ -40,7 +42,7 @@ public:
                 }
                 j = &j->operator[](key);
             } else if (j->is_array()) {
-                if (!std::regex_match(key, std::regex("[0-9]+"))) {
+                if (!std::regex_match(key, is_number)) {
                     return false;
                 }
                 int index = std::stoi(key);
@@ -87,14 +89,35 @@ public:
         if (!ok) {
             return false;
         }
-
-        std::string s;
+        std::string target;
         if (child->is_string()) {
-            s = child->get<std::string>();
+            target = child->get<std::string>();
         } else {
-            s = child->dump();
+            target = child->dump();
         }
-        return s == value_;
+        bool both_number =
+            std::regex_match(target, is_number) && std::regex_match(value_, is_number);
+        long long target_n;
+        long long value_n;
+        if (both_number) {
+            target_n = std::stoll(target);
+            value_n = std::stoll(value_);
+        }
+        switch (op_) {
+            case op_t::EQUAL:
+                return both_number ? target_n == value_n : target == value_;
+            case op_t::NOT_EQUAL:
+                return both_number ? target_n != value_n : target != value_;
+            case op_t::LESS:
+                return both_number ? target_n < value_n : target < value_;
+            case op_t::LESS_EQUAL:
+                return both_number ? target_n <= value_n : target <= value_;
+            case op_t::GREATER:
+                return both_number ? target_n > value_n : target > value_;
+            case op_t::GREATER_EQUAL:
+                return both_number ? target_n >= value_n : target >= value_;
+        }
+        return false;
     }
 
     json to_json() const override
@@ -217,7 +240,7 @@ const x3::rule<class expr_class, ast::expr_value> expr = "expr";
 const x3::rule<class comp_class, ast::comp_value> comp = "comp";
 
 const auto plain = x3::lexeme[+x3::char_(".0-9a-zA-Z")];
-const auto quoted = x3::lexeme['"' >> +(x3::char_ - '"') >> '"'];
+const auto quoted = x3::lexeme['"' >> *(x3::char_ - '"') >> '"'];
 const auto selector = x3::lexeme[+x3::char_("-0-9a-zA-Z") % '.'];
 const auto target = plain | quoted;
 const auto comp_def = compare_op >> target;
