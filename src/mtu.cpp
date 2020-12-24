@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     auto &apt = adaptor::fit(ip4::zeros);
     pcap_t *handle = transport::open_adaptor(apt);
     std::shared_ptr<void> handle_guard(nullptr, [&](void *) { pcap_close(handle); });
-    int nbytes = transport::calc_mtu(handle, apt, target_ip, FLAGS_max);
+    int nbytes = transport::calc_mtu(handle, apt, target_ip, FLAGS_max, true);
     LOG(INFO) << "MTU={}"_format(nbytes);
     NT_CATCH
 }

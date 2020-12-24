@@ -189,7 +189,8 @@ bool transport::query_dns(const ip4 &server, const std::string &domain, dns &rep
     return true;
 }
 
-int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound)
+int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound,
+                        bool print_log)
 {
     const int offset = sizeof(ipv4::detail) + sizeof(icmp::detail);
     int low = 0;
@@ -211,12 +212,12 @@ int transport::calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int h
             throw std::runtime_error("failed to call ping routine");
         }
         if (!reply.is_error()) {
-            VLOG(1) << "- {:5d}"_format(vtest + offset);
+            LOG_IF(INFO, print_log) << "- {:5d}"_format(vtest + offset);
             low = vtest;
         } else {
             auto &p = dynamic_cast<const icmp &>(*reply.get_detail().layers.back());
             if (p.get_detail().type == 3 && p.get_detail().code == 4) {
-                VLOG(1) << "+ {:5d}"_format(vtest + offset);
+                LOG_IF(INFO, print_log) << "+ {:5d}"_format(vtest + offset);
                 high = vtest;
             } else {
                 throw std::runtime_error(

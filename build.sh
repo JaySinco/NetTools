@@ -4,10 +4,10 @@ cwd=`readlink -f .`
 wxbuilder="/c/Program Files (x86)/wxFormBuilder/wxFormBuilder.exe"
 fmt="${cwd}/external/.bin/clang-format.exe"
 cloc="${cwd}/external/.bin/cloc.exe"
-uifbp="${cwd}/resources/ui.fbp"
 
-if [ $(stat -c %Y ${cwd}/src/cli/sniff/ui.cpp) -le $(stat -c %Y ${uifbp}) ]; then
-    "${wxbuilder}" -g "${uifbp}" 2>/dev/null && echo "code generated for ${uifbp}"
+sniff_ui="${cwd}/resources/sniff-ui.fbp"
+if [ $(stat -c %Y ${cwd}/src/sniff/ui.cpp) -le $(stat -c %Y ${sniff_ui}) ]; then
+    "${wxbuilder}" -g "${sniff_ui}" 2>/dev/null && echo "code generated for ${sniff_ui}"
 fi
 
 case $1 in

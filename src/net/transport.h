@@ -29,5 +29,6 @@ public:
     static bool query_dns(const ip4 &server, const std::string &domain, dns &reply,
                           int timeout_ms = 5000);
 
-    static int calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound = 1500);
+    static int calc_mtu(pcap_t *handle, const adaptor &apt, const ip4 &ip, int high_bound = 1500,
+                        bool print_log = false);
 };

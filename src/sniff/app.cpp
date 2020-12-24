@@ -11,6 +11,8 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
+    AttachConsole(ATTACH_PARENT_PROCESS);
+    freopen("CONOUT$", "w+t", stderr);
     char **argv_ = argv;
     INIT_LOG(argc, argv_);
 
