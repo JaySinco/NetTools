@@ -9,7 +9,7 @@ if [ ! -f "b2" ]; then
 fi
 
 ./b2 --with-system --with-thread --with-filesystem --with-chrono --with-date_time --with-regex \
-    --with-serialization --with-program_options --with-test --with-timer --with-atomic \
+    --with-serialization --with-program_options --with-test --with-timer --with-atomic --with-context \
     --build-dir="${cwd}/build/" \
     --prefix="${cwd}/../" \
     toolset=msvc variant=release \
