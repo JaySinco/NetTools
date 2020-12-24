@@ -12,6 +12,12 @@
     FLAGS_logtostderr = 1;                             \
     FLAGS_minloglevel = 0;
 
+#define GUI_INIT_LOG(argc, argv)                \
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) { \
+        freopen("CONOUT$", "w+t", stderr);      \
+    }                                           \
+    INIT_LOG(argc, argv)
+
 struct mac
 {
     u_char b1, b2, b3, b4, b5, b6;

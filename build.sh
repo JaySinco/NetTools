@@ -5,10 +5,17 @@ wxbuilder="/c/Program Files (x86)/wxFormBuilder/wxFormBuilder.exe"
 fmt="${cwd}/external/.bin/clang-format.exe"
 cloc="${cwd}/external/.bin/cloc.exe"
 
-sniff_ui="${cwd}/resources/sniff-ui.fbp"
-if [ $(stat -c %Y ${cwd}/src/sniff/ui.cpp) -le $(stat -c %Y ${sniff_ui}) ]; then
-    "${wxbuilder}" -g "${sniff_ui}" 2>/dev/null && echo "code generated for ${sniff_ui}"
-fi
+function generate_ui() {
+    fbp="${cwd}/resources/$1-ui.fbp"
+    if [ $(stat -c %Y ${cwd}/src/cli/$1/ui.cpp) -le $(stat -c %Y ${fbp}) ]; then
+        "${wxbuilder}" -g "${fbp}" 2>/dev/null && echo "code generated for ${fbp}"
+    fi
+}
+
+ui_list=("sniff" "crawl")
+for ui in ${ui_list[@]}; do
+    generate_ui ${ui}
+done
 
 case $1 in
 "")

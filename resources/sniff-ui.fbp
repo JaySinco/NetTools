@@ -16,9 +16,9 @@
         <property name="help_provider">none</property>
         <property name="indent_with_spaces"></property>
         <property name="internationalize">0</property>
-        <property name="name">NetTools</property>
+        <property name="name">Sniff</property>
         <property name="namespace"></property>
-        <property name="path">../src/sniff/</property>
+        <property name="path">../src/cli/sniff/</property>
         <property name="precompiled_header"></property>
         <property name="relative_path">1</property>
         <property name="skip_lua_events">1</property>

@@ -1,4 +1,5 @@
-#include "main-frame.h"
+#include "web-frame.h"
+#include "net/tcp.h"
 
 class App : public wxApp
 {
@@ -11,12 +12,10 @@ wxIMPLEMENT_APP(App);
 
 bool App::OnInit()
 {
-    AttachConsole(ATTACH_PARENT_PROCESS);
-    freopen("CONOUT$", "w+t", stderr);
     char **argv_ = argv;
-    INIT_LOG(argc, argv_);
+    GUI_INIT_LOG(argc, argv_);
 
-    MainFrame *frame = new MainFrame;
+    WebFrame *frame = new WebFrame;
     frame->Show(true);
     return true;
 }

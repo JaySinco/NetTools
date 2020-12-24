@@ -97,32 +97,44 @@ target_link_libraries(net
   iphlpapi.lib
   )
 
-add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/lsdev.cpp)
+add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/cli/lsdev.cpp)
 target_link_libraries(lsdev net)
 
 add_executable(sniff WIN32
-  ${CMAKE_SOURCE_DIR}/src/sniff/packet-listctrl.cpp
-  ${CMAKE_SOURCE_DIR}/src/sniff/packet-propgrid.cpp
-  ${CMAKE_SOURCE_DIR}/src/sniff/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/sniff/main-frame.cpp
-  ${CMAKE_SOURCE_DIR}/src/sniff/app.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/packet-listctrl.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/packet-propgrid.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/ui.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/main-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/sniff/app.cpp
   )
 target_link_libraries(sniff net)
 
-add_executable(arp ${CMAKE_SOURCE_DIR}/src/arp.cpp)
+add_executable(arp ${CMAKE_SOURCE_DIR}/src/cli/arp.cpp)
 target_link_libraries(arp net)
 
-add_executable(ping ${CMAKE_SOURCE_DIR}/src/ping.cpp)
+add_executable(ping ${CMAKE_SOURCE_DIR}/src/cli/ping.cpp)
 target_link_libraries(ping net)
 
-add_executable(mtu ${CMAKE_SOURCE_DIR}/src/mtu.cpp)
+add_executable(mtu ${CMAKE_SOURCE_DIR}/src/cli/mtu.cpp)
 target_link_libraries(mtu net)
 
-add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/traceroute.cpp)
+add_executable(traceroute ${CMAKE_SOURCE_DIR}/src/cli/traceroute.cpp)
 target_link_libraries(traceroute net)
 
-add_executable(dns ${CMAKE_SOURCE_DIR}/src/dns.cpp)
+add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns net)
 
-add_executable(test ${CMAKE_SOURCE_DIR}/src/test.cpp)
+add_executable(crawl WIN32
+  ${CMAKE_SOURCE_DIR}/src/cli/crawl/ui.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/crawl/web-frame.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/crawl/app.cpp
+  )
+target_link_libraries(crawl net)
+add_custom_command(TARGET crawl POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/external/wxWidgets/src/wxWidgets-3.1.4/3rdparty/webview2/build/x64/WebView2Loader.dll
+  $<TARGET_FILE_DIR:crawl>
+  )
+
+add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
 target_link_libraries(test net)
