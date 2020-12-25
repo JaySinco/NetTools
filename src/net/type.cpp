@@ -2,7 +2,6 @@
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <sstream>
-#include <codecvt>
 #include <boost/filesystem.hpp>
 
 const mac mac::zeros = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
@@ -335,41 +334,4 @@ std::string port_table::lookup(const key_type &key)
         return "";
     }
     return it->second;
-}
-
-std::string util::ws2s(const std::wstring &wstr)
-{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-    return myconv.to_bytes(wstr);
-}
-
-std::wstring util::s2ws(const std::string &str)
-{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-    return myconv.from_bytes(str);
-}
-
-std::wstring util::get_curdir()
-{
-    wchar_t szFilePath[MAX_PATH + 1] = {0};
-    GetModuleFileNameW(NULL, szFilePath, MAX_PATH);
-    (wcsrchr(szFilePath, L'\\'))[0] = 0;
-    return szFilePath;
-}
-
-std::string util::tv2s(const timeval &tv)
-{
-    tm local;
-    time_t timestamp = tv.tv_sec;
-    localtime_s(&local, &timestamp);
-    char timestr[16] = {0};
-    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
-    return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
-}
-
-long operator-(const timeval &tv1, const timeval &tv2)
-{
-    long diff_sec = tv1.tv_sec - tv2.tv_sec;
-    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
-    return (diff_sec * 1000 + diff_ms);
 }

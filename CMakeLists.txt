@@ -50,6 +50,8 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/include/msvc/
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
+  ${CMAKE_SOURCE_DIR}/external/webview2/include/
+  ${CMAKE_SOURCE_DIR}/external/wil/include/
   )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -61,6 +63,7 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/fmt/lib/
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
+  ${CMAKE_SOURCE_DIR}/external/webview2/lib/
   )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -69,6 +72,15 @@ add_custom_target(sync ALL
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE}
+  )
+
+add_library(common INTERFACE)
+target_link_libraries(common INTERFACE
+  ws2_32.lib
+  fmt.lib
+  gflags_static.lib
+  glog.lib
+  shlwapi.lib
   )
 
 add_library(net STATIC
@@ -85,15 +97,10 @@ add_library(net STATIC
   ${CMAKE_SOURCE_DIR}/src/net/filter.cpp
   ${CMAKE_SOURCE_DIR}/src/net/transport.cpp
   )
-target_compile_definitions(net PUBLIC _UNICODE)
 target_precompile_headers(net PUBLIC ${CMAKE_SOURCE_DIR}/src/prec.h)
 target_link_libraries(net
-  gflags_static.lib
-  glog.lib
-  fmt.lib
-  shlwapi.lib
+  common
   wpcap.lib
-  ws2_32.lib
   iphlpapi.lib
   )
 
@@ -124,17 +131,21 @@ target_link_libraries(traceroute net)
 add_executable(dns ${CMAKE_SOURCE_DIR}/src/cli/dns.cpp)
 target_link_libraries(dns net)
 
-add_executable(crawl WIN32
-  ${CMAKE_SOURCE_DIR}/src/cli/crawl/ui.cpp
-  ${CMAKE_SOURCE_DIR}/src/cli/crawl/web-frame.cpp
-  ${CMAKE_SOURCE_DIR}/src/cli/crawl/app.cpp
+add_executable(crawl
+  ${CMAKE_SOURCE_DIR}/src/cli/crawl/browser.cpp
+  ${CMAKE_SOURCE_DIR}/src/cli/crawl/main.cpp
   )
-target_link_libraries(crawl net)
+target_link_libraries(crawl
+  common
+  Version.lib
+  WebView2Guid.lib
+  WebView2LoaderStatic.lib
+  )
 add_custom_command(TARGET crawl POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/external/wxWidgets/src/wxWidgets-3.1.4/3rdparty/webview2/build/x64/WebView2Loader.dll
+    ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   $<TARGET_FILE_DIR:crawl>
   )
 
 add_executable(test ${CMAKE_SOURCE_DIR}/src/cli/test.cpp)
-target_link_libraries(test net)
+target_link_libraries(test common)

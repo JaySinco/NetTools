@@ -1,6 +1,6 @@
 /bin
 /dest
-/external/.bin
+/external/.bin/*.exe
 /external/*/bin
 /external/*/include
 /external/*/lib

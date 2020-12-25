@@ -4,7 +4,7 @@ installer=npcap-1.10.exe
 sdk=npcap-sdk-1.06.zip
 
 cd ..
-${DOWNLOAD} https://nmap.org/npcap/dist/${sdk} \
+${DOWNLOAD} -O https://nmap.org/npcap/dist/${sdk} \
 && \
 unzip ${sdk} \
 && \
@@ -16,4 +16,4 @@ rm -rf docs Examples-pcap _lib Examples-remote Npcap_Guide.html ${sdk} \
 && \
 mkdir -p bin && cd bin \
 && \
-${DOWNLOAD} https://nmap.org/npcap/dist/${installer} \
+${DOWNLOAD} -O https://nmap.org/npcap/dist/${installer} \

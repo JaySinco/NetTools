@@ -126,6 +126,13 @@ bool transport::ip2mac(pcap_t *handle, const ip4 &ip, mac &mac_, bool use_cache,
     return ok;
 }
 
+static long operator-(const timeval &tv1, const timeval &tv2)
+{
+    long diff_sec = tv1.tv_sec - tv2.tv_sec;
+    long diff_ms = (tv1.tv_usec - tv2.tv_usec) / 1000;
+    return (diff_sec * 1000 + diff_ms);
+}
+
 bool transport::ping(pcap_t *handle, const adaptor &apt, const ip4 &ip, packet &reply,
                      long &cost_ms, int ttl, const std::string &echo, bool forbid_slice,
                      int timeout_ms)

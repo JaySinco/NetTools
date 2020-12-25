@@ -2,6 +2,7 @@
 #include "packet-listctrl.h"
 #include "packet-propgrid.h"
 #include "net/transport.h"
+#include <wx/msgdlg.h>
 #include <execution>
 #include <thread>
 #define NOTIFY_TRY try {

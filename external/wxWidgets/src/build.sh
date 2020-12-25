@@ -1,7 +1,14 @@
 #!/bin/bash
 
 cwd=`readlink -f .`
+webview2_sdk=webview2.zip
 
+${DOWNLOAD} -o ${webview2_sdk} https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/1.0.664.37 \
+&& \
+unzip -d wxWidgets-3.1.4/3rdparty/webview2 ${webview2_sdk} \
+&& \
+rm -rf ${webview2_sdk} \
+&& \
 mkdir -p build/ \
 && \
 cd build \

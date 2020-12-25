@@ -1,4 +1,5 @@
 #include "main-frame.h"
+#include <wx/app.h>
 
 class App : public wxApp
 {

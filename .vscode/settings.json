@@ -2,7 +2,7 @@
     "files.exclude": {
         "bin": true,
         "dest": true,
-        "external/.bin": true,
+        "external/.bin/*.exe": true,
         "external/*/bin": true,
         "external/*/include": true,
         "external/*/lib": true,
@@ -24,12 +24,11 @@
         "${workspaceFolder}/external/magic_enum/include/",
         "${workspaceFolder}/external/wxWidgets/include/",
         "${workspaceFolder}/external/wxWidgets/include/msvc/",
-        "${workspaceFolder}/external/boost/include/boost-1_74/"
+        "${workspaceFolder}/external/boost/include/boost-1_74/",
+        "${workspaceFolder}/external/webview2/include/",
+        "${workspaceFolder}/external/wil/include/"
     ],
     "C_Cpp.autoAddFileAssociations": false,
-    "C_Cpp.default.defines":[
-        "_UNICODE",
-    ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true

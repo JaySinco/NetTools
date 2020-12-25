@@ -70,6 +70,16 @@ void packet::to_bytes(std::vector<u_char> &bytes) const
     }
 }
 
+static std::string tv2s(const timeval &tv)
+{
+    tm local;
+    time_t timestamp = tv.tv_sec;
+    localtime_s(&local, &timestamp);
+    char timestr[16] = {0};
+    strftime(timestr, sizeof(timestr), "%H:%M:%S", &local);
+    return "{}.{:03d}"_format(timestr, tv.tv_usec / 1000);
+}
+
 const json &packet::to_json() const
 {
     if (!j_cached) {
@@ -80,7 +90,7 @@ const json &packet::to_json() const
             j[type] = (*it)->to_json();
             j["layers"].push_back(type);
         }
-        j["time"] = util::tv2s(d.time);
+        j["time"] = tv2s(d.time);
         j["owner"] = d.owner;
         const_cast<packet &>(*this).j_cached = j;
     }

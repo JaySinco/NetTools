@@ -12,7 +12,7 @@ function generate_ui() {
     fi
 }
 
-ui_list=("sniff" "crawl")
+ui_list=("sniff")
 for ui in ${ui_list[@]}; do
     generate_ui ${ui}
 done

@@ -1,22 +1,6 @@
 #pragma once
 #include "prec.h"
 #include <mutex>
-#define NT_TRY try {
-#define NT_CATCH \
-    }            \
-    catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
-
-#define INIT_LOG(argc, argv)                           \
-    google::InitGoogleLogging(argv[0]);                \
-    gflags::ParseCommandLineFlags(&argc, &argv, true); \
-    FLAGS_logtostderr = 1;                             \
-    FLAGS_minloglevel = 0;
-
-#define GUI_INIT_LOG(argc, argv)                \
-    if (AttachConsole(ATTACH_PARENT_PROCESS)) { \
-        freopen("CONOUT$", "w+t", stderr);      \
-    }                                           \
-    INIT_LOG(argc, argv)
 
 struct mac
 {
@@ -129,17 +113,3 @@ private:
     static std::mutex lk_image;
     static image_cache_t image_cache;
 };
-
-class util
-{
-public:
-    static std::string tv2s(const timeval &tv);
-
-    static std::string ws2s(const std::wstring &wstr);
-
-    static std::wstring s2ws(const std::string &str);
-
-    static std::wstring get_curdir();
-};
-
-long operator-(const timeval &tv1, const timeval &tv2);
