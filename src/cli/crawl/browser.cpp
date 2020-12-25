@@ -1,54 +1,80 @@
 #include "browser.h"
 #include <wrl.h>
+#define WM_ASYNC_CALL WM_USER + 1
 
 using namespace Microsoft::WRL;
 
-void browser::start()
+browser::browser(const std::wstring &title, const std::pair<int, int> &size, bool show)
 {
-    VLOG(1) << "start browser";
-    std::thread(&browser::message_loop, this).detach();
+    VLOG(1) << "browser<{}> start"_format(util::ws2s(title));
+    std::thread([=] {
+        std::lock_guard<std::mutex> lock(lock_running);
+        thread_id = GetCurrentThreadId();
+        // create window
+        WNDCLASS wc = {0};
+        wc.lpszClassName = L"NETTOOLS_CRAWL_BROWSER";
+        wc.lpfnWndProc = wnd_proc;
+        wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+        RegisterClass(&wc);
+        h_browser = CreateWindow(wc.lpszClassName, title.c_str(), WS_OVERLAPPEDWINDOW,
+                                 CW_USEDEFAULT, CW_USEDEFAULT, size.first, size.second, NULL, NULL,
+                                 GetModuleHandle(NULL), this);
+        if (!h_browser) {
+            throw std::runtime_error("failed to create window");
+        }
+        ShowWindow(h_browser, show);
+        // create webview environment
+        HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
+            nullptr, nullptr, nullptr,
+            Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
+                this, &browser::environment_created)
+                .Get());
+        if (FAILED(hr)) {
+            throw std::runtime_error("failed to create webview environment, hr={}"_format(hr));
+        }
+        // message loop
+        MSG msg;
+        while (GetMessage(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        // quit
+        status_ = status::CLOSED;
+        VLOG(1) << "browser<{}> closed"_format(util::ws2s(title));
+    }).detach();
+
+    while (status_ != status::RUNNING) {
+        std::this_thread::sleep_for(10ms);
+    }
 }
 
-void browser::close()
+void browser::close() const { PostThreadMessage(thread_id, WM_QUIT, 0, NULL); }
+
+void browser::wait_utill_closed() { std::lock_guard<std::mutex> lock(lock_running); }
+
+bool browser::is_closed() const { return status_ == status::CLOSED; }
+
+void browser::navigate(const std::wstring &url) const
 {
-    VLOG(1) << "close browser";
-    PostThreadMessage(thread_id, WM_QUIT, 0, NULL);
+    task_t task([=] {
+        HRESULT hr = wv_window->Navigate(url.c_str());
+        if (FAILED(hr)) {
+            throw std::runtime_error("failed to navigate to {}, hr={}"_format(util::ws2s(url), hr));
+        }
+        return L"";
+    });
+    auto future = task.get_future();
+    async_call(std::move(task));
+    future.get();
 }
 
-void browser::create_window()
+void browser::async_call(task_t &&task) const
 {
-    WNDCLASS wc = {0};
-    wc.lpszClassName = L"NETTOOLS_CRAWL_BROWSER";
-    wc.lpfnWndProc = wnd_proc;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    RegisterClass(&wc);
-    h_browser = CreateWindow(wc.lpszClassName, L"Crawl", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                             CW_USEDEFAULT, 1200, 900, NULL, NULL, GetModuleHandle(NULL), this);
-    if (!h_browser) {
-        throw std::runtime_error("failed to create window");
+    task_t *p_task = new task_t(std::move(task));
+    BOOL ok = PostMessage(h_browser, WM_ASYNC_CALL, reinterpret_cast<WPARAM>(p_task), NULL);
+    if (!ok) {
+        throw std::runtime_error("failed to post async funcion call message");
     }
-    ShowWindow(h_browser, true);
-}
-
-void browser::message_loop()
-{
-    VLOG(1) << "message-loop start";
-    thread_id = GetCurrentThreadId();
-    create_window();
-    HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
-        nullptr, nullptr, nullptr,
-        Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>(
-            this, &browser::environment_created)
-            .Get());
-    if (FAILED(hr)) {
-        throw std::runtime_error("failed to create webview environment, hr={}"_format(hr));
-    }
-    MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-    VLOG(1) << "message-loop quit";
 }
 
 HRESULT browser::environment_created(HRESULT result, ICoreWebView2Environment *environment)
@@ -65,29 +91,16 @@ HRESULT browser::controller_created(HRESULT result, ICoreWebView2Controller *con
         wv_controller = controller;
         wv_controller->get_CoreWebView2(&wv_window);
     }
-
-    // Add a few settings for the webview
-    // The demo step is redundant since the values are the default settings
-    ICoreWebView2Settings *Settings;
-    wv_window->get_Settings(&Settings);
-    Settings->put_IsScriptEnabled(TRUE);
-    Settings->put_AreDefaultScriptDialogsEnabled(TRUE);
-    Settings->put_IsWebMessageEnabled(TRUE);
-
-    // Resize WebView to fit the bounds of the parent window
-    RECT bounds;
-    GetClientRect(h_browser, &bounds);
-    wv_controller->put_Bounds(bounds);
-
-    // Schedule an async task to navigate to Bing
-    wv_window->Navigate(L"https://www.google.com/");
-
-    // Step 4 - Navigation events
-
-    // Step 5 - Scripting
-
-    // Step 6 - Communication between host and web content
-
+    ICoreWebView2Settings *config;
+    wv_window->get_Settings(&config);
+    config->put_IsScriptEnabled(TRUE);
+    config->put_AreDefaultScriptDialogsEnabled(TRUE);
+    config->put_IsWebMessageEnabled(TRUE);
+    config->put_AreDevToolsEnabled(TRUE);
+    RECT rect;
+    GetClientRect(h_browser, &rect);
+    wv_controller->put_Bounds(rect);
+    status_ = status::RUNNING;
     return S_OK;
 }
 
@@ -104,6 +117,11 @@ LRESULT CALLBACK browser::scoped_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LP
         case WM_DESTROY:
             PostQuitMessage(0);
             return 0;
+        case WM_ASYNC_CALL: {
+            auto task = std::unique_ptr<task_t>(reinterpret_cast<task_t *>(wParam));
+            (*task)();
+            return 0;
+        }
     }
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }

@@ -7,7 +7,6 @@
 #include <boost/fusion/include/std_tuple.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/fusion/include/io.hpp>
-#include <magic_enum.hpp>
 
 namespace x3 = boost::spirit::x3;
 
@@ -247,8 +246,8 @@ const auto comp_def = compare_op >> target;
 const auto match = selector >> -comp;
 const auto unit = match | '(' >> expr >> ')';
 const auto not = -x3::char_('!') >> unit;
-const auto and = not % "&&";
-const auto or = and % "||";
+const auto and = not % x3::repeat(1, 2)[x3::lit('&')];
+const auto or = and % x3::repeat(1, 2)[x3::lit('|')];
 const auto expr_def = or ;
 
 BOOST_SPIRIT_DEFINE(expr, comp);
