@@ -7,7 +7,7 @@ cloc="${cwd}/external/.bin/cloc.exe"
 
 function generate_ui() {
     fbp="${cwd}/resources/$1-ui.fbp"
-    if [ $(stat -c %Y ${cwd}/src/cli/$1/ui.cpp) -le $(stat -c %Y ${fbp}) ]; then
+    if [ $(stat -c %Y ${cwd}/src/widgets/$1-ui.cpp) -le $(stat -c %Y ${fbp}) ]; then
         "${wxbuilder}" -g "${fbp}" 2>/dev/null && echo "code generated for ${fbp}"
     fi
 }

@@ -1,0 +1,32 @@
+#pragma once
+#include "sniff-ui.h"
+#include "submodule/filter.h"
+#include "transport/adaptor.h"
+#include "transport/packet.h"
+#include <atomic>
+
+class SniffFrame : public SniffFrame_g
+{
+public:
+    SniffFrame();
+
+private:
+    void on_sniff_start(wxCommandEvent &event);
+    void on_sniff_stop(wxCommandEvent &event);
+    void on_sniff_clear(wxCommandEvent &event);
+    void on_packet_selected(wxListEvent &event);
+    void on_list_col_clicked(wxListEvent &event);
+    void on_filter_changed(wxCommandEvent &event);
+    void sniff_background(const adaptor &apt, const std::string &filter, int update_freq_ms);
+    void port_table_update_background(int update_freq_ms);
+    void sniff_recv(std::vector<packet> data);
+    void sniff_stopped();
+    void notify_error(const std::string &msg);
+    void update_status_bar();
+
+    p_filter filter_;
+    std::vector<size_t> idx_list;
+    std::vector<packet> pac_list;
+    std::vector<bool> column_sort;
+    std::atomic<bool> sniff_should_stop;
+};
