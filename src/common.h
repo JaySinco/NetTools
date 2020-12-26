@@ -10,7 +10,7 @@ using json = nlohmann::ordered_json;
 #define NT_TRY try {
 #define NT_CATCH \
     }            \
-    catch (const std::runtime_error &e) { LOG(ERROR) << e.what(); }
+    catch (const std::exception &e) { LOG(ERROR) << e.what(); }
 
 #define INIT_LOG(argc, argv)                           \
     google::InitGoogleLogging(argv[0]);                \

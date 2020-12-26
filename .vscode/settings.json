@@ -29,6 +29,10 @@
         "${workspaceFolder}/external/wil/include/"
     ],
     "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.default.defines":[
+        "UNICODE",
+        "_UNICODE",
+    ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true
