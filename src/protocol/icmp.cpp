@@ -143,10 +143,15 @@ json icmp::to_json() const
         j["echo"] = extra.raw;
     }
     if (tp == "error") {
-        j["error-ipv4"] = extra.eip.to_json();
-        j["error-sport"] = ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0]));
-        j["error-dport"] =
-            ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0] + sizeof(u_short)));
+        json ep;
+        ep["ipv4"] = extra.eip.to_json();
+        auto error_type = extra.eip.type();
+        if (error_type == Protocol_Type_TCP || error_type == Protocol_Type_UDP) {
+            ep["source-port"] = ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0]));
+            ep["dest-port"] =
+                ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0] + sizeof(u_short)));
+        }
+        j["error-header"] = ep;
     }
     return j;
 }
