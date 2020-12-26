@@ -145,7 +145,7 @@ json icmp::to_json() const
     if (tp == "error") {
         json ep;
         ep["ipv4"] = extra.eip.to_json();
-        auto error_type = extra.eip.type();
+        auto error_type = extra.eip.succ_type();
         if (error_type == Protocol_Type_TCP || error_type == Protocol_Type_UDP) {
             ep["source-port"] = ntohs(*reinterpret_cast<const u_short *>(&extra.buf[0]));
             ep["dest-port"] =
