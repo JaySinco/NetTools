@@ -68,14 +68,35 @@ void browser::navigate(const std::wstring &url) const
         return L"";
     });
     auto future = task.get_future();
-    async_call(std::move(task));
+    post_task(std::move(task));
     future.get();
 }
 
-void browser::async_call(task_t &&task) const
+std::wstring browser::run_script(const std::wstring &source)
+{
+    std::promise<std::wstring> result;
+    auto future = result.get_future();
+    task_t task([=, &result] {
+        HRESULT hr = wv_window->ExecuteScript(
+            source.c_str(),
+            Callback<ICoreWebView2ExecuteScriptCompletedHandler>([&](HRESULT err_code,
+                                                                     LPCWSTR res_json) -> HRESULT {
+                result.set_value(res_json);
+                return S_OK;
+            }).Get());
+        if (FAILED(hr)) {
+            throw std::runtime_error("failed to execute script, hr={}"_format(hr));
+        }
+        return L"";
+    });
+    post_task(std::move(task));
+    return future.get();
+}
+
+void browser::post_task(task_t &&task) const
 {
     if (is_closed()) {
-        throw std::runtime_error("failed to execute async task: browser is closed");
+        throw std::runtime_error("failed to post task: browser is closed");
     }
     task_t *p_task = new task_t(std::move(task));
     BOOL ok = PostMessage(h_browser, WM_ASYNC_CALL, reinterpret_cast<WPARAM>(p_task), NULL);

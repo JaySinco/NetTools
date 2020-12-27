@@ -17,6 +17,7 @@ public:
     void close();
     bool is_closed() const;
     void navigate(const std::wstring &url) const;
+    std::wstring run_script(const std::wstring &source);
 
 private:
     using task_t = std::packaged_task<std::wstring()>;
@@ -27,7 +28,7 @@ private:
         CLOSED,
     };
 
-    void async_call(task_t &&task) const;
+    void post_task(task_t &&task) const;
     HRESULT environment_created(HRESULT result, ICoreWebView2Environment *environment);
     HRESULT controller_created(HRESULT result, ICoreWebView2Controller *controller);
     HRESULT new_window_requested(ICoreWebView2 *sender,
