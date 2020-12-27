@@ -109,10 +109,10 @@ json dns::to_json() const
     j["recursion-desired"] = d.flags & 0x100 ? true : false;
     j["recursion-available"] = d.flags & 0x80 ? true : false;
     j["rcode"] = d.flags & 0xf;
-    j["query-count"] = d.qrn;
-    j["reply-count"] = d.rrn;
-    j["author-count"] = d.arn;
-    j["extra-count"] = d.ern;
+    j["query-no"] = d.qrn;
+    j["reply-no"] = d.rrn;
+    j["author-no"] = d.arn;
+    j["extra-no"] = d.ern;
     if (d.qrn > 0) {
         json query;
         for (const auto &qr : extra.query) {
