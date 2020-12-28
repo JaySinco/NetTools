@@ -38,6 +38,6 @@ mkdir -p dest/ bin/ \
 cd dest/ \
 && \
 ${CMAKE_CMD} "${CMAKE_GENERATOR}" ../ \
-    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=${cwd}/bin/ \
+    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=${cwd}/bin/ \
 && \
 ${MSVC_BUILD} ${target}
