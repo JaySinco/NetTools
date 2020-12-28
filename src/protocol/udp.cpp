@@ -12,13 +12,10 @@ udp::udp(const u_char *const start, const u_char *&end, const protocol *prev)
     ph.type = ipdt.type;
     ph.zero_pad = 0;
     ph.len = htons(d.len);
-    std::string raw = std::string(start + sizeof(detail), start + d.len);
-    size_t tlen = sizeof(pseudo_header) + sizeof(detail) + raw.size();
+    size_t tlen = sizeof(pseudo_header) + d.len;
     u_char *buf = new u_char[tlen];
-    auto dt = hton(d);
     std::memcpy(buf, &ph, sizeof(pseudo_header));
-    std::memcpy(buf + sizeof(pseudo_header), &dt, sizeof(detail));
-    std::memcpy(buf + sizeof(pseudo_header) + sizeof(detail), raw.data(), raw.size());
+    std::memcpy(buf + sizeof(pseudo_header), start, d.len);
     extra.crc = calc_checksum(buf, tlen);
     delete[] buf;
 }

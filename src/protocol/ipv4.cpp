@@ -12,7 +12,7 @@ ipv4::ipv4(const u_char *const start, const u_char *&end, const protocol *prev)
     if (d.tlen != end - start) {
         VLOG(3) << "abnormal ipv4 length: expected={}, got={}"_format(d.tlen, end - start);
     }
-    end = start + 4 * (d.ver_ihl & 0xf);
+    end = start + 4 * (d.ver_hl & 0xf);
 }
 
 ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type, bool forbid_slice)
@@ -28,7 +28,7 @@ ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type, 
     if (!found) {
         throw std::runtime_error("unknow ipv4 type: {}"_format(type));
     }
-    d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
+    d.ver_hl = (4 << 4) | (sizeof(detail) / 4);
     d.id = rand_ushort();
     d.flags_fo = forbid_slice ? 0x4000 : 0;
     d.ttl = ttl;
@@ -39,7 +39,7 @@ ipv4::ipv4(const ip4 &sip, const ip4 &dip, u_char ttl, const std::string &type, 
 void ipv4::to_bytes(std::vector<u_char> &bytes) const
 {
     auto pt = const_cast<ipv4 *>(this);
-    pt->d.ver_ihl = (4 << 4) | (sizeof(detail) / 4);
+    pt->d.ver_hl = (4 << 4) | (sizeof(detail) / 4);
     pt->d.tlen = sizeof(detail) + bytes.size();
 
     auto dt = hton(d);
@@ -54,9 +54,9 @@ json ipv4::to_json() const
     json j;
     j["type"] = type();
     j["ipv4-type"] = succ_type();
-    j["version"] = d.ver_ihl >> 4;
+    j["version"] = d.ver_hl >> 4;
     j["tos"] = d.tos;
-    size_t header_size = 4 * (d.ver_ihl & 0xf);
+    size_t header_size = 4 * (d.ver_hl & 0xf);
     j["header-size"] = header_size;
     int checksum = -1;
     if (header_size == sizeof(detail)) {
@@ -96,7 +96,7 @@ bool ipv4::link_to(const protocol &rhs) const
 
 const ipv4::detail &ipv4::get_detail() const { return d; }
 
-u_short ipv4::payload_size() const { return d.tlen - 4 * (d.ver_ihl & 0xf); }
+u_short ipv4::payload_size() const { return d.tlen - 4 * (d.ver_hl & 0xf); }
 
 ipv4::detail ipv4::ntoh(const detail &d, bool reverse)
 {
@@ -111,6 +111,6 @@ ipv4::detail ipv4::hton(const detail &d) { return ntoh(d, true); }
 
 bool ipv4::operator==(const ipv4 &rhs) const
 {
-    return d.ver_ihl == rhs.d.ver_ihl && d.id == rhs.d.id && d.flags_fo == rhs.d.flags_fo &&
+    return d.ver_hl == rhs.d.ver_hl && d.id == rhs.d.id && d.flags_fo == rhs.d.flags_fo &&
            d.type == rhs.d.type && d.sip == rhs.d.sip && d.dip == rhs.d.dip;
 }

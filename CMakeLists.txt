@@ -102,13 +102,5 @@ add_custom_command(TARGET sniff POST_BUILD
   $<TARGET_FILE_DIR:sniff>
 )
 
-add_executable(crawl ${CMAKE_SOURCE_DIR}/src/tools/crawl.cpp)
-target_link_libraries(crawl submodule)
-add_custom_command(TARGET crawl POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
-  $<TARGET_FILE_DIR:crawl>
-)
-
 add_executable(test ${CMAKE_SOURCE_DIR}/src/tools/test.cpp)
 target_link_libraries(test common)

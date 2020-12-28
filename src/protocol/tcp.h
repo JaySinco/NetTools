@@ -6,14 +6,29 @@ class tcp : public protocol
 public:
     struct detail
     {
-        u_short sport;      // Source port
-        u_short dport;      // Destination port
-        u_int sn;           // Sequence number
-        u_int an;           // Acknowledgment number
-        u_short thl_flags;  // Header length (4 bits) + Reserved (3 bits) + Flags (9 bits)
-        u_short wlen;       // Window Size
-        u_short crc;        // Checksum
-        u_short urp;        // Urgent pointer
+        u_short sport;     // Source port
+        u_short dport;     // Destination port
+        u_int sn;          // Sequence number
+        u_int an;          // Acknowledgment number
+        u_short hl_flags;  // Header length (4 bits) + Reserved (3 bits) + Flags (9 bits)
+        u_short wlen;      // Window Size
+        u_short crc;       // Checksum
+        u_short urp;       // Urgent pointer
+    };
+
+    struct extra_detail
+    {
+        u_short len;  // Datagram length, >= 20
+        u_short crc;  // Computed checksum
+    };
+
+    struct pseudo_header
+    {
+        ip4 sip;          // IPv4 Source address
+        ip4 dip;          // IPv4 Destination address
+        u_char zero_pad;  // Zero
+        u_char type;      // IPv4 type
+        u_short len;      // TCP Datagram length
     };
 
     tcp() = default;
@@ -36,6 +51,8 @@ public:
 
 private:
     detail d{0};
+
+    extra_detail extra;
 
     static detail ntoh(const detail &d, bool reverse = false);
 
