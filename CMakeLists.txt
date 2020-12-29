@@ -66,7 +66,7 @@ add_library(submodule STATIC
   ${CMAKE_SOURCE_DIR}/src/submodule/filter.cpp
   ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
 )
-target_link_libraries(submodule common Version.lib WebView2Guid.lib WebView2LoaderStatic.lib)
+target_link_libraries(submodule common WebView2Loader.dll.lib)
 
 add_library(widgets STATIC
   ${CMAKE_SOURCE_DIR}/src/widgets/packet-listctrl.cpp
@@ -103,4 +103,10 @@ add_custom_command(TARGET sniff POST_BUILD
 )
 
 add_executable(test ${CMAKE_SOURCE_DIR}/src/tools/test.cpp)
-target_link_libraries(test common)
+target_link_libraries(test submodule)
+add_custom_command(TARGET test POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
+  ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
+  $<TARGET_FILE_DIR:test>
+)
