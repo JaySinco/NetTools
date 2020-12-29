@@ -18,9 +18,10 @@ void PacketPropGrid::show_packet(const packet &pac)
 
 void PacketPropGrid::show_json(wxPGProperty *parent, const std::string &name, const json &j)
 {
+    std::string id = "{}.{}"_format(name, rand());
     if (j.is_array()) {
         wxPGProperty *p = nullptr;
-        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
+        wxStringProperty *sp = new wxStringProperty(name, id, "<composed>");
         if (parent != nullptr) {
             p = AppendIn(parent, sp);
         } else {
@@ -33,7 +34,7 @@ void PacketPropGrid::show_json(wxPGProperty *parent, const std::string &name, co
         }
     } else if (j.is_object()) {
         wxPGProperty *p = nullptr;
-        wxStringProperty *sp = new wxStringProperty(name, wxPG_LABEL, "<composed>");
+        wxStringProperty *sp = new wxStringProperty(name, id, "<composed>");
         if (parent != nullptr) {
             p = AppendIn(parent, sp);
         } else {
@@ -43,14 +44,14 @@ void PacketPropGrid::show_json(wxPGProperty *parent, const std::string &name, co
             show_json(p, it.key(), it.value());
         }
     } else if (j.is_string()) {
-        auto p = new wxStringProperty(name, wxPG_LABEL, j.get<std::string>());
+        auto p = new wxStringProperty(name, id, j.get<std::string>());
         if (parent != nullptr) {
             AppendIn(parent, p);
         } else {
             Append(p);
         }
     } else {
-        auto p = new wxStringProperty(name, wxPG_LABEL, j.dump());
+        auto p = new wxStringProperty(name, id, j.dump());
         if (parent != nullptr) {
             AppendIn(parent, p);
         } else {

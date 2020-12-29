@@ -1,6 +1,8 @@
 #!/bin/bash
 
 cwd=`readlink -f .`
+source "${cwd}/resources/source_in_bash_profile.sh"
+
 wxbuilder="/c/Program Files (x86)/wxFormBuilder/wxFormBuilder.exe"
 fmt="${cwd}/external/.bin/clang-format.exe"
 cloc="${cwd}/external/.bin/cloc.exe"

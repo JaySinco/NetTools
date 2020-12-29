@@ -49,7 +49,7 @@ SniffFrame_g::SniffFrame_g(wxWindow *parent, wxWindowID id, const wxString &titl
     bSizer4->Add(bSizer6, 1, wxEXPAND, 5);
 
     m_list = new PacketListCtrl(m_panel_left, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                wxLC_ICON | wxLC_REPORT | wxLC_VIRTUAL);
+                                wxLC_REPORT | wxLC_VIRTUAL);
     m_list->SetFont(wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false,
                            wxT("Consolas")));
 
