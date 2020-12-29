@@ -60,7 +60,7 @@ add_library(transport STATIC
   ${CMAKE_SOURCE_DIR}/src/transport/packet.cpp
   ${CMAKE_SOURCE_DIR}/src/transport/transport.cpp
 )
-target_link_libraries(transport protocol wpcap.lib iphlpapi.lib)
+target_link_libraries(transport protocol wpcap.lib iphlpapi.lib libboost_filesystem-vc141-mt-s-x64-1_74.lib)
 
 add_library(submodule STATIC
   ${CMAKE_SOURCE_DIR}/src/submodule/filter.cpp

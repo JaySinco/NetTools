@@ -31,6 +31,8 @@ clean)
     ;;
 esac
 
+BUILD_TYPE=`echo ${MSVC_BUILD_TYPE} | tr '[:lower:]' '[:upper:]'`
+
 find "${cwd}/src" -type f -exec ${fmt} -i {} \; \
 && \
 mkdir -p dest/ bin/ \
@@ -38,6 +40,6 @@ mkdir -p dest/ bin/ \
 cd dest/ \
 && \
 ${CMAKE_CMD} "${CMAKE_GENERATOR}" ../ \
-    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO=${cwd}/bin/ \
+    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_${BUILD_TYPE}=${cwd}/bin/ \
 && \
 ${MSVC_BUILD} ${target}
