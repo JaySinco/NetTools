@@ -49,7 +49,7 @@ json tcp::to_json() const
     if (d.hl_flags >> 2 & 0x1) flags.push_back("rst");
     if (d.hl_flags >> 1 & 0x1) flags.push_back("syn");
     if (d.hl_flags & 0x1) flags.push_back("fin");
-    j["flags"] = boost::algorithm::join(flags, "; ");
+    j["flags"] = boost::algorithm::join(flags, ";");
     j["window-size"] = d.wlen;
     j["checksum"] = extra.crc;
     j["urgent-pointer"] = d.urp;
