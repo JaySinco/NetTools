@@ -7,12 +7,12 @@
         "external/*/include": true,
         "external/*/lib": true,
         "external/*/src/build": true,
-        "external/*/src/*[0-9]": true,
+        "external/*/src/*[0-9]": true
     },
     "files.watcherExclude": {
         "bin": true,
         "dest": true,
-        "external": true,
+        "external": true
     },
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/",     
@@ -31,7 +31,7 @@
     "C_Cpp.autoAddFileAssociations": false,
     "C_Cpp.default.defines":[
         "UNICODE",
-        "_UNICODE",
+        "_UNICODE"
     ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
@@ -44,4 +44,6 @@
     "workbench.iconTheme": "vscode-icons",
     "gitlens.codeLens.enabled": false,
     "gitlens.currentLine.enabled": false,
+    "scm.inputFontFamily": "editor",
+    "editor.codeLensFontFamily": "Cascadia Code"
 }
