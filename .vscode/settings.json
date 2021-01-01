@@ -35,5 +35,13 @@
     ],
     "explorer.autoReveal": true,
     "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true
+    "files.trimFinalNewlines": true,
+    "editor.minimap.enabled": true,
+    "editor.fontFamily": "Cascadia Code",
+    "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+    "debug.console.fontFamily": "Cascadia Code",
+    "editor.accessibilitySupport": "off",
+    "workbench.iconTheme": "vscode-icons",
+    "gitlens.codeLens.enabled": false,
+    "gitlens.currentLine.enabled": false,
 }
