@@ -18,7 +18,7 @@ public:
 
     http() = default;
 
-    http(const u_char *const start, const u_char *&end, const protocol *prev);
+    http(const u_char *const start, const u_char *&end, const protocol *prev = nullptr);
 
     virtual ~http() = default;
 
