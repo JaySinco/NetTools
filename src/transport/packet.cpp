@@ -7,6 +7,7 @@
 #include "protocol/udp.h"
 #include "protocol/tcp.h"
 #include "protocol/dns.h"
+#include "protocol/http.h"
 
 std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_Ethernet, packet::decode<::ethernet>},
@@ -17,6 +18,7 @@ std::map<std::string, packet::decoder> packet::decoder_dict = {
     {Protocol_Type_UDP, packet::decode<::udp>},
     {Protocol_Type_TCP, packet::decode<::tcp>},
     {Protocol_Type_DNS, packet::decode<::dns>},
+    {Protocol_Type_HTTP, packet::decode<::http>},
 };
 
 packet::packet() { d.time = gettimeofday(); }

@@ -51,6 +51,7 @@ add_library(protocol STATIC
   ${CMAKE_SOURCE_DIR}/src/protocol/udp.cpp
   ${CMAKE_SOURCE_DIR}/src/protocol/tcp.cpp
   ${CMAKE_SOURCE_DIR}/src/protocol/dns.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/http.cpp
 )
 target_link_libraries(protocol common)
 
