@@ -1,6 +1,6 @@
 #include "port-table.h"
 #include <iphlpapi.h>
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 std::mutex port_table::lk_map;
 port_table::storage_t port_table::map;
@@ -33,7 +33,7 @@ std::string port_table::pid_to_image(u_int pid)
         image_cache[pid] = std::make_pair(s_default, std::chrono::system_clock::now());
         return s_default;
     }
-    boost::filesystem::path fp(std::string(buf, size));
+    std::filesystem::path fp(std::string(buf, size));
     std::string image = fp.filename().string();
     image_cache[pid] = std::make_pair(image, std::chrono::system_clock::now());
     return image;
