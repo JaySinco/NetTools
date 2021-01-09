@@ -6,6 +6,7 @@
         "external/*/bin": true,
         "external/*/include": true,
         "external/*/lib": true,
+        "external/*/share": true,
         "external/*/src/build": true,
         "external/*/src/*[0-9]": true
     },

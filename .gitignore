@@ -4,5 +4,6 @@
 /external/*/bin
 /external/*/include
 /external/*/lib
+/external/*/share
 /external/*/src/*
 !/external/*/src/build.sh

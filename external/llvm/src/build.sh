@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cwd=`readlink -f .`
+
 mkdir -p build/ \
 && \
 cd build \
