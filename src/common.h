@@ -13,10 +13,10 @@ using json = nlohmann::ordered_json;
     catch (const std::exception &e) { LOG(ERROR) << e.what(); }
 
 #define INIT_LOG(argc, argv)                           \
-    google::InitGoogleLogging(argv[0]);                \
-    gflags::ParseCommandLineFlags(&argc, &argv, true); \
     FLAGS_logtostderr = 1;                             \
-    FLAGS_minloglevel = 0;
+    FLAGS_minloglevel = 0;                             \
+    gflags::ParseCommandLineFlags(&argc, &argv, true); \
+    google::InitGoogleLogging(argv[0]);
 
 #define GUI_INIT_LOG(argc, argv)                \
     if (AttachConsole(ATTACH_PARENT_PROCESS)) { \
