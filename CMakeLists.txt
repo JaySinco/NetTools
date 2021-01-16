@@ -21,6 +21,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
   ${CMAKE_SOURCE_DIR}/external/webview2/include/
   ${CMAKE_SOURCE_DIR}/external/wil/include/
+  ${CMAKE_SOURCE_DIR}/external/v8/include/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -33,6 +34,7 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/
+  ${CMAKE_SOURCE_DIR}/external/v8/lib/
 )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -63,19 +65,14 @@ add_library(transport STATIC
 )
 target_link_libraries(transport protocol wpcap.lib iphlpapi.lib)
 
-add_library(submodule STATIC
-  ${CMAKE_SOURCE_DIR}/src/submodule/filter.cpp
-  ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
-)
-target_link_libraries(submodule common WebView2Loader.dll.lib)
-
 add_library(widgets STATIC
+  ${CMAKE_SOURCE_DIR}/src/submodule/filter.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/packet-listctrl.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/packet-propgrid.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/sniff-ui.cpp
   ${CMAKE_SOURCE_DIR}/src/widgets/sniff-frame.cpp
 )
-target_link_libraries(widgets transport submodule)
+target_link_libraries(widgets transport)
 
 add_executable(lsdev ${CMAKE_SOURCE_DIR}/src/tools/lsdev.cpp)
 target_link_libraries(lsdev transport)
@@ -103,11 +100,17 @@ add_custom_command(TARGET sniff POST_BUILD
   $<TARGET_FILE_DIR:sniff>
 )
 
-add_executable(test ${CMAKE_SOURCE_DIR}/src/tools/test.cpp)
-target_link_libraries(test submodule)
-add_custom_command(TARGET test POST_BUILD
+add_executable(browser_test
+  ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
+  ${CMAKE_SOURCE_DIR}/src/submodule/browser_test.cpp
+)
+target_link_libraries(browser_test common WebView2Loader.dll.lib)
+add_custom_command(TARGET browser_test POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
-  $<TARGET_FILE_DIR:test>
+  $<TARGET_FILE_DIR:browser_test>
 )
+
+add_executable(v8_test ${CMAKE_SOURCE_DIR}/src/submodule/v8_test.cpp)
+target_link_libraries(v8_test v8_monolith.lib dbghelp.lib winmm.lib)
