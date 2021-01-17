@@ -12,7 +12,7 @@ mkdir v8
 cd v8
 fetch v8
 cd v8
-git checkout 8.6.51
+git checkout 8.7.220.31
 gclient sync
 
 # build

@@ -1,14 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 #define V8_COMPRESS_POINTERS
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
 int main(int argc, char *argv[])
 {
-    v8::V8::InitializeICUDefaultLocation(argv[0]);
-    v8::V8::InitializeExternalStartupData(argv[0]);
+    NT_TRY
+    INIT_LOG(argc, argv);
+
     std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
     v8::V8::InitializePlatform(platform.get());
     v8::V8::Initialize();
@@ -26,11 +25,11 @@ int main(int argc, char *argv[])
         v8::Local<v8::Script> script = v8::Script::Compile(context, source).ToLocalChecked();
         v8::Local<v8::Value> result = script->Run(context).ToLocalChecked();
         v8::String::Utf8Value utf8(isolate, result);
-        printf("%s\n", *utf8);
+        LOG(INFO) << *utf8;
     }
     isolate->Dispose();
     v8::V8::Dispose();
     v8::V8::ShutdownPlatform();
     delete create_params.array_buffer_allocator;
-    return 0;
+    NT_CATCH
 }

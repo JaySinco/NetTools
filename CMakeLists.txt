@@ -113,4 +113,9 @@ add_custom_command(TARGET browser_test POST_BUILD
 )
 
 add_executable(v8_test ${CMAKE_SOURCE_DIR}/src/submodule/v8_test.cpp)
-target_link_libraries(v8_test v8_monolith.lib dbghelp.lib winmm.lib)
+target_link_libraries(v8_test common v8_monolith.lib dbghelp.lib winmm.lib)
+add_custom_command(TARGET v8_test POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/v8/bin/d8.exe
+  $<TARGET_FILE_DIR:v8_test>
+)
