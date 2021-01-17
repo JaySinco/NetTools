@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
 {
     NT_TRY
     INIT_LOG(argc, argv);
-
     std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
     v8::V8::InitializePlatform(platform.get());
     v8::V8::Initialize();

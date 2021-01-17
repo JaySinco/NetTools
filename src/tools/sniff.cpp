@@ -14,7 +14,6 @@ bool App::OnInit()
 {
     char **argv_ = argv;
     GUI_INIT_LOG(argc, argv_);
-
     SniffFrame *frame = new SniffFrame;
     frame->Show(true);
     return true;

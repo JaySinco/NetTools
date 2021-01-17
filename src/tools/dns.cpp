@@ -6,7 +6,6 @@ int main(int argc, char *argv[])
 {
     NT_TRY
     INIT_LOG(argc, argv);
-
     if (argc < 2) {
         LOG(ERROR) << "empty domain name, please input domain name";
         return -1;

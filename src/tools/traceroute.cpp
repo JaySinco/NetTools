@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
 {
     NT_TRY
     INIT_LOG(argc, argv);
-
     if (argc < 2) {
         LOG(ERROR) << "empty target name, please input ip or host name";
         return -1;
