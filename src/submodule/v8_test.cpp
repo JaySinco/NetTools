@@ -3,6 +3,16 @@
 #include "libplatform/libplatform.h"
 #include "v8.h"
 
+void LogCallback(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+    if (args.Length() < 1) return;
+    v8::Isolate *isolate = args.GetIsolate();
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::Value> arg = args[0];
+    v8::String::Utf8Value value(isolate, arg);
+    LOG(INFO) << *value;
+}
+
 int main(int argc, char *argv[])
 {
     NT_TRY
@@ -16,15 +26,14 @@ int main(int argc, char *argv[])
     {
         v8::Isolate::Scope isolate_scope(isolate);
         v8::HandleScope handle_scope(isolate);
-        v8::Local<v8::Context> context = v8::Context::New(isolate);
+        v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
+        global->Set(v8::String::NewFromUtf8(isolate, "log").ToLocalChecked(),
+                    v8::FunctionTemplate::New(isolate, LogCallback));
+        v8::Local<v8::Context> context = v8::Context::New(isolate, nullptr, global);
         v8::Context::Scope context_scope(context);
-        v8::Local<v8::String> source =
-            v8::String::NewFromUtf8(isolate, "'Hello' + ', World!'", v8::NewStringType::kNormal)
-                .ToLocalChecked();
+        v8::Local<v8::String> source = v8::String::NewFromUtf8(isolate, argv[1]).ToLocalChecked();
         v8::Local<v8::Script> script = v8::Script::Compile(context, source).ToLocalChecked();
         v8::Local<v8::Value> result = script->Run(context).ToLocalChecked();
-        v8::String::Utf8Value utf8(isolate, result);
-        LOG(INFO) << *utf8;
     }
     isolate->Dispose();
     v8::V8::Dispose();
