@@ -245,10 +245,10 @@ const auto target = plain | quoted;
 const auto comp_def = compare_op >> target;
 const auto match = selector >> -comp;
 const auto unit = match | '(' >> expr >> ')';
-const auto not = -x3::char_('!') >> unit;
-const auto and = not % x3::repeat(1, 2)[x3::lit('&')];
-const auto or = and % x3::repeat(1, 2)[x3::lit('|')];
-const auto expr_def = or ;
+const auto not_ = -x3::char_('!') >> unit;
+const auto and_ = not_ % x3::repeat(1, 2)[x3::lit('&')];
+const auto or_ = and_ % x3::repeat(1, 2)[x3::lit('|')];
+const auto expr_def = or_;
 
 BOOST_SPIRIT_DEFINE(expr, comp);
 

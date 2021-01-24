@@ -88,7 +88,7 @@ void SniffFrame::on_list_col_clicked(wxListEvent &event)
 void SniffFrame::on_filter_changed(wxCommandEvent &event)
 {
     NOTIFY_TRY
-    std::string filter = m_filter->GetValue();
+    std::string filter = m_filter->GetValue().ToStdString();
     if (filter.size() == 0) {
         filter_.reset();
     } else {

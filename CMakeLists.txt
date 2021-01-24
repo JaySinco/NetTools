@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(NetTools)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")

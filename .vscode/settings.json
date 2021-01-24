@@ -33,5 +33,6 @@
     "C_Cpp.default.defines": [
         "UNICODE",
         "_UNICODE"
-    ]
+    ],
+    "C_Cpp.default.cppStandard": "c++20"
 }
