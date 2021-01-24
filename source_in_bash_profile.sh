@@ -11,7 +11,7 @@ _build_completions()
 complete -F _build_completions build.sh
 
 export DOWNLOAD="curl -LJ" # -x socks5h://localhost:8172
-export CMAKE_CMD="cmake -A x64 -G"
+export CMAKE_CMD="cmake -A x64 -G" # -T clangcl
 export CMAKE_GENERATOR="Visual Studio 16 2019"
 export MSVC_PATH="\
 /c/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin:\
