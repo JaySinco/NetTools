@@ -21,9 +21,6 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
   ${CMAKE_SOURCE_DIR}/external/webview2/include/
   ${CMAKE_SOURCE_DIR}/external/wil/include/
-  ${CMAKE_SOURCE_DIR}/external/node/include/
-  ${CMAKE_SOURCE_DIR}/external/node/include/v8/
-  ${CMAKE_SOURCE_DIR}/external/node/include/uv/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -36,7 +33,6 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/
-  ${CMAKE_SOURCE_DIR}/external/node/lib/
 )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -113,6 +109,3 @@ add_custom_command(TARGET browser_test POST_BUILD
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
   $<TARGET_FILE_DIR:browser_test>
 )
-
-add_executable(node_test ${CMAKE_SOURCE_DIR}/src/submodule/node_test.cpp)
-target_link_libraries(node_test common)

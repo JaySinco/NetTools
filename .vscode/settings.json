@@ -28,7 +28,6 @@
         "${workspaceFolder}/external/boost/include/boost-1_74/",
         "${workspaceFolder}/external/webview2/include/",
         "${workspaceFolder}/external/wil/include/",
-        "${workspaceFolder}/external/v8/include/"
     ],
     "C_Cpp.default.defines": [
         "UNICODE",
