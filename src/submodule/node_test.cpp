@@ -22,21 +22,8 @@ void NativeModuleEnv::InitializeCodeCache() {}
 
 }  // namespace node
 
-using node::ArrayBufferAllocator;
-using node::Environment;
-using node::IsolateData;
-using node::MultiIsolatePlatform;
-using v8::Context;
-using v8::HandleScope;
-using v8::Isolate;
-using v8::Local;
-using v8::Locker;
-using v8::MaybeLocal;
-using v8::SealHandleScope;
-using v8::V8;
-using v8::Value;
-
-static int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::string> &args,
+static int RunNodeInstance(node::MultiIsolatePlatform *platform,
+                           const std::vector<std::string> &args,
                            const std::vector<std::string> &exec_args);
 
 int main(int argc, char **argv)
@@ -52,14 +39,14 @@ int main(int argc, char **argv)
         return exit_code;
     }
 
-    std::unique_ptr<MultiIsolatePlatform> platform = MultiIsolatePlatform::Create(4);
-    V8::InitializePlatform(platform.get());
-    V8::Initialize();
+    std::unique_ptr<node::MultiIsolatePlatform> platform = node::MultiIsolatePlatform::Create(4);
+    v8::V8::InitializePlatform(platform.get());
+    v8::V8::Initialize();
 
     int ret = RunNodeInstance(platform.get(), args, exec_args);
 
-    V8::Dispose();
-    V8::ShutdownPlatform();
+    v8::V8::Dispose();
+    v8::V8::ShutdownPlatform();
     return ret;
 }
 
@@ -73,7 +60,7 @@ void LogCallback(const v8::FunctionCallbackInfo<v8::Value> &args)
     std::cout << "[LOG] " << *value << std::endl;
 }
 
-int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::string> &args,
+int RunNodeInstance(node::MultiIsolatePlatform *platform, const std::vector<std::string> &args,
                     const std::vector<std::string> &exec_args)
 {
     int exit_code = 0;
@@ -84,40 +71,40 @@ int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::strin
         return 1;
     }
 
-    std::shared_ptr<ArrayBufferAllocator> allocator = ArrayBufferAllocator::Create();
+    std::shared_ptr<node::ArrayBufferAllocator> allocator = node::ArrayBufferAllocator::Create();
 
-    Isolate *isolate = NewIsolate(allocator.get(), &loop, platform);
+    v8::Isolate *isolate = NewIsolate(allocator.get(), &loop, platform);
     if (isolate == nullptr) {
         fprintf(stderr, "%s: Failed to initialize V8 Isolate\n", args[0].c_str());
         return 1;
     }
 
     {
-        Locker locker(isolate);
-        Isolate::Scope isolate_scope(isolate);
+        v8::Locker locker(isolate);
+        v8::Isolate::Scope isolate_scope(isolate);
 
-        std::unique_ptr<IsolateData, decltype(&node::FreeIsolateData)> isolate_data(
+        std::unique_ptr<node::IsolateData, decltype(&node::FreeIsolateData)> isolate_data(
             node::CreateIsolateData(isolate, &loop, platform, allocator.get()),
             node::FreeIsolateData);
 
-        HandleScope handle_scope(isolate);
+        v8::HandleScope handle_scope(isolate);
 
         v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
         global->Set(v8::String::NewFromUtf8(isolate, "log"),
                     v8::FunctionTemplate::New(isolate, LogCallback));
 
-        Local<Context> context = node::NewContext(isolate, global);
+        v8::Local<v8::Context> context = node::NewContext(isolate, global);
         if (context.IsEmpty()) {
             fprintf(stderr, "%s: Failed to initialize V8 Context\n", args[0].c_str());
             return 1;
         }
 
-        Context::Scope context_scope(context);
-        std::unique_ptr<Environment, decltype(&node::FreeEnvironment)> env(
+        v8::Context::Scope context_scope(context);
+        std::unique_ptr<node::Environment, decltype(&node::FreeEnvironment)> env(
             node::CreateEnvironment(isolate_data.get(), context, args, exec_args),
             node::FreeEnvironment);
 
-        MaybeLocal<Value> loadenv_ret =
+        v8::MaybeLocal<v8::Value> loadenv_ret =
             node::LoadEnvironment(env.get(),
                                   "const publicRequire ="
                                   "  require('module').createRequire(process.cwd() + '/');"
@@ -129,7 +116,7 @@ int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::strin
             return 1;
 
         {
-            SealHandleScope seal(isolate);
+            v8::SealHandleScope seal(isolate);
             bool more;
             do {
                 uv_run(&loop, UV_RUN_DEFAULT);
