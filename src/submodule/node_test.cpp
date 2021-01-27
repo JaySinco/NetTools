@@ -4,6 +4,7 @@
 #include "node_main_instance.h"
 #include "node_native_module_env.h"
 #include <assert.h>
+#include <iostream>
 
 namespace node
 {
@@ -62,6 +63,16 @@ int main(int argc, char **argv)
     return ret;
 }
 
+void LogCallback(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+    if (args.Length() < 1) return;
+    v8::Isolate *isolate = args.GetIsolate();
+    v8::HandleScope scope(isolate);
+    v8::Local<v8::Value> arg = args[0];
+    v8::String::Utf8Value value(isolate, arg);
+    std::cout << "[LOG] " << *value << std::endl;
+}
+
 int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::string> &args,
                     const std::vector<std::string> &exec_args)
 {
@@ -90,7 +101,12 @@ int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::strin
             node::FreeIsolateData);
 
         HandleScope handle_scope(isolate);
-        Local<Context> context = node::NewContext(isolate);
+
+        v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
+        global->Set(v8::String::NewFromUtf8(isolate, "log"),
+                    v8::FunctionTemplate::New(isolate, LogCallback));
+
+        Local<Context> context = node::NewContext(isolate, global);
         if (context.IsEmpty()) {
             fprintf(stderr, "%s: Failed to initialize V8 Context\n", args[0].c_str());
             return 1;
