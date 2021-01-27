@@ -21,6 +21,9 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
   ${CMAKE_SOURCE_DIR}/external/webview2/include/
   ${CMAKE_SOURCE_DIR}/external/wil/include/
+  ${CMAKE_SOURCE_DIR}/external/node/include/
+  ${CMAKE_SOURCE_DIR}/external/node/include/v8/
+  ${CMAKE_SOURCE_DIR}/external/node/include/uv/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -33,6 +36,7 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/
+  ${CMAKE_SOURCE_DIR}/external/node/lib/
 )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -92,8 +96,7 @@ target_link_libraries(dns transport)
 
 add_executable(sniff WIN32 ${CMAKE_SOURCE_DIR}/src/tools/sniff.cpp)
 target_link_libraries(sniff widgets)
-add_custom_command(TARGET sniff POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+add_custom_command(TARGET sniff POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/npcap/bin/npcap-1.10.exe
   $<TARGET_FILE_DIR:sniff>
 )
@@ -103,9 +106,21 @@ add_executable(browser_test
   ${CMAKE_SOURCE_DIR}/src/submodule/browser_test.cpp
 )
 target_link_libraries(browser_test common WebView2Loader.dll.lib)
-add_custom_command(TARGET browser_test POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+add_custom_command(TARGET browser_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
   $<TARGET_FILE_DIR:browser_test>
+)
+
+add_executable(node_test ${CMAKE_SOURCE_DIR}/src/submodule/node_test.cpp)
+target_link_libraries(node_test
+  brotli.lib cares.lib histogram.lib http_parser.lib icudata.lib icui18n.lib icustubdata.lib
+  icutools.lib icuucx.lib libnode.lib libuv.lib llhttp.lib torque_base.lib 
+  nghttp2.lib openssl.lib uvwasi.lib v8_compiler.lib v8_libbase.lib v8_libplatform.lib
+  v8_base_without_compiler.lib v8_libsampler.lib v8_snapshot.lib zlib.lib
+  dbghelp.lib winmm.lib ws2_32.lib crypt32.lib iphlpapi.lib psapi.lib userenv.lib
+)
+add_custom_command(TARGET node_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/node/bin/node.exe 
+  $<TARGET_FILE_DIR:node_test>
 )
