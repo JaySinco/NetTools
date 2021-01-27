@@ -145,3 +145,23 @@ int RunNodeInstance(MultiIsolatePlatform *platform, const std::vector<std::strin
 
     return exit_code;
 }
+
+// const WebSocket = require('ws');
+
+// const ws = new WebSocket("ws://127.0.0.1:9229/d1bc1d23-c9e8-4b3d-a5a1-15f9d14a50d2");
+
+// ws.on('open', function open() {
+//     ws.send(JSON.stringify({id:  7, method: "Debugger.enable"}));
+//     ws.send(JSON.stringify({id:  8, method: "Runtime.runIfWaitingForDebugger"}));
+//     ws.send(JSON.stringify({id:  9, method: "Runtime.evaluate", params: {expression: "s"}}));
+//     ws.send(JSON.stringify({id: 10, method: "Debugger.resume"}));
+//     ws.send(JSON.stringify({id: 11, method: "Runtime.globalLexicalScopeNames"}));
+// });
+
+// ws.on('message', function incoming(data) {
+//   console.log(data);
+// });
+
+// ws.on('error', function incoming(data) {
+//   console.log(data);
+// });
