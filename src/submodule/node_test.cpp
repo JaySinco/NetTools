@@ -1,10 +1,14 @@
 #define NODE_WANT_INTERNALS 1
-#include "node.h"
-#include "uv.h"
-#include "node_main_instance.h"
-#include "node_native_module_env.h"
-#include <assert.h>
+#include <uv.h>
+#include <node.h>
+#include <node_main_instance.h>
+#include <node_native_module_env.h>
+#include <fmt/format.h>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
+
+using namespace fmt::literals;
 
 namespace node
 {
@@ -22,60 +26,30 @@ void NativeModuleEnv::InitializeCodeCache() {}
 
 }  // namespace node
 
-static int RunNodeInstance(node::MultiIsolatePlatform *platform,
-                           const std::vector<std::string> &args,
-                           const std::vector<std::string> &exec_args);
-
-int main(int argc, char **argv)
-{
-    argv = uv_setup_args(argc, argv);
-    std::vector<std::string> args(argv, argv + argc);
-    std::vector<std::string> exec_args;
-    std::vector<std::string> errors;
-    int exit_code = node::InitializeNodeWithArgs(&args, &exec_args, &errors);
-    for (const std::string &error : errors)
-        fprintf(stderr, "%s: %s\n", args[0].c_str(), error.c_str());
-    if (exit_code != 0) {
-        return exit_code;
-    }
-
-    std::unique_ptr<node::MultiIsolatePlatform> platform = node::MultiIsolatePlatform::Create(4);
-    v8::V8::InitializePlatform(platform.get());
-    v8::V8::Initialize();
-
-    int ret = RunNodeInstance(platform.get(), args, exec_args);
-
-    v8::V8::Dispose();
-    v8::V8::ShutdownPlatform();
-    return ret;
-}
-
-void LogCallback(const v8::FunctionCallbackInfo<v8::Value> &args)
+void log_js(const v8::FunctionCallbackInfo<v8::Value> &args)
 {
     if (args.Length() < 1) return;
     v8::Isolate *isolate = args.GetIsolate();
     v8::HandleScope scope(isolate);
     v8::Local<v8::Value> arg = args[0];
     v8::String::Utf8Value value(isolate, arg);
-    std::cout << "[LOG] " << *value << std::endl;
+    std::cout << *value << std::endl;
 }
 
-int RunNodeInstance(node::MultiIsolatePlatform *platform, const std::vector<std::string> &args,
-                    const std::vector<std::string> &exec_args)
+int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::string> &args,
+               const std::vector<std::string> &exec_args, const std::string &source)
 {
     int exit_code = 0;
     uv_loop_t loop;
-    int ret = uv_loop_init(&loop);
-    if (ret != 0) {
-        fprintf(stderr, "%s: Failed to initialize loop: %s\n", args[0].c_str(), uv_err_name(ret));
+    if (int ret = uv_loop_init(&loop); ret != 0) {
+        std::cerr << "failed to init uv loop: {}"_format(uv_err_name(ret)) << std::endl;
         return 1;
     }
 
     std::shared_ptr<node::ArrayBufferAllocator> allocator = node::ArrayBufferAllocator::Create();
-
     v8::Isolate *isolate = NewIsolate(allocator.get(), &loop, platform);
     if (isolate == nullptr) {
-        fprintf(stderr, "%s: Failed to initialize V8 Isolate\n", args[0].c_str());
+        std::cerr << "failed to create v8 isolate" << std::endl;
         return 1;
     }
 
@@ -91,40 +65,42 @@ int RunNodeInstance(node::MultiIsolatePlatform *platform, const std::vector<std:
 
         v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
         global->Set(v8::String::NewFromUtf8(isolate, "log"),
-                    v8::FunctionTemplate::New(isolate, LogCallback));
+                    v8::FunctionTemplate::New(isolate, log_js));
 
         v8::Local<v8::Context> context = node::NewContext(isolate, global);
         if (context.IsEmpty()) {
-            fprintf(stderr, "%s: Failed to initialize V8 Context\n", args[0].c_str());
+            std::cerr << "failed to create v8 context" << std::endl;
             return 1;
         }
 
         v8::Context::Scope context_scope(context);
+
         std::unique_ptr<node::Environment, decltype(&node::FreeEnvironment)> env(
             node::CreateEnvironment(isolate_data.get(), context, args, exec_args),
             node::FreeEnvironment);
 
-        v8::MaybeLocal<v8::Value> loadenv_ret =
-            node::LoadEnvironment(env.get(),
-                                  "const publicRequire ="
-                                  "  require('module').createRequire(process.cwd() + '/');"
-                                  "globalThis.require = publicRequire;"
-                                  "globalThis.embedVars = { nön_ascıı: '🏳️‍🌈' };"
-                                  "require('vm').runInThisContext(process.argv[1]);");
+        std::string code = R"(
+            const publicRequire = require('module').createRequire(process.cwd() + '/');
+            globalThis.require = publicRequire;
+            require('vm').runInThisContext(`{}`);
+        )"_format(source);
+        v8::MaybeLocal<v8::Value> loadenv_ret = node::LoadEnvironment(env.get(), code.c_str());
 
-        if (loadenv_ret.IsEmpty())  // There has been a JS exception.
+        if (loadenv_ret.IsEmpty()) {
+            std::cerr << "failed to load env, there has been a JS exception" << std::endl;
             return 1;
+        }
 
         {
             v8::SealHandleScope seal(isolate);
             bool more;
             do {
                 uv_run(&loop, UV_RUN_DEFAULT);
-
                 platform->DrainTasks(isolate);
                 more = uv_loop_alive(&loop);
-                if (more) continue;
-
+                if (more) {
+                    continue;
+                }
                 node::EmitBeforeExit(env.get());
                 more = uv_loop_alive(&loop);
             } while (more == true);
@@ -141,12 +117,82 @@ int RunNodeInstance(node::MultiIsolatePlatform *platform, const std::vector<std:
     platform->UnregisterIsolate(isolate);
     isolate->Dispose();
 
-    // Wait until the platform has cleaned up all relevant resources.
-    while (!platform_finished) uv_run(&loop, UV_RUN_ONCE);
-    int err = uv_loop_close(&loop);
-    assert(err == 0);
-
+    while (!platform_finished) {
+        uv_run(&loop, UV_RUN_ONCE);
+    }
+    if (int err = uv_loop_close(&loop); err != 0) {
+        std::cerr << "failed to close uv loop" << std::endl;
+    }
     return exit_code;
+}
+
+inline bool ends_with(const std::string &s, const std::string &suffix)
+{
+    return s.rfind(suffix) == s.size() - suffix.size();
+}
+
+std::string read_script(const std::string &path)
+{
+    if (ends_with(path, ".js")) {
+        std::ifstream file(path, std::ios::binary | std::ios::in);
+        if (!file.is_open()) {
+            return "";
+        }
+        std::shared_ptr<void> file_guard(nullptr, [&](void *) { file.close(); });
+        file.seekg(0, std::ios::end);
+        long size = file.tellg();
+        file.seekg(0, std::ios::beg);
+        std::string buffer(size, 0);
+        if (size <= 0 || !file.read(buffer.data(), size)) {
+            return "";
+        }
+        return buffer;
+    }
+    return "";
+}
+
+void print_usage(const char *arg0)
+{
+    std::string exec_name = std::filesystem::path(arg0).filename().string();
+    std::cerr << "Usage: {} [options] [ script.js ]"_format(exec_name) << std::endl;
+}
+
+int main(int argc, char **argv)
+{
+    argv = uv_setup_args(argc, argv);
+    std::vector<std::string> args(argv, argv + argc);
+    std::vector<std::string> exec_args;
+    std::vector<std::string> errors;
+    int exit_code = node::InitializeNodeWithArgs(&args, &exec_args, &errors);
+    for (const std::string &error : errors) {
+        std::cerr << "failed to init node with args: {}"_format(error.c_str()) << std::endl;
+    }
+    if (exit_code != 0) {
+        return exit_code;
+    }
+    std::unique_ptr<node::MultiIsolatePlatform> platform = node::MultiIsolatePlatform::Create(4);
+    v8::V8::InitializePlatform(platform.get());
+    v8::V8::Initialize();
+
+    if (argc < 2) {
+        print_usage(argv[0]);
+        return 1;
+    }
+    std::string path = argv[argc - 1];
+    if (!ends_with(path, ".js") && !ends_with(path, ".mrpa")) {
+        print_usage(argv[0]);
+        return 1;
+    }
+    std::string source = read_script(path);
+    if (source.size() <= 0) {
+        std::cerr << "failed to read source code, path={}"_format(path) << std::endl;
+        return 2;
+    }
+    int ret = run_script(platform.get(), args, exec_args, source);
+
+    v8::V8::Dispose();
+    v8::V8::ShutdownPlatform();
+    return ret;
 }
 
 // const WebSocket = require('ws');

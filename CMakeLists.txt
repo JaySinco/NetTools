@@ -117,7 +117,7 @@ target_link_libraries(node_test
   brotli.lib cares.lib histogram.lib http_parser.lib icudata.lib icui18n.lib icustubdata.lib
   icutools.lib icuucx.lib libnode.lib libuv.lib llhttp.lib torque_base.lib 
   nghttp2.lib openssl.lib uvwasi.lib v8_compiler.lib v8_libbase.lib v8_libplatform.lib
-  v8_base_without_compiler.lib v8_libsampler.lib v8_snapshot.lib zlib.lib
+  v8_base_without_compiler.lib v8_libsampler.lib v8_snapshot.lib zlib.lib fmt.lib
   dbghelp.lib winmm.lib ws2_32.lib crypt32.lib iphlpapi.lib psapi.lib userenv.lib
 )
 add_custom_command(TARGET node_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
