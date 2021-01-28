@@ -131,10 +131,10 @@ inline bool ends_with(const std::string &s, const std::string &suffix)
     return s.rfind(suffix) == s.size() - suffix.size();
 }
 
-std::string read_script(const std::string &path)
+std::string read_script(const std::string &arg_N)
 {
-    if (ends_with(path, ".js")) {
-        std::ifstream file(path, std::ios::binary | std::ios::in);
+    if (ends_with(arg_N, ".js")) {
+        std::ifstream file(arg_N, std::ios::binary | std::ios::in);
         if (!file.is_open()) {
             return "";
         }
@@ -148,13 +148,13 @@ std::string read_script(const std::string &path)
         }
         return buffer;
     }
-    return "";
+    return arg_N;
 }
 
 void print_usage(const char *arg0)
 {
     std::string exec_name = std::filesystem::path(arg0).filename().string();
-    std::cerr << "Usage: {} [options] [ script.js ]"_format(exec_name) << std::endl;
+    std::cerr << "Usage: {} [options] [ script.js | statements ]"_format(exec_name) << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -178,14 +178,10 @@ int main(int argc, char **argv)
         print_usage(argv[0]);
         return 1;
     }
-    std::string path = argv[argc - 1];
-    if (!ends_with(path, ".js") && !ends_with(path, ".mrpa")) {
-        print_usage(argv[0]);
-        return 1;
-    }
-    std::string source = read_script(path);
+    std::string arg_N = argv[argc - 1];
+    std::string source = read_script(arg_N);
     if (source.size() <= 0) {
-        std::cerr << "failed to read source code, path={}"_format(path) << std::endl;
+        std::cerr << "failed to read source code, path={}"_format(arg_N) << std::endl;
         return 2;
     }
     int ret = run_script(platform.get(), args, exec_args, source);
