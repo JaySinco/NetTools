@@ -26,21 +26,19 @@ using json = nlohmann::ordered_json;
 inline std::string ws2s(const std::wstring &ws, UINT page = CP_UTF8)
 {
     int len = WideCharToMultiByte(page, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    if (len <= 0) {
-        throw std::runtime_error("ws2s failed, code-page: {}"_format(page));
-    }
-    std::string s(len, 0);
-    WideCharToMultiByte(page, 0, ws.c_str(), -1, s.data(), len, nullptr, nullptr);
+    auto buf = new char[len]{0};
+    WideCharToMultiByte(page, 0, ws.c_str(), -1, buf, len, nullptr, nullptr);
+    std::string s = buf;
+    delete[] buf;
     return s;
 }
 
 inline std::wstring s2ws(const std::string &s, UINT page = CP_UTF8)
 {
     int len = MultiByteToWideChar(page, 0, s.c_str(), -1, nullptr, 0);
-    if (len <= 0) {
-        throw std::runtime_error("s2ws failed, code-page: {}"_format(page));
-    }
-    std::wstring ws(len, 0);
-    MultiByteToWideChar(page, 0, s.c_str(), -1, ws.data(), len);
+    auto buf = new wchar_t[len]{0};
+    MultiByteToWideChar(page, 0, s.c_str(), -1, buf, len);
+    std::wstring ws = buf;
+    delete[] buf;
     return ws;
 }

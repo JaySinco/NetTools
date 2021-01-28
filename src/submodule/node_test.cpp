@@ -1,11 +1,11 @@
+#pragma warning(disable : 4005)
+#include "common.h"
 #define NODE_WANT_INTERNALS 1
 #include <uv.h>
 #include <node.h>
 #include <node_main_instance.h>
 #include <node_native_module_env.h>
-#include <fmt/format.h>
 #include <iostream>
-#include <fstream>
 #include <filesystem>
 
 using namespace fmt::literals;
@@ -37,7 +37,7 @@ void log_js(const v8::FunctionCallbackInfo<v8::Value> &args)
 }
 
 int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::string> &args,
-               const std::vector<std::string> &exec_args, const std::string &source)
+               const std::vector<std::string> &exec_args, const std::string &source_path)
 {
     int exit_code = 0;
     uv_loop_t loop;
@@ -80,10 +80,9 @@ int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::stri
             node::FreeEnvironment);
 
         std::string code = R"(
-            const publicRequire = require('module').createRequire(process.cwd() + '/');
-            globalThis.require = publicRequire;
-            require('vm').runInThisContext(`{}`);
-        )"_format(source);
+            globalThis.require = require('module').createRequire(process.cwd() + '/');
+            require('vm').runInThisContext(require('fs').readFileSync(`{}`, encoding='utf8'));
+        )"_format(source_path);
         v8::MaybeLocal<v8::Value> loadenv_ret = node::LoadEnvironment(env.get(), code.c_str());
 
         if (loadenv_ret.IsEmpty()) {
@@ -128,33 +127,13 @@ int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::stri
 
 inline bool ends_with(const std::string &s, const std::string &suffix)
 {
-    return s.rfind(suffix) == s.size() - suffix.size();
-}
-
-std::string read_script(const std::string &arg_N)
-{
-    if (ends_with(arg_N, ".js")) {
-        std::ifstream file(arg_N, std::ios::binary | std::ios::in);
-        if (!file.is_open()) {
-            return "";
-        }
-        std::shared_ptr<void> file_guard(nullptr, [&](void *) { file.close(); });
-        file.seekg(0, std::ios::end);
-        long size = file.tellg();
-        file.seekg(0, std::ios::beg);
-        std::string buffer(size, 0);
-        if (size <= 0 || !file.read(buffer.data(), size)) {
-            return "";
-        }
-        return buffer;
-    }
-    return arg_N;
+    return s.size() >= suffix.size() && s.rfind(suffix) == s.size() - suffix.size();
 }
 
 void print_usage(const char *arg0)
 {
     std::string exec_name = std::filesystem::path(arg0).filename().string();
-    std::cerr << "Usage: {} [options] [ script.js | statements ]"_format(exec_name) << std::endl;
+    std::cerr << "Usage: {} [options] [ script.js ]"_format(exec_name) << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -174,17 +153,13 @@ int main(int argc, char **argv)
     v8::V8::InitializePlatform(platform.get());
     v8::V8::Initialize();
 
-    if (argc < 2) {
+    if (argc < 2 || !ends_with(argv[argc - 1], ".js")) {
         print_usage(argv[0]);
         return 1;
     }
-    std::string arg_N = argv[argc - 1];
-    std::string source = read_script(arg_N);
-    if (source.size() <= 0) {
-        std::cerr << "failed to read source code, path={}"_format(arg_N) << std::endl;
-        return 2;
-    }
-    int ret = run_script(platform.get(), args, exec_args, source);
+    std::wstring native_path = s2ws(argv[argc - 1]);
+    std::string generic_path = ws2s(std::filesystem::path(native_path).generic_wstring());
+    int ret = run_script(platform.get(), args, exec_args, generic_path);
 
     v8::V8::Dispose();
     v8::V8::ShutdownPlatform();
