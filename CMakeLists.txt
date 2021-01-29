@@ -121,6 +121,7 @@ target_link_libraries(node_test
   dbghelp.lib winmm.lib ws2_32.lib crypt32.lib iphlpapi.lib psapi.lib userenv.lib
 )
 add_custom_command(TARGET node_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  ${CMAKE_SOURCE_DIR}/external/node/bin/node.exe 
+  ${CMAKE_SOURCE_DIR}/external/node/bin/node.exe
+  ${CMAKE_SOURCE_DIR}/resources/inspect.js
   $<TARGET_FILE_DIR:node_test>
 )
