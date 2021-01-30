@@ -81,7 +81,7 @@ int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::stri
 
         std::string code = R"(
             globalThis.require = require('module').createRequire(process.cwd() + '/');
-            require('vm').runInThisContext(require('fs').readFileSync(`{}`, encoding='utf8'));
+            require('vm').runInThisContext(require('fs').readFileSync(`{0}`, encoding='utf8'), `{0}`);
         )"_format(source_path);
         v8::MaybeLocal<v8::Value> loadenv_ret = node::LoadEnvironment(env.get(), code.c_str());
 
