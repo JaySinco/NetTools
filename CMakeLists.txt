@@ -112,16 +112,15 @@ add_custom_command(TARGET browser_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E co
   $<TARGET_FILE_DIR:browser_test>
 )
 
-add_executable(node_test ${CMAKE_SOURCE_DIR}/src/submodule/node_test.cpp)
-target_link_libraries(node_test
+add_executable(embed_node ${CMAKE_SOURCE_DIR}/src/tools/embed_node.cpp)
+target_link_libraries(embed_node
   brotli.lib cares.lib histogram.lib http_parser.lib icudata.lib icui18n.lib icustubdata.lib
   icutools.lib icuucx.lib libnode.lib libuv.lib llhttp.lib torque_base.lib 
   nghttp2.lib openssl.lib uvwasi.lib v8_compiler.lib v8_libbase.lib v8_libplatform.lib
   v8_base_without_compiler.lib v8_libsampler.lib v8_snapshot.lib zlib.lib fmt.lib
   dbghelp.lib winmm.lib ws2_32.lib crypt32.lib iphlpapi.lib psapi.lib userenv.lib
 )
-add_custom_command(TARGET node_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+add_custom_command(TARGET embed_node POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/node/bin/node.exe
-  ${CMAKE_SOURCE_DIR}/resources/inspect.js
-  $<TARGET_FILE_DIR:node_test>
+  $<TARGET_FILE_DIR:embed_node>
 )
