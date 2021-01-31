@@ -1,5 +1,6 @@
 #pragma warning(disable : 4005)
 #include "common.h"
+#include <boost/algorithm/string.hpp>
 #define NODE_WANT_INTERNALS 1
 #include <uv.h>
 #include <node.h>
@@ -26,23 +27,6 @@ void NativeModuleEnv::InitializeCodeCache() {}
 
 }  // namespace node
 
-void log_js(const v8::FunctionCallbackInfo<v8::Value> &args)
-{
-    if (args.Length() < 1) return;
-    v8::Isolate *isolate = args.GetIsolate();
-    v8::HandleScope scope(isolate);
-    v8::Local<v8::Value> arg = args[0];
-    v8::String::Utf8Value value(isolate, arg);
-    std::cout << *value << std::endl;
-}
-
-v8::Local<v8::Context> create_context(v8::Isolate *isolate)
-{
-    v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
-    global->Set(isolate, "log", v8::FunctionTemplate::New(isolate, log_js));
-    return node::NewContext(isolate, global);
-}
-
 int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::string> &args,
                const std::vector<std::string> &exec_args, const std::string &source_path)
 {
@@ -65,7 +49,7 @@ int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::stri
             node::CreateIsolateData(isolate, &loop, platform, allocator.get()),
             node::FreeIsolateData);
         v8::HandleScope handle_scope(isolate);
-        v8::Local<v8::Context> context = create_context(isolate);
+        v8::Local<v8::Context> context = node::NewContext(isolate);
         if (context.IsEmpty()) {
             std::cerr << "failed to create v8 context" << std::endl;
             return 1;
@@ -114,11 +98,6 @@ int run_script(node::MultiIsolatePlatform *platform, const std::vector<std::stri
     return exit_code;
 }
 
-inline bool ends_with(const std::string &s, const std::string &suffix)
-{
-    return s.size() >= suffix.size() && s.rfind(suffix) == s.size() - suffix.size();
-}
-
 void print_usage(const char *arg0)
 {
     std::string exec_name = std::filesystem::path(arg0).filename().string();
@@ -141,13 +120,12 @@ int main(int argc, char **argv)
     std::unique_ptr<node::MultiIsolatePlatform> platform = node::MultiIsolatePlatform::Create(4);
     v8::V8::InitializePlatform(platform.get());
     v8::V8::Initialize();
-    if (argc < 2 || !ends_with(argv[argc - 1], ".js")) {
+    if (argc < 2 || !boost::algorithm::ends_with(argv[argc - 1], ".js")) {
         print_usage(argv[0]);
         return 1;
     }
-    std::wstring native_path = s2ws(argv[argc - 1]);
-    std::string generic_path = ws2s(std::filesystem::path(native_path).generic_wstring());
-    int ret = run_script(platform.get(), args, exec_args, generic_path);
+    std::string source_path = std::filesystem::path(argv[argc - 1]).generic_string();
+    int ret = run_script(platform.get(), args, exec_args, source_path);
     v8::V8::Dispose();
     v8::V8::ShutdownPlatform();
     return ret;
