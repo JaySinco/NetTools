@@ -104,7 +104,7 @@ void print_usage(const char *arg0)
     std::cerr << "Usage: {} [options] [ script.js ]"_format(exec_name) << std::endl;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
     argv = uv_setup_args(argc, argv);
     std::vector<std::string> args(argv, argv + argc);
