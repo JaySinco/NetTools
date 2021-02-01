@@ -1,12 +1,14 @@
 #include "common.h"
 #include <boost/algorithm/string.hpp>
 #define V8_COMPRESS_POINTERS
-#include "libplatform/libplatform.h"
-#include "v8.h"
+#include <libplatform/libplatform.h>
+#include <v8.h>
 
 void log_js(const v8::FunctionCallbackInfo<v8::Value> &args)
 {
-    if (args.Length() < 1) return;
+    if (args.Length() < 1) {
+        return;
+    }
     v8::Isolate *isolate = args.GetIsolate();
     v8::HandleScope scope(isolate);
     v8::Local<v8::Value> arg = args[0];
@@ -42,9 +44,9 @@ int main(int argc, char *argv[])
             std::stringstream ss;
             ss << in_file.rdbuf();
             std::string code = ss.str();
-            source = v8::String::NewFromUtf8(isolate, code.c_str());
+            source = v8::String::NewFromUtf8(isolate, code.c_str()).ToLocalChecked();
         } else {
-            source = v8::String::NewFromUtf8(isolate, argv[1]);
+            source = v8::String::NewFromUtf8(isolate, argv[1]).ToLocalChecked();
         }
         v8::Local<v8::Script> script = v8::Script::Compile(context, source).ToLocalChecked();
         v8::Local<v8::Value> result = script->Run(context).ToLocalChecked();

@@ -21,9 +21,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/boost/include/boost-1_74/
   ${CMAKE_SOURCE_DIR}/external/webview2/include/
   ${CMAKE_SOURCE_DIR}/external/wil/include/
-  ${CMAKE_SOURCE_DIR}/external/node/include/
-  ${CMAKE_SOURCE_DIR}/external/node/include/v8/
-  ${CMAKE_SOURCE_DIR}/external/node/include/uv/
+  ${CMAKE_SOURCE_DIR}/external/v8/include/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -36,7 +34,7 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/wxWidgets/lib/vc_x64_lib/
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/
-  ${CMAKE_SOURCE_DIR}/external/node/lib/
+  ${CMAKE_SOURCE_DIR}/external/v8/lib/
 )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
@@ -112,19 +110,9 @@ add_custom_command(TARGET browser_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E co
   $<TARGET_FILE_DIR:browser_test>
 )
 
-add_library(v8_all INTERFACE)
-target_link_libraries(v8_all INTERFACE winmm.lib icudata.lib icui18n.lib icustubdata.lib icutools.lib icuucx.lib
-  v8_compiler.lib v8_libbase.lib v8_libplatform.lib v8_base_without_compiler.lib v8_libsampler.lib v8_snapshot.lib
+add_executable(v8_test ${CMAKE_SOURCE_DIR}/src/submodule/v8_test.cpp)
+target_link_libraries(v8_test common v8_monolith.lib dbghelp.lib winmm.lib)
+add_custom_command(TARGET v8_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_SOURCE_DIR}/external/v8/bin/d8.exe
+  $<TARGET_FILE_DIR:v8_test>
 )
-
-add_library(node_all INTERFACE)
-target_link_libraries(node_all INTERFACE v8_all brotli.lib cares.lib histogram.lib http_parser.lib
-  libnode.lib libuv.lib llhttp.lib torque_base.lib nghttp2.lib openssl.lib uvwasi.lib zlib.lib
-  dbghelp.lib ws2_32.lib crypt32.lib iphlpapi.lib psapi.lib userenv.lib
-)
-
-add_executable(embed_v8 ${CMAKE_SOURCE_DIR}/src/submodule/embed_v8.cpp)
-target_link_libraries(embed_v8 common v8_all)
-
-add_executable(embed_node ${CMAKE_SOURCE_DIR}/src/submodule/embed_node.cpp)
-target_link_libraries(embed_node common node_all)
