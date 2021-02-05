@@ -27,6 +27,11 @@ int main(int argc, char *argv[])
 {
     NT_TRY
     INIT_LOG(argc, argv);
+    if (argc < 2) {
+        LOG(ERROR) << "please input js code snippet or source file";
+        return -1;
+    }
+
     std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
     v8::V8::InitializePlatform(platform.get());
     v8::V8::Initialize();
@@ -41,6 +46,10 @@ int main(int argc, char *argv[])
         v8::Local<v8::String> source;
         if (boost::algorithm::ends_with(argv[1], ".js")) {
             std::ifstream in_file(argv[1]);
+            if (!in_file) {
+                LOG(ERROR) << "can't read js source file: " << argv[1];
+                return -1;
+            }
             std::stringstream ss;
             ss << in_file.rdbuf();
             std::string code = ss.str();

@@ -99,15 +99,15 @@ add_custom_command(TARGET sniff POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_d
   $<TARGET_FILE_DIR:sniff>
 )
 
-add_executable(browser_test
+add_executable(module_test
   ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
-  ${CMAKE_SOURCE_DIR}/src/submodule/browser_test.cpp
+  ${CMAKE_SOURCE_DIR}/src/submodule/module_test.cpp
 )
-target_link_libraries(browser_test common WebView2Loader.dll.lib)
-add_custom_command(TARGET browser_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+target_link_libraries(module_test common WebView2Loader.dll.lib)
+add_custom_command(TARGET module_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
-  $<TARGET_FILE_DIR:browser_test>
+  $<TARGET_FILE_DIR:module_test>
 )
 
 add_executable(v8_test ${CMAKE_SOURCE_DIR}/src/submodule/v8_test.cpp)

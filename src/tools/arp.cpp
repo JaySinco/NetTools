@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     NT_TRY
     INIT_LOG(argc, argv);
     if (argc < 2 && !FLAGS_attack) {
-        LOG(WARNING) << "empty ipv4 address, please input ip";
+        LOG(ERROR) << "empty ipv4 address, please input ip";
         return -1;
     }
 
