@@ -93,14 +93,7 @@ int main(int argc, char *argv[])
         std::string source;
         std::string filename;
         if (boost::algorithm::ends_with(argv[1], ".js")) {
-            std::ifstream in_file(s2ws(argv[1]));
-            if (!in_file) {
-                std::cerr << "can't read js source file: " << argv[1] << std::endl;
-                return -1;
-            }
-            std::stringstream ss;
-            ss << in_file.rdbuf();
-            source = ss.str();
+            source = read_file(s2ws(argv[1]));
             filename = argv[1];
         } else {
             source = argv[1];

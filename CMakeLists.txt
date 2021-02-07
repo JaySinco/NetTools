@@ -39,9 +39,11 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
-add_library(common INTERFACE)
-target_precompile_headers(common INTERFACE ${CMAKE_SOURCE_DIR}/src/prec.h)
-target_link_libraries(common INTERFACE fmt.lib gflags_static.lib glog.lib shlwapi.lib ws2_32.lib)
+add_library(common STATIC
+  ${CMAKE_SOURCE_DIR}/src/common.cpp
+)
+target_precompile_headers(common PUBLIC ${CMAKE_SOURCE_DIR}/src/prec.h)
+target_link_libraries(common fmt.lib gflags_static.lib glog.lib shlwapi.lib ws2_32.lib)
 
 add_library(protocol STATIC
   ${CMAKE_SOURCE_DIR}/src/protocol/type.cpp

@@ -23,22 +23,7 @@ using json = nlohmann::ordered_json;
     }                                           \
     INIT_LOG(argc, argv)
 
-inline std::string ws2s(const std::wstring &ws, UINT page = CP_UTF8)
-{
-    int len = WideCharToMultiByte(page, 0, ws.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    auto buf = new char[len]{0};
-    WideCharToMultiByte(page, 0, ws.c_str(), -1, buf, len, nullptr, nullptr);
-    std::string s = buf;
-    delete[] buf;
-    return s;
-}
-
-inline std::wstring s2ws(const std::string &s, UINT page = CP_UTF8)
-{
-    int len = MultiByteToWideChar(page, 0, s.c_str(), -1, nullptr, 0);
-    auto buf = new wchar_t[len]{0};
-    MultiByteToWideChar(page, 0, s.c_str(), -1, buf, len);
-    std::wstring ws = buf;
-    delete[] buf;
-    return ws;
-}
+std::string ws2s(const std::wstring &ws, UINT page = CP_ACP);
+std::wstring s2ws(const std::string &s, UINT page = CP_ACP);
+std::string read_file(const std::wstring &path);
+std::pair<int, std::string> exec(const std::wstring &cmd);
