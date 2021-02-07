@@ -40,7 +40,7 @@ std::pair<int, std::string> exec(const std::wstring &cmd)
     HANDLE hr = NULL;
     HANDLE hw = NULL;
     if (!CreatePipe(&hr, &hw, &sa, 0)) {
-        throw std::runtime_error("failed to create pipe");
+        throw std::runtime_error("failed to create pipe: {}"_format(GetLastError()));
     }
     SetHandleInformation(hr, HANDLE_FLAG_INHERIT, 0);
     STARTUPINFOW si = {sizeof(si)};
