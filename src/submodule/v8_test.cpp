@@ -54,19 +54,24 @@ void log(const v8::FunctionCallbackInfo<v8::Value> &args)
     std::cerr << *value << std::endl;
 }
 
-void get_version(v8::Local<v8::String> property, const v8::PropertyCallbackInfo<v8::Value> &info)
+void getter_callback(v8::Local<v8::String> property,
+                     const v8::PropertyCallbackInfo<v8::Value> &info)
 {
     v8::Isolate *isolate = info.GetIsolate();
     v8::HandleScope handle_scope(isolate);
-    info.GetReturnValue().Set(
-        v8::String::NewFromUtf8(isolate, v8::V8::GetVersion()).ToLocalChecked());
+    v8::String::Utf8Value property_value(isolate, property);
+    std::string property_str = *property_value;
+    if (property_str == "__version__") {
+        info.GetReturnValue().Set(
+            v8::String::NewFromUtf8(isolate, v8::V8::GetVersion()).ToLocalChecked());
+    }
 }
 
 v8::Local<v8::Context> create_context(v8::Isolate *isolate)
 {
     v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(isolate);
     global->Set(isolate, "log", v8::FunctionTemplate::New(isolate, log));
-    global->SetAccessor(v8::String::NewFromUtf8Literal(isolate, "__version__"), get_version);
+    global->SetAccessor(v8::String::NewFromUtf8Literal(isolate, "__version__"), getter_callback);
     return v8::Context::New(isolate, nullptr, global);
 }
 
