@@ -26,6 +26,7 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/libuv/include/
   ${CMAKE_SOURCE_DIR}/external/zlib/include/
   ${CMAKE_SOURCE_DIR}/external/openssl/include/
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -59,9 +60,7 @@ add_library(usockets STATIC
   ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/wolfssl.c
 )
 target_compile_definitions(usockets PUBLIC LIBUS_USE_OPENSSL)
-target_include_directories(usockets PUBLIC ${CMAKE_SOURCE_DIR}/external/usockets/src/)
 target_link_libraries(usockets libcrypto.lib libssl.lib libuv.lib zlib.lib psapi.lib userenv.lib iphlpapi.lib)
-
 
 add_library(common STATIC
   ${CMAKE_SOURCE_DIR}/src/common.cpp

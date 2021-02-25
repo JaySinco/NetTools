@@ -33,6 +33,7 @@
         "${workspaceFolder}/external/libuv/include/",
         "${workspaceFolder}/external/zlib/include/",
         "${workspaceFolder}/external/openssl/include/",
+        "${workspaceFolder}/external/usockets/src/",
     ],
     "C_Cpp.default.defines": [
         "UNICODE",
