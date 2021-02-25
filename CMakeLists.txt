@@ -133,6 +133,8 @@ target_link_libraries(module_test common usockets WebView2Loader.dll.lib)
 add_custom_command(TARGET module_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
+  ${CMAKE_SOURCE_DIR}/external/openssl/bin/libcrypto-1_1-x64.dll
+  ${CMAKE_SOURCE_DIR}/external/openssl/bin/libssl-1_1-x64.dll
   $<TARGET_FILE_DIR:module_test>
 )
 
