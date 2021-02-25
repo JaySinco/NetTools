@@ -16,7 +16,8 @@
         "external": true
     },
     "C_Cpp.default.includePath": [
-        "${workspaceFolder}/src/",     
+        "${workspaceFolder}/src/",
+        "${workspaceFolder}/external/",
         "${workspaceFolder}/external/gflags/include/",
         "${workspaceFolder}/external/glog/include/",
         "${workspaceFolder}/external/npcap/include/",
@@ -29,6 +30,9 @@
         "${workspaceFolder}/external/webview2/include/",
         "${workspaceFolder}/external/wil/include/",
         "${workspaceFolder}/external/v8/include/",
+        "${workspaceFolder}/external/libuv/include/",
+        "${workspaceFolder}/external/zlib/include/",
+        "${workspaceFolder}/external/openssl/include/",
     ],
     "C_Cpp.default.defines": [
         "UNICODE",

@@ -10,6 +10,7 @@ add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/
+  ${CMAKE_SOURCE_DIR}/external/
   ${CMAKE_SOURCE_DIR}/external/gflags/include/
   ${CMAKE_SOURCE_DIR}/external/glog/include/
   ${CMAKE_SOURCE_DIR}/external/npcap/include/
@@ -22,6 +23,9 @@ set(INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/external/webview2/include/
   ${CMAKE_SOURCE_DIR}/external/wil/include/
   ${CMAKE_SOURCE_DIR}/external/v8/include/
+  ${CMAKE_SOURCE_DIR}/external/libuv/include/
+  ${CMAKE_SOURCE_DIR}/external/zlib/include/
+  ${CMAKE_SOURCE_DIR}/external/openssl/include/
 )
 message(STATUS "Include dir -> " ${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR})
@@ -35,9 +39,29 @@ set(LINK_DIR
   ${CMAKE_SOURCE_DIR}/external/boost/lib/
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/
   ${CMAKE_SOURCE_DIR}/external/v8/lib/
+  ${CMAKE_SOURCE_DIR}/external/libuv/lib/
+  ${CMAKE_SOURCE_DIR}/external/zlib/lib/
+  ${CMAKE_SOURCE_DIR}/external/openssl/lib/
 )
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
+
+add_library(usockets STATIC
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/bsd.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/context.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/loop.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/socket.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/libuv.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/epoll_kqueue.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/gcd.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/openssl.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/sni_tree.cpp
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/wolfssl.c
+)
+target_compile_definitions(usockets PUBLIC LIBUS_USE_OPENSSL)
+target_include_directories(usockets PUBLIC ${CMAKE_SOURCE_DIR}/external/usockets/src/)
+target_link_libraries(usockets libcrypto.lib libssl.lib libuv.lib zlib.lib psapi.lib userenv.lib iphlpapi.lib)
+
 
 add_library(common STATIC
   ${CMAKE_SOURCE_DIR}/src/common.cpp
@@ -105,7 +129,7 @@ add_executable(module_test
   ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
   ${CMAKE_SOURCE_DIR}/src/submodule/module_test.cpp
 )
-target_link_libraries(module_test common WebView2Loader.dll.lib)
+target_link_libraries(module_test common usockets WebView2Loader.dll.lib)
 add_custom_command(TARGET module_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
