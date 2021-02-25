@@ -47,18 +47,11 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
-add_library(usockets STATIC
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/bsd.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/context.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/loop.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/socket.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/libuv.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/epoll_kqueue.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/eventing/gcd.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/openssl.c
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/sni_tree.cpp
-  ${CMAKE_SOURCE_DIR}/external/usockets/src/crypto/wolfssl.c
+file(GLOB_RECURSE usockets_SRC CONFIGURE_DEPENDS
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/*.c
+  ${CMAKE_SOURCE_DIR}/external/usockets/src/*.cpp
 )
+add_library(usockets STATIC ${usockets_SRC})
 target_compile_definitions(usockets PUBLIC LIBUS_USE_OPENSSL)
 target_link_libraries(usockets libcrypto.lib libssl.lib libuv.lib zlib.lib psapi.lib userenv.lib iphlpapi.lib)
 
