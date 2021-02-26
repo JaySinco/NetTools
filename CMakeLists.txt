@@ -46,6 +46,9 @@ set(LINK_DIR
 message(STATUS "Link dir -> " ${LINK_DIR})
 link_directories(${LINK_DIR})
 
+add_library(openssl INTERFACE)
+target_link_libraries(openssl INTERFACE libcrypto.lib libssl.lib crypt32.lib)
+
 file(GLOB_RECURSE uwebsockets_SRC CONFIGURE_DEPENDS
   ${CMAKE_SOURCE_DIR}/external/uwebsockets/lib/*.c
   ${CMAKE_SOURCE_DIR}/external/uwebsockets/lib/*.cpp
@@ -53,7 +56,7 @@ file(GLOB_RECURSE uwebsockets_SRC CONFIGURE_DEPENDS
 add_library(uwebsockets STATIC ${uwebsockets_SRC})
 target_compile_definitions(uwebsockets PUBLIC LIBUS_USE_OPENSSL)
 target_include_directories(uwebsockets PRIVATE ${CMAKE_SOURCE_DIR}/external/uwebsockets/lib/)
-target_link_libraries(uwebsockets libcrypto.lib libssl.lib libuv.lib zlib.lib psapi.lib userenv.lib iphlpapi.lib)
+target_link_libraries(uwebsockets openssl libuv.lib zlibstatic.lib psapi.lib userenv.lib iphlpapi.lib)
 
 add_library(common STATIC
   ${CMAKE_SOURCE_DIR}/src/common.cpp
@@ -125,8 +128,6 @@ target_link_libraries(module_test common uwebsockets WebView2Loader.dll.lib)
 add_custom_command(TARGET module_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
-  ${CMAKE_SOURCE_DIR}/external/openssl/bin/libcrypto-1_1-x64.dll
-  ${CMAKE_SOURCE_DIR}/external/openssl/bin/libssl-1_1-x64.dll
   $<TARGET_FILE_DIR:module_test>
 )
 

@@ -8,7 +8,7 @@
         "external/*/lib": true,
         "external/*/share": true,
         "external/*/src/build": true,
-        "external/*/src/*[0-9]": true
+        "external/*/src/*[0-9]*": true
     },
     "files.watcherExclude": {
         "bin": true,
