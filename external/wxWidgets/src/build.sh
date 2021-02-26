@@ -1,6 +1,8 @@
 #!/bin/bash
 
 cwd=`readlink -f .`
+source "../../../source_in_bash_profile.sh"
+
 webview2_sdk=webview2.zip
 
 ${DOWNLOAD} -o ${webview2_sdk} https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/1.0.664.37 \

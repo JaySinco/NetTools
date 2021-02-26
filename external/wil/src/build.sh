@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "../../../source_in_bash_profile.sh"
+
 sdk=master.zip
 
 cd ..

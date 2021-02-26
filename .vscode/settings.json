@@ -17,7 +17,6 @@
     },
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/src/",
-        "${workspaceFolder}/external/",
         "${workspaceFolder}/external/gflags/include/",
         "${workspaceFolder}/external/glog/include/",
         "${workspaceFolder}/external/npcap/include/",
@@ -33,7 +32,7 @@
         "${workspaceFolder}/external/libuv/include/",
         "${workspaceFolder}/external/zlib/include/",
         "${workspaceFolder}/external/openssl/include/",
-        "${workspaceFolder}/external/usockets/src/",
+        "${workspaceFolder}/external/uwebsockets/include/",
     ],
     "C_Cpp.default.defines": [
         "UNICODE",

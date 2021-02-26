@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "../../../source_in_bash_profile.sh"
+
 cd ..
 ${DOWNLOAD} -o clang-format.exe https://prereleases.llvm.org/win-snapshots/clang-format-6923b0a7.exe \
 && \

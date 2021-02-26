@@ -1,6 +1,6 @@
 #include "submodule/browser.h"
 #pragma warning(disable : 4138)
-#include "uwebSockets/src/App.h"
+#include "uwebsockets/App.h"
 
 void test_browser()
 {

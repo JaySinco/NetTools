@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cwd=`readlink -f .`
+source "../../../source_in_bash_profile.sh"
 
 cd boost_1_74_0
 

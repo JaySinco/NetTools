@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "../../../source_in_bash_profile.sh"
+
 installer=npcap-1.10.exe
 sdk=npcap-sdk-1.06.zip
 
