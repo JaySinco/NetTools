@@ -120,15 +120,15 @@ add_custom_command(TARGET sniff POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_d
   $<TARGET_FILE_DIR:sniff>
 )
 
-add_executable(module_test
+add_executable(browser_test
   ${CMAKE_SOURCE_DIR}/src/submodule/browser.cpp
-  ${CMAKE_SOURCE_DIR}/src/submodule/module_test.cpp
+  ${CMAKE_SOURCE_DIR}/src/submodule/browser_test.cpp
 )
-target_link_libraries(module_test common uwebsockets WebView2Loader.dll.lib)
-add_custom_command(TARGET module_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+target_link_libraries(browser_test common WebView2Loader.dll.lib)
+add_custom_command(TARGET browser_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_SOURCE_DIR}/external/webview2/bin/MicrosoftEdgeWebview2Setup.exe
   ${CMAKE_SOURCE_DIR}/external/webview2/lib/WebView2Loader.dll
-  $<TARGET_FILE_DIR:module_test>
+  $<TARGET_FILE_DIR:browser_test>
 )
 
 add_executable(v8_test ${CMAKE_SOURCE_DIR}/src/submodule/v8_test.cpp)
@@ -137,3 +137,6 @@ add_custom_command(TARGET v8_test POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if
   ${CMAKE_SOURCE_DIR}/external/v8/bin/d8.exe
   $<TARGET_FILE_DIR:v8_test>
 )
+
+add_executable(ws_test ${CMAKE_SOURCE_DIR}/src/submodule/ws_test.cpp)
+target_link_libraries(ws_test common uwebsockets)

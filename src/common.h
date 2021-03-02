@@ -4,6 +4,7 @@
 
 using namespace fmt::literals;
 using namespace std::chrono_literals;
+using namespace std::string_literals;
 using json = nlohmann::ordered_json;
 
 #define NT_TRY try {
