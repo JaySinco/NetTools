@@ -15,9 +15,7 @@ namespace asio = boost::asio;
 class session : public std::enable_shared_from_this<session>
 {
 public:
-    session(asio::io_context &ioc) : resolver_(asio::make_strand(ioc)), ws_(asio::make_strand(ioc))
-    {
-    }
+    session(asio::io_context &ioc) : resolver_(ioc), ws_(asio::make_strand(ioc)) {}
 
     void run(const std::string &host, const std::string &port, const std::string &url)
     {
